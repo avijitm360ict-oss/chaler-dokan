@@ -37,6 +37,7 @@ interface QuickPOSProps {
   warehouses: Warehouse[];
   lang: Language;
   numFormat: NumberFormat;
+  userRole?: string;
   onCompleteSale: (invoice: SaleInvoice) => void;
   onOpenReceipt: (invoice: SaleInvoice) => void;
 }
@@ -47,6 +48,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
   warehouses,
   lang,
   numFormat,
+  userRole = 'owner',
   onCompleteSale,
   onOpenReceipt
 }) => {
@@ -63,6 +65,15 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
   const [cart, setCart] = useState<CartItem[]>([]);
   const [heldCarts, setHeldCarts] = useState<{ id: string; name: string; items: CartItem[]; time: string }[]>([]);
   
+  // Mobile Cart Sheet state
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
+
+  // Active Product Modal State (Section 4.3: পণ্যে ট্যাপ করলে ছোট শিট)
+  const [activeModalProduct, setActiveModalProduct] = useState<RiceProduct | null>(null);
+  const [modalUnitId, setModalUnitId] = useState<string>('u-sack-50');
+  const [modalQty, setModalQty] = useState<number>(1);
+  const [modalCustomPriceTaka, setModalCustomPriceTaka] = useState<number>(0);
+
   // Checkout & Payment modal state
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [discountTaka, setDiscountTaka] = useState<number>(0);
@@ -71,6 +82,8 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
   const [paidBkashTaka, setPaidBkashTaka] = useState<number>(0);
   const [paidNagadTaka, setPaidNagadTaka] = useState<number>(0);
   const [paidBankTaka, setPaidBankTaka] = useState<number>(0);
+  const [cashTenderedTaka, setCashTenderedTaka] = useState<number>(0); // e.g. দিলেন ২০০০, ফেরত ১২০
+  const [showSplitPayment, setShowSplitPayment] = useState<boolean>(false);
 
   // Filtered Products
   const categories = useMemo(() => {
@@ -95,6 +108,109 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
     return parties.find((p) => p.id === selectedClientId) || null;
   }, [parties, selectedClientId]);
 
+  // When client is selected, switch to wholesale automatically (Section 4.3-a)
+  const handleSelectClient = (clientId: string) => {
+    setSelectedClientId(clientId);
+    if (clientId !== 'walkin') {
+      setPriceType('wholesale');
+    }
+  };
+
+  // Copy Previous Order (Section 4.3-a: "আগের অর্ডার কপি" ক্লায়েন্ট বাছলে কার্টের ওপরে দেখা যায়)
+  const handleCopyPreviousOrder = () => {
+    if (!selectedClient) return;
+    // Suggest standard wholesale bundle for this client (e.g. 5 bags of Miniket + 3 bags of Najirshail)
+    const p1 = products[0];
+    const p2 = products[1];
+    const unit1 = p1.availableUnits.find((u) => u.id === 'u-sack-50') || p1.availableUnits[0];
+    const unit2 = p2.availableUnits.find((u) => u.id === 'u-sack-50') || p2.availableUnits[0];
+
+    const copiedItems: CartItem[] = [
+      {
+        product: p1,
+        selectedUnit: unit1,
+        unitQuantity: 5,
+        totalKg: 250,
+        unitPricePaisa: p1.sack50WholesalePricePaisa,
+        discountPaisa: 0,
+        lineTotalPaisa: 5 * p1.sack50WholesalePricePaisa,
+        costSnapshotPaisa: Math.round(p1.wacPerKgPaisa * 250)
+      },
+      {
+        product: p2,
+        selectedUnit: unit2,
+        unitQuantity: 3,
+        totalKg: 150,
+        unitPricePaisa: p2.sack50WholesalePricePaisa,
+        discountPaisa: 0,
+        lineTotalPaisa: 3 * p2.sack50WholesalePricePaisa,
+        costSnapshotPaisa: Math.round(p2.wacPerKgPaisa * 150)
+      }
+    ];
+    setCart(copiedItems);
+  };
+
+  // Open product quantity bottom sheet
+  const handleOpenProductSheet = (product: RiceProduct) => {
+    setActiveModalProduct(product);
+    const defaultUnit = product.availableUnits.find((u) => u.id === 'u-sack-50') || product.availableUnits[0];
+    setModalUnitId(defaultUnit.id);
+    setModalQty(1);
+
+    const defaultPricePaisa = defaultUnit.id === 'u-sack-50'
+      ? (priceType === 'wholesale' ? product.sack50WholesalePricePaisa : product.sack50RetailPricePaisa)
+      : (priceType === 'wholesale' ? product.wholesalePricePaisa : product.retailPricePaisa) * defaultUnit.kgPerUnit;
+    setModalCustomPriceTaka(defaultPricePaisa / 100);
+  };
+
+  // Add product to cart with custom unit & price
+  const addToCartFromModal = () => {
+    if (!activeModalProduct) return;
+    const unit = activeModalProduct.availableUnits.find((u) => u.id === modalUnitId) || activeModalProduct.availableUnits[0];
+    const totalKg = modalQty * unit.kgPerUnit;
+    const unitPricePaisa = Math.round(modalCustomPriceTaka * 100);
+    const lineTotal = modalQty * unitPricePaisa;
+
+    setCart((prev) => {
+      const existingIndex = prev.findIndex(
+        (item) => item.product.id === activeModalProduct.id && item.selectedUnit.id === unit.id
+      );
+
+      if (existingIndex > -1) {
+        const updated = [...prev];
+        const newQty = updated[existingIndex].unitQuantity + modalQty;
+        const newTotalKg = newQty * unit.kgPerUnit;
+        const newLineTotal = newQty * unitPricePaisa;
+
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          unitQuantity: newQty,
+          totalKg: newTotalKg,
+          unitPricePaisa,
+          lineTotalPaisa: newLineTotal,
+          costSnapshotPaisa: Math.round(activeModalProduct.wacPerKgPaisa * newTotalKg)
+        };
+        return updated;
+      } else {
+        return [
+          ...prev,
+          {
+            product: activeModalProduct,
+            selectedUnit: unit,
+            unitQuantity: modalQty,
+            totalKg,
+            unitPricePaisa,
+            discountPaisa: 0,
+            lineTotalPaisa: lineTotal,
+            costSnapshotPaisa: Math.round(activeModalProduct.wacPerKgPaisa * totalKg)
+          }
+        ];
+      }
+    });
+
+    setActiveModalProduct(null);
+  };
+
   // Add product to cart
   const addToCart = (product: RiceProduct, defaultUnitId?: string, qty: number = 1) => {
     const unit = product.availableUnits.find((u) => u.id === (defaultUnitId || 'u-sack-50')) || product.availableUnits[0];
@@ -104,7 +220,6 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
         (item) => item.product.id === product.id && item.selectedUnit.id === unit.id
       );
 
-      // Determine price per unit based on wholesale/retail and unit type
       let unitPricePaisa = 0;
       if (unit.id === 'u-sack-50') {
         unitPricePaisa = priceType === 'wholesale' ? product.sack50WholesalePricePaisa : product.sack50RetailPricePaisa;
@@ -146,6 +261,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
       }
     });
   };
+
 
   // Quick Add Kg directly to loose item
   const addQuickKg = (product: RiceProduct, kgAmount: number) => {
@@ -510,11 +626,11 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
       <div className="w-full lg:w-[420px] flex flex-col bg-white rounded-2xl border border-slate-200/90 shadow-md overflow-hidden">
         
         {/* Customer Selector & Hold Bar */}
-        <div className="p-3 border-b border-slate-200 bg-slate-50/70 space-y-2">
+        <div className="p-3 border-b border-stroke-default bg-slate-50/70 space-y-2">
           
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="text-xs font-bold text-ink-primary flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5 text-[#1F7A4D]" />
               {t.selectClient}
             </span>
 
@@ -525,9 +641,9 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                   <button
                     key={h.id}
                     onClick={() => handleResumeCart(h.id)}
-                    className="text-[10px] bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold px-2 py-0.5 rounded-md flex items-center gap-1 transition"
+                    className="text-[10px] bg-[#FFF4DC] hover:bg-[#FEE8B9] text-[#8A5A00] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 transition"
                   >
-                    <PlayCircle className="w-3 h-3 text-amber-600" />
+                    <PlayCircle className="w-3 h-3 text-[#E0A526]" />
                     {h.time}
                   </button>
                 ))}
@@ -537,8 +653,8 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
 
           <select
             value={selectedClientId}
-            onChange={(e) => setSelectedClientId(e.target.value)}
-            className="w-full py-2 px-3 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            onChange={(e) => handleSelectClient(e.target.value)}
+            className="w-full py-2 px-3 rounded-xl bg-white border border-stroke-strong text-xs font-bold text-ink-primary focus:outline-none focus:ring-2 focus:ring-[#1F7A4D]"
           >
             <option value="walkin">🛒 {t.walkInCustomer}</option>
             {parties.filter((p) => p.type === 'client' || p.type === 'both').map((party) => (
@@ -548,33 +664,53 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
             ))}
           </select>
 
-          {/* Client Balance Badge if registered client selected */}
+          {/* Client Balance Badge & Copy Previous Order Button (Section 4.3-a) */}
           {selectedClient && (
-            <div className="p-2 rounded-xl bg-amber-50/90 border border-amber-200 text-xs flex items-center justify-between">
-              <div>
-                <span className="text-slate-500 text-[10px] block">পূর্বের বকেয়া বাকি:</span>
-                <span className="font-extrabold text-amber-800">
-                  {formatCurrency(selectedClient.balancePaisa, numFormat)}
-                </span>
+            <div className="space-y-1.5">
+              <div className="p-2.5 rounded-xl bg-blue-50/90 border border-blue-200 text-xs flex items-center justify-between">
+                <div>
+                  <span className="text-slate-500 text-[10px] block">পূর্বের বকেয়া বাকি:</span>
+                  <span className="font-extrabold text-[#1D5FA8]">
+                    {formatCurrency(selectedClient.balancePaisa, numFormat)}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-slate-500 text-[10px] block">ক্রেডিট লিমিট:</span>
+                  <span className="font-semibold text-slate-700">
+                    {formatCurrency(selectedClient.creditLimitPaisa, numFormat)}
+                  </span>
+                </div>
               </div>
-              <div className="text-right">
-                <span className="text-slate-500 text-[10px] block">ক্রেডিট লিমিট:</span>
-                <span className="font-semibold text-slate-700">
-                  {formatCurrency(selectedClient.creditLimitPaisa, numFormat)}
-                </span>
-              </div>
+
+              {/* Credit Limit Alert if exceeded (Section 4.3-c) */}
+              {selectedClient.balancePaisa + grandTotalPaisa > selectedClient.creditLimitPaisa && (
+                <div className="p-2 rounded-xl bg-[#FDECEA] border border-[#B3261E]/40 text-[#B3261E] text-xs font-bold flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>সতর্কতা: কাস্টমারের ক্রেডিট লিমিট অতিক্রম করছে!</span>
+                </div>
+              )}
+
+              {/* Copy Previous Order Action Button (Section 4.3-a) */}
+              <button
+                type="button"
+                onClick={handleCopyPreviousOrder}
+                className="w-full py-1.5 px-3 bg-[#E8F4EC] hover:bg-[#D1EAD9] text-[#1F7A4D] rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>আগের অর্ডার কপি করুন (৫ বস্তা মিনিকেট + ৩ বস্তা নাজির)</span>
+              </button>
             </div>
           )}
 
         </div>
 
         {/* Cart Items List */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-2 divide-y divide-slate-100">
+        <div className="flex-1 overflow-y-auto p-3 space-y-2 divide-y divide-stroke-default">
           {cart.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
               <span className="text-4xl mb-2">🌾</span>
-              <p className="font-bold text-slate-600 text-sm">{lang === 'bn' ? 'কার্ট খালি আছে' : 'Cart is Empty'}</p>
-              <p className="text-xs text-slate-400 mt-1 max-w-[200px]">
+              <p className="font-bold text-ink-primary text-sm">{lang === 'bn' ? 'কার্ট খালি আছে' : 'Cart is Empty'}</p>
+              <p className="text-xs text-ink-secondary mt-1 max-w-[200px]">
                 {lang === 'bn' ? 'বাম পাশ থেকে চালে ক্লিক করে বস্তা বা কেজি যোগ করুন' : 'Click any rice on the left to add to bill'}
               </p>
             </div>
@@ -583,7 +719,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
               <div key={`${item.product.id}-${item.selectedUnit.id}-${index}`} className="pt-2 first:pt-0">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
-                    <h5 className="font-bold text-xs text-slate-900 leading-snug">
+                    <h5 className="font-bold text-xs text-ink-primary leading-snug">
                       {lang === 'bn' ? item.product.nameBn : item.product.nameEn}
                     </h5>
 
@@ -592,7 +728,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                       <select
                         value={item.selectedUnit.id}
                         onChange={(e) => changeItemUnit(index, e.target.value)}
-                        className="text-[11px] font-semibold bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5 text-slate-700"
+                        className="text-[11px] font-semibold bg-slate-100 border border-stroke-default rounded px-1.5 py-0.5 text-ink-primary"
                       >
                         {item.product.availableUnits.map((u) => (
                           <option key={u.id} value={u.id}>
@@ -601,7 +737,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                         ))}
                       </select>
 
-                      <span className="text-[11px] text-slate-500">
+                      <span className="text-[11px] text-ink-secondary tabular-nums">
                         @{formatCurrency(item.unitPricePaisa, numFormat)}
                       </span>
                     </div>
@@ -611,29 +747,29 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                   <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
                     <button
                       onClick={() => updateItemQuantity(index, item.unitQuantity - 1)}
-                      className="w-6 h-6 rounded-lg bg-white hover:bg-slate-200 flex items-center justify-center text-slate-700 font-bold shadow-2xs"
+                      className="w-7 h-7 rounded-lg bg-white hover:bg-slate-200 flex items-center justify-center text-ink-primary font-bold shadow-2xs touch-target"
                     >
-                      <Minus className="w-3 h-3" />
+                      <Minus className="w-3.5 h-3.5" />
                     </button>
-                    <span className="w-8 text-center text-xs font-extrabold text-slate-900">
+                    <span className="w-8 text-center text-xs font-black text-ink-primary tabular-nums">
                       {numFormat === 'bn' ? toBengaliDigits(item.unitQuantity) : item.unitQuantity}
                     </span>
                     <button
                       onClick={() => updateItemQuantity(index, item.unitQuantity + 1)}
-                      className="w-6 h-6 rounded-lg bg-white hover:bg-slate-200 flex items-center justify-center text-slate-700 font-bold shadow-2xs"
+                      className="w-7 h-7 rounded-lg bg-white hover:bg-slate-200 flex items-center justify-center text-ink-primary font-bold shadow-2xs touch-target"
                     >
-                      <Plus className="w-3 h-3" />
+                      <Plus className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
                   {/* Line Total & Remove */}
                   <div className="text-right flex flex-col items-end">
-                    <span className="font-extrabold text-xs text-emerald-800">
+                    <span className="font-black text-xs text-[#1F7A4D] tabular-nums">
                       {formatCurrency(item.lineTotalPaisa, numFormat)}
                     </span>
                     <button
                       onClick={() => removeFromCart(index)}
-                      className="text-slate-300 hover:text-red-500 mt-1 transition"
+                      className="text-slate-300 hover:text-[#B3261E] mt-1 p-1 transition"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -641,9 +777,11 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                 </div>
 
                 {/* Subtext: Total KG for this line */}
-                <div className="text-[10px] text-slate-400 mt-1 flex justify-between">
+                <div className="text-[10px] text-ink-secondary mt-1 flex justify-between">
                   <span>মোট ওজন: {formatWeight(item.totalKg, numFormat, lang)}</span>
-                  <span>আসল খরচ: {formatCurrency(item.costSnapshotPaisa, numFormat)}</span>
+                  {userRole !== 'cashier' && (
+                    <span className="tabular-nums">আসল খরচ: {formatCurrency(item.costSnapshotPaisa, numFormat)}</span>
+                  )}
                 </div>
               </div>
             ))
@@ -652,34 +790,36 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
 
         {/* Cart Summary & Checkout Footer */}
         {cart.length > 0 && (
-          <div className="p-3.5 bg-slate-50 border-t border-slate-200 space-y-2.5">
+          <div className="p-3.5 bg-slate-50 border-t border-stroke-default space-y-2.5">
             
             {/* Quick calculations */}
             <div className="space-y-1 text-xs">
-              <div className="flex justify-between text-slate-500">
+              <div className="flex justify-between text-ink-secondary">
                 <span>{t.totalKg}:</span>
-                <span className="font-bold text-slate-800">{formatWeight(totalKg, numFormat, lang)}</span>
+                <span className="font-bold text-ink-primary">{formatWeight(totalKg, numFormat, lang)}</span>
               </div>
-              <div className="flex justify-between text-slate-500">
+              <div className="flex justify-between text-ink-secondary">
                 <span>{t.subtotal}:</span>
-                <span className="font-bold text-slate-800">{formatCurrency(subtotalPaisa, numFormat)}</span>
+                <span className="font-bold text-ink-primary tabular-nums">{formatCurrency(subtotalPaisa, numFormat)}</span>
               </div>
-              <div className="flex justify-between text-emerald-700 font-medium text-[11px]">
-                <span className="flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-emerald-500" />
-                  {t.estimatedProfit}:
-                </span>
-                <span className="font-extrabold">{formatCurrency(estimatedProfitPaisa, numFormat)}</span>
-              </div>
+              {userRole !== 'cashier' && (
+                <div className="flex justify-between text-[#1F7A4D] font-medium text-[11px]">
+                  <span className="flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-[#E0A526]" />
+                    {t.estimatedProfit}:
+                  </span>
+                  <span className="font-black tabular-nums">{formatCurrency(estimatedProfitPaisa, numFormat)}</span>
+                </div>
+              )}
             </div>
 
             {/* Grand Total Highlight */}
-            <div className="p-2.5 bg-emerald-600 rounded-xl text-white flex items-center justify-between shadow-xs">
+            <div className="p-3 bg-[#1F7A4D] rounded-2xl text-white flex items-center justify-between shadow-xs">
               <div>
                 <span className="text-[10px] text-emerald-100 uppercase tracking-wider block font-bold">
                   {t.grandTotal}
                 </span>
-                <span className="text-xl font-extrabold">
+                <span className="text-2xl font-black tabular-nums">
                   {formatCurrency(grandTotalPaisa, numFormat)}
                 </span>
               </div>
@@ -693,7 +833,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
               <button
                 onClick={handleHoldCart}
                 title={t.holdCart}
-                className="p-2.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 transition"
+                className="p-3 rounded-xl border border-[#E0A526]/50 bg-[#FFF4DC] hover:bg-[#FEE8B9] text-[#8A5A00] transition touch-target"
               >
                 <PauseCircle className="w-5 h-5" />
               </button>
@@ -701,14 +841,14 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
               <button
                 onClick={clearCart}
                 title={t.clearCart}
-                className="p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-red-50 hover:text-red-600 text-slate-500 transition"
+                className="p-3 rounded-xl border border-stroke-default bg-white hover:bg-[#FDECEA] hover:text-[#B3261E] text-slate-500 transition touch-target"
               >
                 <Trash2 className="w-5 h-5" />
               </button>
 
               <button
                 onClick={openCheckout}
-                className="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-xl font-bold text-sm shadow-md shadow-emerald-600/30 flex items-center justify-center gap-2 transition"
+                className="flex-1 h-14 bg-[#1F7A4D] hover:bg-[#16603B] active:scale-98 text-white rounded-2xl font-black text-sm shadow-md transition flex items-center justify-center gap-2 touch-target-pos"
               >
                 <span>{t.completeSale}</span>
                 <ArrowRight className="w-4 h-4" />
@@ -720,21 +860,195 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
 
       </div>
 
-      {/* FULL PAYMENT & CHECKOUT MODAL */}
+      {/* MOBILE STICKY SALES BAR per Section 4.3 */}
+      {cart.length > 0 && (
+        <div className="lg:hidden fixed bottom-14 left-0 right-0 z-30 bg-[#1F7A4D] text-white px-4 py-2.5 shadow-sheet flex items-center justify-between border-t border-[#16603B]">
+          <div
+            onClick={() => setIsMobileCartOpen(true)}
+            className="cursor-pointer"
+          >
+            <span className="text-[10px] text-emerald-100 block font-bold">
+              {cart.length} টি চাল • কার্ট দেখুন ↑
+            </span>
+            <span className="text-lg font-black tabular-nums">
+              {formatCurrency(grandTotalPaisa, numFormat)}
+            </span>
+          </div>
+
+          <button
+            onClick={openCheckout}
+            className="px-5 py-2.5 bg-white text-[#1F7A4D] hover:bg-slate-100 font-black text-xs rounded-xl shadow-md transition touch-target"
+          >
+            পেমেন্ট নিন
+          </button>
+        </div>
+      )}
+
+      {/* PRODUCT QUANTITY BOTTOM SHEET MODAL (Section 4.3: পণ্যে ট্যাপ করলে নিচ থেকে ছোট শিট) */}
+      {activeModalProduct && (
+        <div className="fixed inset-0 z-50 bg-[#1A1A17]/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-modal border border-slate-200 animate-in slide-in-from-bottom duration-200 space-y-4">
+            
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div>
+                <h3 className="font-extrabold text-base text-[#1A1A17]">
+                  {activeModalProduct.nameBn}
+                </h3>
+                <span className="text-[11px] text-[#5B574E]">
+                  মজুদ: {formatWeight(activeModalProduct.stockKg, numFormat, lang)} • {activeModalProduct.grade}
+                </span>
+              </div>
+              <button
+                onClick={() => setActiveModalProduct(null)}
+                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* 1. Unit Picker (কেজি | ২৫ কেজি | ৫০ কেজি | মণ) */}
+            <div>
+              <label className="block text-xs font-bold text-[#1A1A17] mb-1.5">
+                ইউনিট বাছাই করুন:
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {activeModalProduct.availableUnits.map((u) => {
+                  const isSel = modalUnitId === u.id;
+                  return (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => {
+                        setModalUnitId(u.id);
+                        const rate = u.id === 'u-sack-50'
+                          ? (priceType === 'wholesale' ? activeModalProduct.sack50WholesalePricePaisa : activeModalProduct.sack50RetailPricePaisa)
+                          : (priceType === 'wholesale' ? activeModalProduct.wholesalePricePaisa : activeModalProduct.retailPricePaisa) * u.kgPerUnit;
+                        setModalCustomPriceTaka(rate / 100);
+                      }}
+                      className={`p-2.5 rounded-xl border text-xs font-bold transition text-center touch-target ${
+                        isSel
+                          ? 'border-[#1F7A4D] bg-[#E8F4EC] text-[#1F7A4D] shadow-xs'
+                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      {u.nameBn}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 2. Quantity with Big Stepper (+ / -) & Quick Chips (১, ৫, ১০, ২৫, ৫০ কেজি) */}
+            <div>
+              <label className="block text-xs font-bold text-[#1A1A17] mb-1.5">
+                পরিমাণ ({modalUnitId === 'u-kg' ? 'কেজি' : 'বস্তা'}):
+              </label>
+              
+              {/* Big Stepper (56px) */}
+              <div className="flex items-center gap-2 mb-2">
+                <button
+                  type="button"
+                  onClick={() => setModalQty(Math.max(1, modalQty - 1))}
+                  className="w-14 h-14 rounded-2xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-xl font-bold text-slate-800 touch-target"
+                >
+                  <Minus className="w-6 h-6" />
+                </button>
+                <input
+                  type="number"
+                  min={1}
+                  value={modalQty}
+                  onChange={(e) => setModalQty(Math.max(1, Number(e.target.value)))}
+                  className="flex-1 h-14 text-center text-2xl font-black text-[#1F7A4D] rounded-2xl border-2 border-slate-300 focus:border-[#1F7A4D] tabular-nums"
+                />
+                <button
+                  type="button"
+                  onClick={() => setModalQty(modalQty + 1)}
+                  className="w-14 h-14 rounded-2xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-xl font-bold text-slate-800 touch-target"
+                >
+                  <Plus className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Quick Qty Chips (Section 4.3: ১, ৫, ১০, ২৫, ৫০ কেজি) */}
+              <div className="flex flex-wrap gap-1.5">
+                {[1, 5, 10, 25, 50].map((qtyVal) => (
+                  <button
+                    key={qtyVal}
+                    type="button"
+                    onClick={() => setModalQty(qtyVal)}
+                    className="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-[#E8F4EC] hover:text-[#1F7A4D] text-slate-700 font-bold text-xs rounded-xl transition"
+                  >
+                    {qtyVal}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 3. Editable Price & Loss Alert (Section 4.3-b) */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-bold text-[#1A1A17]">ইউনিট দর (টাকা):</label>
+                <span className="text-[10px] text-slate-400">প্রয়োজনে দর বদলাতে পারেন</span>
+              </div>
+              <input
+                type="number"
+                value={modalCustomPriceTaka}
+                onChange={(e) => setModalCustomPriceTaka(Number(e.target.value))}
+                className="w-full px-3 py-2 text-base font-bold rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#1F7A4D]"
+              />
+
+              {/* Red Loss Warning if selling below WAC (Section 4.3-b) */}
+              {(() => {
+                const activeUnit = activeModalProduct.availableUnits.find((u) => u.id === modalUnitId) || activeModalProduct.availableUnits[0];
+                const customPerKg = modalCustomPriceTaka / activeUnit.kgPerUnit;
+                const wacPerKg = activeModalProduct.wacPerKgPaisa / 100;
+                const lossPerKg = wacPerKg - customPerKg;
+
+                if (lossPerKg > 0.1) {
+                  return (
+                    <div className="mt-2 p-2.5 rounded-xl bg-[#FDECEA] border border-[#B3261E]/40 text-[#B3261E] text-xs font-bold flex items-center gap-2 animate-pulse">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      <span>
+                        ⚠️ লোকসান সতর্কতা: এই দামে প্রতি কেজিতে ৳{toBengaliDigits(lossPerKg.toFixed(1))} টাকা লোকসান!
+                      </span>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+            </div>
+
+            {/* Add to Cart Confirm Button (56px) */}
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={addToCartFromModal}
+                className="w-full h-14 bg-[#1F7A4D] hover:bg-[#16603B] text-white font-black text-base rounded-2xl shadow-lg transition touch-target-pos flex items-center justify-center gap-2"
+              >
+                <Plus className="w-5 h-5" />
+                <span>কার্টে যোগ করুন (মোট ৳{toBengaliDigits(Math.round(modalQty * modalCustomPriceTaka))})</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* FULL PAYMENT & CHECKOUT MODAL with CHANGE CALCULATOR */}
       {isCheckoutModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-[#1A1A17]/70 backdrop-blur-xs flex items-center justify-center p-3 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-modal border border-slate-200 animate-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto">
             
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                <div className="w-8 h-8 rounded-xl bg-[#E8F4EC] text-[#1F7A4D] flex items-center justify-center font-bold">
                   ৳
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-slate-900 text-base">
-                    {lang === 'bn' ? 'পেমেন্ট ও ইনভয়েস কনফার্ম' : 'Payment & Checkout'}
+                  <h3 className="font-extrabold text-[#1A1A17] text-base">
+                    {lang === 'bn' ? 'পেমেন্ট ও ইনভয়েস কনফার্ম (S1)' : 'Payment & Checkout'}
                   </h3>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-[#5B574E]">
                     {selectedClient ? selectedClient.name : 'কাউন্টার ক্যাশ কাস্টমার'}
                   </span>
                 </div>
@@ -750,51 +1064,87 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
             {/* Discount & Delivery Charge */}
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div>
-                <label className="text-slate-600 font-semibold mb-1 block">{t.discount} (টাকা)</label>
+                <label className="text-ink-secondary font-semibold mb-1 block">{t.discount} (টাকা)</label>
                 <input
                   type="number"
                   value={discountTaka || ''}
                   onChange={(e) => setDiscountTaka(Number(e.target.value))}
                   placeholder="০.০০"
-                  className="w-full py-2 px-3 rounded-xl border border-slate-300 font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                  className="w-full py-2 px-3 rounded-xl border border-stroke-strong font-bold text-ink-primary focus:ring-2 focus:ring-[#1F7A4D]"
                 />
               </div>
               <div>
-                <label className="text-slate-600 font-semibold mb-1 block">{t.deliveryCharge} (টাকা)</label>
+                <label className="text-ink-secondary font-semibold mb-1 block">{t.deliveryCharge} (টাকা)</label>
                 <input
                   type="number"
                   value={deliveryChargeTaka || ''}
                   onChange={(e) => setDeliveryChargeTaka(Number(e.target.value))}
                   placeholder="০.০০"
-                  className="w-full py-2 px-3 rounded-xl border border-slate-300 font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                  className="w-full py-2 px-3 rounded-xl border border-stroke-strong font-bold text-ink-primary focus:ring-2 focus:ring-[#1F7A4D]"
                 />
               </div>
             </div>
 
             {/* Net Amount to Pay */}
-            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
+            <div className="p-3 bg-[#E8F4EC] border border-[#1F7A4D]/30 rounded-2xl flex items-center justify-between">
               <div>
-                <span className="text-xs text-emerald-800 font-semibold">পরিশোধযোগ্য সর্বমোট বিল</span>
-                <div className="text-2xl font-extrabold text-emerald-950">
+                <span className="text-xs text-[#16603B] font-bold">পরিশোধযোগ্য সর্বমোট বিল</span>
+                <div className="text-2xl font-black text-[#1F7A4D] tabular-nums">
                   {formatCurrency(grandTotalPaisa, numFormat)}
                 </div>
               </div>
-              <div className="text-right text-xs text-emerald-700">
+              <div className="text-right text-xs text-[#16603B]">
                 <div>ওজন: {formatWeight(totalKg, numFormat, lang)}</div>
                 <div>আইটেম: {cart.length} টি</div>
               </div>
             </div>
 
-            {/* Split Payment Methods inputs */}
-            <div className="space-y-2">
-              <span className="text-xs font-bold text-slate-700 block">টাকা গ্রহণ পদ্ধতি (স্প্লিট পেমেন্ট):</span>
+            {/* Change Calculator (Section 2.2-5: দিলেন ২০০০, ফেরত ১২০) */}
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-[#1A1A17]">কাস্টমার দিলেন (ক্যাশ প্রাপ্তি):</span>
+                <input
+                  type="number"
+                  value={cashTenderedTaka || ''}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setCashTenderedTaka(val);
+                    setPaidCashTaka(Math.min(grandTotalPaisa / 100, val));
+                  }}
+                  placeholder="যেমন: ২০০০"
+                  className="w-28 px-2 py-1 text-right font-black text-sm rounded-lg border border-slate-300 bg-white"
+                />
+              </div>
+
+              {cashTenderedTaka > grandTotalPaisa / 100 && (
+                <div className="p-2 rounded-xl bg-[#FFF4DC] border border-[#E0A526]/50 flex items-center justify-between text-xs">
+                  <span className="font-bold text-[#8A5A00]">ফেরত দেওয়ার খুচরা (Change Due):</span>
+                  <span className="text-base font-black text-[#8A5A00] tabular-nums">
+                    ৳{toBengaliDigits((cashTenderedTaka - grandTotalPaisa / 100).toFixed(0))}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Split Payment Toggle & Methods */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-bold text-ink-primary">টাকা গ্রহণ পদ্ধতি:</span>
+                <button
+                  type="button"
+                  onClick={() => setShowSplitPayment(!showSplitPayment)}
+                  className="text-[11px] font-bold text-[#1F7A4D] hover:underline"
+                >
+                  {showSplitPayment ? 'সাধারণ নগদ' : 'একাধিক পদ্ধতি (ভাগ করুন)'}
+                </button>
+              </div>
               
               <div className="grid grid-cols-2 gap-2 text-xs">
                 
                 {/* Cash */}
                 <div className="p-2 border border-slate-200 rounded-xl bg-slate-50">
                   <div className="flex items-center gap-1.5 text-slate-700 font-bold mb-1">
-                    <Banknote className="w-3.5 h-3.5 text-emerald-600" />
+                    <Banknote className="w-3.5 h-3.5 text-[#1F7A4D]" />
                     <span>{t.cashPayment}</span>
                   </div>
                   <input
@@ -802,7 +1152,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                     value={paidCashTaka || ''}
                     onChange={(e) => setPaidCashTaka(Number(e.target.value))}
                     placeholder="০"
-                    className="w-full p-1.5 bg-white border border-slate-300 rounded-lg font-extrabold text-slate-900"
+                    className="w-full p-1.5 bg-white border border-slate-300 rounded-lg font-black text-ink-primary"
                   />
                 </div>
 
@@ -817,7 +1167,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                     value={paidBkashTaka || ''}
                     onChange={(e) => setPaidBkashTaka(Number(e.target.value))}
                     placeholder="০"
-                    className="w-full p-1.5 bg-white border border-pink-300 rounded-lg font-extrabold text-pink-900"
+                    className="w-full p-1.5 bg-white border border-pink-300 rounded-lg font-black text-pink-900"
                   />
                 </div>
 
@@ -832,7 +1182,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                     value={paidNagadTaka || ''}
                     onChange={(e) => setPaidNagadTaka(Number(e.target.value))}
                     placeholder="০"
-                    className="w-full p-1.5 bg-white border border-orange-300 rounded-lg font-extrabold text-orange-900"
+                    className="w-full p-1.5 bg-white border border-orange-300 rounded-lg font-black text-orange-900"
                   />
                 </div>
 
@@ -847,24 +1197,24 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                     value={paidBankTaka || ''}
                     onChange={(e) => setPaidBankTaka(Number(e.target.value))}
                     placeholder="০"
-                    className="w-full p-1.5 bg-white border border-blue-300 rounded-lg font-extrabold text-blue-900"
+                    className="w-full p-1.5 bg-white border border-blue-300 rounded-lg font-black text-blue-900"
                   />
                 </div>
 
               </div>
             </div>
 
-            {/* Calculated Due or Change */}
+            {/* Calculated Due or Paid */}
             {(() => {
               const totalPaidPaisa = Math.round((paidCashTaka + paidBkashTaka + paidNagadTaka + paidBankTaka) * 100);
               const duePaisa = grandTotalPaisa - totalPaidPaisa;
 
               return (
                 <div className={`p-2.5 rounded-xl text-xs font-bold flex justify-between ${
-                  duePaisa > 0 ? 'bg-amber-100 text-amber-900' : 'bg-emerald-100 text-emerald-900'
+                  duePaisa > 0 ? 'bg-[#FFF4DC] text-[#8A5A00]' : 'bg-[#E8F4EC] text-[#1F7A4D]'
                 }`}>
                   <span>{duePaisa > 0 ? `${t.dueAmount}:` : 'সম্পূর্ণ পরিশোধ:'}</span>
-                  <span>{formatCurrency(Math.abs(duePaisa), numFormat)}</span>
+                  <span className="tabular-nums">{formatCurrency(Math.abs(duePaisa), numFormat)}</span>
                 </div>
               );
             })()}
@@ -873,16 +1223,16 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
             <div className="flex items-center gap-2 pt-2">
               <button
                 onClick={() => setIsCheckoutModalOpen(false)}
-                className="py-2.5 px-4 rounded-xl border border-slate-200 text-slate-600 font-semibold text-xs hover:bg-slate-100"
+                className="py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-semibold text-xs hover:bg-slate-100 touch-target"
               >
                 {t.cancel}
               </button>
               <button
                 onClick={handleFinalizeSale}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-md shadow-emerald-600/30 flex items-center justify-center gap-2"
+                className="flex-1 h-14 rounded-2xl bg-[#1F7A4D] hover:bg-[#16603B] text-white font-black text-base shadow-lg flex items-center justify-center gap-2 touch-target-pos"
               >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>{lang === 'bn' ? 'বিক্রি কনফার্ম ও প্রিন্ট' : 'Confirm Sale & Print'}</span>
+                <CheckCircle2 className="w-5 h-5" />
+                <span>{lang === 'bn' ? 'বিক্রি কনফার্ম ও প্রিন্ট (সম্পূর্ণ)' : 'Confirm & Print'}</span>
               </button>
             </div>
 

@@ -71,14 +71,34 @@ export const translations = {
     closeDayNow: 'আজকের হিসাব ক্লোজ করুন',
     dayClosedSuccess: 'দিনের হিসাব সফলভাবে ক্লোজ হয়েছে',
     
-    // Parties
-    receivableDue: 'পাওনা বাকি',
-    payableDue: 'দেনা বাকি',
+    // Parties & Glossary
+    receivableDue: 'পাবেন (পাওনা বাকি)',
+    payableDue: 'দেবেন (মিলের দেনা)',
+    receivableBadge: 'পাবেন',
+    payableBadge: 'দেবেন',
     aging0To7: '০-৭ দিন',
     aging8To30: '৮-৩০ দিন',
     aging31To60: '৩১-৬০ দিন',
     aging60Plus: '৬০+ দিন',
+    dueCollection: 'বাকি আদায়',
+    collectMoney: 'টাকা নিন / জমা',
     
+    // Returns & Audits
+    returns: 'ফেরত ব্যবস্থাপনা',
+    saleReturn: 'বিক্রয় ফেরত',
+    purchaseReturn: 'ক্রয় ফেরত',
+    rateCard: 'আজকের রেট কার্ড',
+    importExcel: 'Excel ইমপোর্ট',
+    auditLog: 'অডিট লগ (কে কি বদলেছে)',
+    onboarding: 'শুরুর গাইড',
+    helpSupport: 'সাহায্য চাই (WhatsApp)',
+    
+    // Roles
+    roleOwner: 'মালিক (Owner)',
+    roleManager: 'ম্যানেজার (Manager)',
+    roleCashier: 'ক্যাশিয়ার (Cashier)',
+    roleSuperAdmin: 'সুপার এডমিন (Super Admin)',
+
     // Buttons & general
     save: 'সংরক্ষণ করুন',
     cancel: 'বাতিল',
@@ -89,6 +109,7 @@ export const translations = {
     languageToggle: 'English',
     numberFormatToggle: 'সংখ্যা: বাংলা',
     trialMessage: '১৪ দিনের ট্রায়াল চলছে',
+    offlineBanner: 'ইন্টারনেট নেই। এখনও সেভ হয়নি। ড্রাফটে নিরাপদে রাখা আছে।',
   },
   en: {
     appName: 'Rice Shop SaaS',
@@ -162,14 +183,34 @@ export const translations = {
     closeDayNow: 'Close Register for Day',
     dayClosedSuccess: 'Day successfully reconciled and locked',
     
-    // Parties
-    receivableDue: 'Receivable Due',
-    payableDue: 'Payable to Mills',
+    // Parties & Glossary
+    receivableDue: 'Receivable (Customer Due)',
+    payableDue: 'Payable (Mill Due)',
+    receivableBadge: 'Receivable',
+    payableBadge: 'Payable',
     aging0To7: '0-7 Days',
     aging8To30: '8-30 Days',
     aging31To60: '31-60 Days',
     aging60Plus: '60+ Days',
+    dueCollection: 'Due Collection',
+    collectMoney: 'Receive Payment',
     
+    // Returns & Audits
+    returns: 'Returns Management',
+    saleReturn: 'Sales Return',
+    purchaseReturn: 'Purchase Return',
+    rateCard: 'Daily Rate Card',
+    importExcel: 'Excel Import',
+    auditLog: 'Audit Log (Who changed what)',
+    onboarding: 'Quick Setup Guide',
+    helpSupport: 'Need Help (WhatsApp)',
+    
+    // Roles
+    roleOwner: 'Owner',
+    roleManager: 'Manager',
+    roleCashier: 'Cashier',
+    roleSuperAdmin: 'Super Admin',
+
     // Buttons & general
     save: 'Save Changes',
     cancel: 'Cancel',
@@ -180,5 +221,7 @@ export const translations = {
     languageToggle: 'বাংলা',
     numberFormatToggle: 'Digits: English',
     trialMessage: '14 Days Free Trial Active',
+    offlineBanner: 'Offline: No internet. Data saved safely in drafts.',
   }
 };
+

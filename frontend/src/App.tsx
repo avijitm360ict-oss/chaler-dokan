@@ -8,7 +8,10 @@ import {
   PurchaseBill,
   ExpenseRecord,
   DayCloseRecord,
-  TenantInfo
+  TenantInfo,
+  UserRole,
+  ReturnRecord,
+  AuditLogEntry
 } from './types';
 import {
   initialTenant,
@@ -18,7 +21,9 @@ import {
   initialSales,
   initialPurchases,
   initialExpenses,
-  initialDayClose
+  initialDayClose,
+  initialReturns,
+  initialAuditLogs
 } from './data/mockData';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
@@ -35,6 +40,12 @@ import { ReportsHub } from './components/Reports/ReportsHub';
 import { ShopSettings } from './components/Settings/ShopSettings';
 import { SuperAdminView } from './components/SuperAdmin/SuperAdminView';
 import { SalesListView } from './components/Sales/SalesListView';
+import { ReturnsManager } from './components/Returns/ReturnsManager';
+import { AuditLogModal } from './components/Audit/AuditLogModal';
+import { ImportWizardModal } from './components/Import/ImportWizardModal';
+import { HelpDrawer } from './components/Common/HelpDrawer';
+import { KeyboardShortcutModal } from './components/Common/KeyboardShortcutModal';
+import { OnboardingModal } from './components/Onboarding/OnboardingModal';
 
 export function App() {
   // App Config & Localization
@@ -51,9 +62,34 @@ export function App() {
   const [purchases, setPurchases] = useState<PurchaseBill[]>(initialPurchases);
   const [expenses, setExpenses] = useState<ExpenseRecord[]>(initialExpenses);
   const [dayClose, setDayClose] = useState<DayCloseRecord>(initialDayClose);
+  const [returns, setReturns] = useState<ReturnRecord[]>(initialReturns);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(initialAuditLogs);
+
+  // User & System Status
+  const [userRole, setUserRole] = useState<UserRole>('owner');
+  const [isOffline, setIsOffline] = useState<boolean>(false);
+
+  // Modals & Drawers
+  const [showShortcuts, setShowShortcuts] = useState<boolean>(false);
+  const [showHelp, setShowHelp] = useState<boolean>(false);
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
+  const [showAuditLog, setShowAuditLog] = useState<boolean>(false);
+  const [showImportWizard, setShowImportWizard] = useState<boolean>(false);
 
   // Modal receipt viewer
   const [activeReceipt, setActiveReceipt] = useState<SaleInvoice | null>(null);
+
+  const handleSelectTab = (tab: string) => {
+    if (tab === 'audit-log') {
+      setShowAuditLog(true);
+      return;
+    }
+    if (tab === 'import') {
+      setShowImportWizard(true);
+      return;
+    }
+    setActiveTab(tab);
+  };
 
   // Toggle Language
   const toggleLanguage = () => {
@@ -273,7 +309,14 @@ export function App() {
         numFormat={numFormat}
         onToggleNumFormat={toggleNumFormat}
         activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        onSelectTab={handleSelectTab}
+        userRole={userRole}
+        onSelectRole={setUserRole}
+        isOffline={isOffline}
+        onToggleOffline={() => setIsOffline((prev) => !prev)}
+        onOpenShortcuts={() => setShowShortcuts(true)}
+        onOpenHelp={() => setShowHelp(true)}
+        onOpenOnboarding={() => setShowOnboarding(true)}
       />
 
       <div className="flex-1 flex max-w-7xl w-full mx-auto px-2 sm:px-4 lg:px-6">
@@ -281,8 +324,9 @@ export function App() {
         {/* Desktop Sidebar */}
         <Sidebar
           activeTab={activeTab}
-          onSelectTab={setActiveTab}
+          onSelectTab={handleSelectTab}
           lang={lang}
+          userRole={userRole}
         />
 
         {/* Main Content Area */}
@@ -295,7 +339,7 @@ export function App() {
               tenant={tenant}
               lang={lang}
               numFormat={numFormat}
-              onSelectTab={setActiveTab}
+              onSelectTab={handleSelectTab}
               onOpenReceipt={(inv) => setActiveReceipt(inv)}
             />
           )}
@@ -331,6 +375,17 @@ export function App() {
             />
           )}
 
+          {activeTab === 'returns' && (
+            <ReturnsManager
+              sales={sales}
+              purchases={purchases}
+              returns={returns}
+              onAddReturn={(ret) => setReturns((prev) => [ret, ...prev])}
+              lang={lang}
+              numFormat={numFormat}
+            />
+          )}
+
           {activeTab === 'purchases' && (
             <PurchaseManager
               purchases={purchases}
@@ -353,7 +408,7 @@ export function App() {
             />
           )}
 
-          {activeTab === 'parties' && (
+          {(activeTab === 'parties' || activeTab === 'due-collection') && (
             <PartyLedgerView
               parties={parties}
               lang={lang}
@@ -406,7 +461,7 @@ export function App() {
       {/* Mobile Bottom Navigation */}
       <BottomNav
         activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        onSelectTab={handleSelectTab}
         lang={lang}
       />
 
@@ -420,6 +475,56 @@ export function App() {
           onClose={() => setActiveReceipt(null)}
         />
       )}
+
+      {/* Audit Log Modal */}
+      <AuditLogModal
+        isOpen={showAuditLog}
+        onClose={() => setShowAuditLog(false)}
+        auditLogs={auditLogs}
+        lang={lang}
+        numFormat={numFormat}
+      />
+
+      {/* Import Wizard Modal */}
+      <ImportWizardModal
+        isOpen={showImportWizard}
+        onClose={() => setShowImportWizard(false)}
+        lang={lang}
+        numFormat={numFormat}
+        onImportSuccess={(count) => {
+          setShowImportWizard(false);
+          alert(`${count}টি চালের রেকর্ড সফলভাবে ইম্পোর্ট সম্পন্ন হয়েছে!`);
+        }}
+      />
+
+      {/* Help & Support Drawer */}
+      <HelpDrawer
+        isOpen={showHelp}
+        onClose={() => setShowHelp(false)}
+        lang={lang}
+      />
+
+      {/* Keyboard Shortcuts Modal */}
+      <KeyboardShortcutModal
+        isOpen={showShortcuts}
+        onClose={() => setShowShortcuts(false)}
+        lang={lang}
+      />
+
+      {/* 2-Minute First-Time Onboarding Wizard */}
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        tenant={tenant}
+        onUpdateTenant={setTenant}
+        onAddProducts={(newProds) => setProducts((prev) => [...prev, ...newProds])}
+        onGoToPos={() => {
+          setShowOnboarding(false);
+          setActiveTab('pos');
+        }}
+        lang={lang}
+        numFormat={numFormat}
+      />
 
     </div>
   );

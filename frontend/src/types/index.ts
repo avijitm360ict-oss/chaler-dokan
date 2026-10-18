@@ -167,3 +167,68 @@ export interface DayCloseRecord {
   notes?: string;
   isClosed: boolean;
 }
+
+export type UserRole = 'owner' | 'manager' | 'cashier' | 'superadmin';
+
+export interface StockMovement {
+  id: string;
+  date: string;
+  type: 'sale' | 'purchase' | 'adjustment' | 'return_in' | 'return_out' | 'transfer';
+  productId: string;
+  productName: string;
+  warehouseName: string;
+  diffKg: number;
+  resultingStockKg: number;
+  referenceDocNo?: string;
+  reason?: string;
+  user: string;
+}
+
+export interface ReturnRecord {
+  id: string;
+  docNo: string;
+  date: string;
+  type: 'sale_return' | 'purchase_return';
+  originalDocNo: string;
+  partyName: string;
+  items: {
+    productId: string;
+    productName: string;
+    unitName: string;
+    quantity: number;
+    totalKg: number;
+    ratePaisa: number;
+    totalAmountPaisa: number;
+    condition: 'good' | 'damaged'; // ভালো vs নষ্ট
+  }[];
+  reason: string;
+  settlementMethod: 'deduct_due' | 'cash_refund' | 'store_credit'; // বাকি থেকে বাদ | নগদ ফেরত | ক্রেডিট
+  totalAmountPaisa: number;
+  approvedBy: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  userName: string;
+  userRole: UserRole;
+  action: string;
+  entityType: 'sale' | 'purchase' | 'rate' | 'stock' | 'party' | 'day_close' | 'tenant';
+  entityId: string;
+  details: string;
+  oldValue?: string;
+  newValue?: string;
+}
+
+export interface ImportPreviewRow {
+  rowNumber: number;
+  name: string;
+  variety: string;
+  category: string;
+  unit: string;
+  price: string;
+  stock: string;
+  isValid: boolean;
+  errorMessage?: string;
+}
+

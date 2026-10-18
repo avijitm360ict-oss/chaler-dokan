@@ -421,3 +421,118 @@ export const initialDayClose: DayCloseRecord = {
   notes: 'আলহামদুলিল্লাহ, গতকালের ক্যাশ সম্পূর্ণ মিলেছে।',
   isClosed: true
 };
+
+export const initialStockMovements: any[] = [
+  {
+    id: 'mov-1',
+    date: '2026-10-14T11:30:00',
+    type: 'sale',
+    productId: 'prod-1',
+    productName: 'কুষ্টিয়ার অটো স্পেশাল মিনিকেট',
+    warehouseName: 'প্রধান দোকান ও বিক্রয় কেন্দ্র',
+    diffKg: -500,
+    resultingStockKg: 3250,
+    referenceDocNo: 'INV-2026-000101',
+    user: 'ক্যাশিয়ার শামীম'
+  },
+  {
+    id: 'mov-2',
+    date: '2026-10-13T09:00:00',
+    type: 'purchase',
+    productId: 'prod-1',
+    productName: 'কুষ্টিয়ার অটো স্পেশাল মিনিকেট',
+    warehouseName: 'প্রধান দোকান ও বিক্রয় কেন্দ্র',
+    diffKg: 3000,
+    resultingStockKg: 3750,
+    referenceDocNo: 'PUR-2026-000045',
+    user: 'ম্যানেজার তারেক'
+  },
+  {
+    id: 'mov-3',
+    date: '2026-10-12T17:00:00',
+    type: 'adjustment',
+    productId: 'prod-1',
+    productName: 'কুষ্টিয়ার অটো স্পেশাল মিনিকেট',
+    warehouseName: 'প্রধান দোকান ও বিক্রয় কেন্দ্র',
+    diffKg: -15,
+    resultingStockKg: 750,
+    referenceDocNo: 'ADJ-2026-008',
+    reason: 'রোদে শুকিয়ে ওজন হ্রাস (Moisture loss)',
+    user: 'মালিক রফিকুল ইসলাম'
+  }
+];
+
+export const initialReturns: any[] = [
+  {
+    id: 'ret-001',
+    docNo: 'RET-2026-000012',
+    date: '2026-10-14T14:10:00',
+    type: 'sale_return',
+    originalDocNo: 'INV-2026-000098',
+    partyName: 'হাজী রিয়াজ উদ্দিন',
+    items: [
+      {
+        productId: 'prod-1',
+        productName: 'কুষ্টিয়ার অটো স্পেশাল মিনিকেট',
+        unitName: '৫০ কেজি বস্তা',
+        quantity: 1,
+        totalKg: 50,
+        ratePaisa: 345000,
+        totalAmountPaisa: 345000,
+        condition: 'good'
+      }
+    ],
+    reason: 'কাস্টমার ভুল গ্রেড অর্ডার দিয়েছিলেন',
+    settlementMethod: 'deduct_due',
+    totalAmountPaisa: 345000,
+    approvedBy: 'মালিক রফিকুল ইসলাম'
+  }
+];
+
+export const initialAuditLogs: any[] = [
+  {
+    id: 'aud-001',
+    timestamp: '2026-10-15T09:15:00',
+    userName: 'হাজী মো: রফিকুল ইসলাম',
+    userRole: 'owner',
+    action: 'বাজারদর আপডেট',
+    entityType: 'rate',
+    entityId: 'prod-1',
+    details: 'মিনিকেট চালের খুচরা দর পরিবর্তন করা হয়েছে',
+    oldValue: '৭২ টাকা/কেজি',
+    newValue: '৭৪ টাকা/কেজি'
+  },
+  {
+    id: 'aud-002',
+    timestamp: '2026-10-14T15:20:00',
+    userName: 'মো: শামীম (ক্যাশিয়ার)',
+    userRole: 'cashier',
+    action: 'ইনভয়েস বাতিল',
+    entityType: 'sale',
+    entityId: 'INV-2026-000095',
+    details: 'কাস্টমার নগদ টাকা না থাকায় অর্ডার বাতিল',
+    oldValue: 'confirmed',
+    newValue: 'voided'
+  },
+  {
+    id: 'aud-003',
+    timestamp: '2026-10-13T20:30:00',
+    userName: 'হাজী মো: রফিকুল ইসলাম',
+    userRole: 'owner',
+    action: 'ডে ক্লোজ লক',
+    entityType: 'day_close',
+    entityId: 'close-2026-10-13',
+    details: 'দিনের হিসাব সফলভাবে মিলেছে ও লক করা হয়েছে',
+    oldValue: 'open',
+    newValue: 'closed'
+  }
+];
+
+export const sampleImportRows: any[] = [
+  { rowNumber: 1, name: 'কুষ্টিয়ার মিনিকেট', variety: 'মিনিকেট', category: 'সিদ্ধ', unit: '৫০ কেজি বস্তা', price: '৭৪', stock: '৩২৫০', isValid: true },
+  { rowNumber: 2, name: 'দিনাজপুর নাজিরশাইল', variety: 'নাজিরশাইল', category: 'সিদ্ধ', unit: '৫০ কেজি বস্তা', price: '৮৪', stock: '২৪৫০', isValid: true },
+  { rowNumber: 3, name: '', variety: 'বাসমতি', category: 'আতপ', unit: '৫০ কেজি বস্তা', price: '১৯৮', stock: '৮৫০', isValid: false, errorMessage: 'চালের নাম বাধ্যতামূলক' },
+  { rowNumber: 4, name: 'কালিজিরা সুগন্ধি', variety: 'কালিজিরা', category: 'পোলাও', unit: '২৫ কেজি বস্তা', price: 'বিনামূল্যে', stock: '৫০০', isValid: false, errorMessage: 'দর সংখ্যা (Number) হতে হবে' },
+  { rowNumber: 5, name: 'বিআর-২৮ চাল', variety: 'বিআর-২৮', category: 'সিদ্ধ', unit: '৫০ কেজি বস্তা', price: '৫৮', stock: '৪২০০', isValid: true },
+];
+
