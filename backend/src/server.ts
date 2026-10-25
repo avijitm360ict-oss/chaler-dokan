@@ -12,6 +12,10 @@ import marketRateRoutes from './routes/marketRate.routes';
 import purchaseRoutes from './routes/purchase.routes';
 import saleRoutes from './routes/sale.routes';
 import inventoryRoutes from './routes/inventory.routes';
+import partyRoutes from './routes/party.routes';
+import accountRoutes from './routes/account.routes';
+import reportRoutes from './routes/report.routes';
+import returnRoutes from './routes/return.routes';
 
 dotenv.config();
 
@@ -52,6 +56,12 @@ app.use('/api/v1/market-rates', marketRateRoutes);
 app.use('/api/v1/purchases', purchaseRoutes);
 app.use('/api/v1/sales', saleRoutes);
 app.use('/api/v1/inventory', inventoryRoutes);
+
+// Part 3 Routes (Parties, Money/Accounts, Reports, Returns)
+app.use('/api/v1/parties', partyRoutes);
+app.use('/api/v1/accounts', accountRoutes);
+app.use('/api/v1/reports', reportRoutes);
+app.use('/api/v1/returns', returnRoutes);
 
 // Global Error Handler
 app.use(errorHandler);
