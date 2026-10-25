@@ -1,6 +1,17 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { tenantMiddleware } from './middleware/tenant';
+import { errorHandler } from './middleware/errorHandler';
+
+import authRoutes from './routes/auth.routes';
+import tenantRoutes from './routes/tenant.routes';
+import productRoutes from './routes/product.routes';
+import warehouseRoutes from './routes/warehouse.routes';
+import marketRateRoutes from './routes/marketRate.routes';
+import purchaseRoutes from './routes/purchase.routes';
+import saleRoutes from './routes/sale.routes';
+import inventoryRoutes from './routes/inventory.routes';
 
 dotenv.config();
 
@@ -22,38 +33,28 @@ app.get('/api/health', (_req: Request, res: Response) => {
     status: 'healthy',
     service: 'chal-a-dokan-backend-saas',
     version: '1.0.0',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    db: 'connected',
   });
 });
 
-// Multi-tenant Middleware demo & documentation
-app.use('/api/v1', (req: Request, res: Response, next: NextFunction) => {
-  const tenantId = (req.headers['x-tenant-id'] as string) || 'tenant-001';
-  (req as any).tenantId = tenantId;
-  next();
-});
+// Global Multi-tenant middleware for /api/v1
+app.use('/api/v1', tenantMiddleware);
 
-// Demo Data endpoints representing PRD services
-app.get('/api/v1/shop-summary', (req: Request, res: Response) => {
-  const tenantId = (req as any).tenantId;
-  res.json({
-    tenantId,
-    name: 'মেসার্স বিসমিল্লাহ চাউল আড়ত ও স্টোর',
-    baseUnit: 'KG',
-    currency: 'Paisa (BIGINT)',
-    status: 'active',
-    trialEndsAt: '2026-10-28T00:00:00.000Z'
-  });
-});
+// Part 1 Routes
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/tenant', tenantRoutes);
+app.use('/api/v1/products', productRoutes);
+app.use('/api/v1/warehouses', warehouseRoutes);
+app.use('/api/v1/market-rates', marketRateRoutes);
+
+// Part 2 Routes
+app.use('/api/v1/purchases', purchaseRoutes);
+app.use('/api/v1/sales', saleRoutes);
+app.use('/api/v1/inventory', inventoryRoutes);
 
 // Global Error Handler
-app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-  console.error('API Error:', err);
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: err.message || 'Something went wrong'
-  });
-});
+app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
