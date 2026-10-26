@@ -3,45 +3,48 @@
 @tailwind utilities;
 
 :root {
-  /* Design Tokens as specified in Section 6 */
-  --color-primary-600: #1F7A4D;
-  --color-primary-700: #16603B;
-  --color-primary-50: #E8F4EC;
-  --color-accent-500: #E0A526;
-  --color-accent-50: #FFF4DC;
-  --color-text-primary: #1A1A17;
-  --color-text-secondary: #5B574E;
-  --color-text-disabled: #8F8A7E;
-  --color-bg-page: #F6F5F1;
+  /* Modern Crisp Emerald SaaS Palette */
+  --color-primary-600: #059669;
+  --color-primary-700: #047857;
+  --color-primary-50: #ECFDF5;
+  --color-accent-500: #F59E0B;
+  --color-accent-50: #FFFBEB;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-disabled: #94A3B8;
+  --color-bg-page: #F8FAFC;
   --color-bg-surface: #FFFFFF;
-  --color-border-default: #DDD9CE;
-  --color-border-strong: #A9A395;
-  --color-success-600: #1B7F3B;
-  --color-warning-700: #8A5A00;
-  --color-danger-600: #B3261E;
-  --color-danger-50: #FDECEA;
-  --color-info-600: #1D5FA8;
-  --color-owe-700: #9A4A00;
+  --color-border-default: #E2E8F0;
+  --color-border-strong: #CBD5E1;
+  --color-success-600: #10B981;
+  --color-warning-700: #D97706;
+  --color-danger-600: #EF4444;
+  --color-danger-50: #FEF2F2;
+  --color-info-600: #2563EB;
+  --color-owe-700: #EA580C;
 }
 
 @layer base {
   body {
-    background-color: #F6F5F1;
-    color: #1A1A17;
-    font-family: 'Hind Siliguri', 'Noto Sans Bengali', Inter, system-ui, sans-serif;
+    background-color: #F8FAFC;
+    color: #0F172A;
+    font-family: 'Anek Bangla', 'Noto Sans Bengali', 'Plus Jakarta Sans', Inter, system-ui, sans-serif;
     line-height: 1.6;
+    letter-spacing: -0.012em;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
   }
 
   h1, h2, h3, h4, h5, h6 {
     line-height: 1.3;
-    color: #1A1A17;
+    color: #0F172A;
+    letter-spacing: -0.02em;
   }
 
-  /* Keyboard Focus Ring per Section 8.3 */
+  /* Keyboard Focus Ring */
   :focus-visible {
-    outline: 2px solid #1F7A4D !important;
+    outline: 2px solid #059669 !important;
     outline-offset: 2px !important;
   }
 }

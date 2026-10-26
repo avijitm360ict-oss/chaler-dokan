@@ -136,6 +136,8 @@ router.post('/transfer', async (req: AuthenticatedRequest, res: Response, next) 
     });
 
     res.status(201).json({
+      success: true,
+      data: result,
       message: 'চাল এক গোডাউন থেকে অন্য গোডাউনে সফলভাবে স্থানান্তর হয়েছে',
       result,
     });
@@ -186,7 +188,7 @@ router.get('/timeline/:productId', async (req: AuthenticatedRequest, res: Respon
       };
     });
 
-    res.json({
+    const responsePayload = {
       product: {
         id: product.id,
         nameBn: product.nameBn,
@@ -196,6 +198,12 @@ router.get('/timeline/:productId', async (req: AuthenticatedRequest, res: Respon
       currentStockKg: runningBalanceKg,
       currentStockBags50: Math.floor(runningBalanceKg / 50),
       timeline: timeline.reverse(), // Newest on top
+    };
+
+    res.json({
+      success: true,
+      data: responsePayload,
+      ...responsePayload,
     });
   } catch (err) {
     next(err);
@@ -253,7 +261,12 @@ router.post('/adjust', async (req: AuthenticatedRequest, res: Response, next) =>
       return { newStockKg: newKg };
     });
 
-    res.json({ message: 'স্টক সফলভাবে সমন্বয় করা হয়েছে', result });
+    res.json({
+      success: true,
+      data: result,
+      message: 'স্টক সফলভাবে সমন্বয় করা হয়েছে',
+      result,
+    });
   } catch (err) {
     next(err);
   }

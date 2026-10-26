@@ -13,7 +13,9 @@ import {
   ChevronDown,
   User,
   Menu,
-  EyeOff
+  EyeOff,
+  RotateCw,
+  LogOut
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -33,6 +35,11 @@ interface HeaderProps {
   onOpenHelp: () => void;
   onOpenOnboarding: () => void;
   isImpersonating?: boolean;
+  pendingSyncCount?: number;
+  onTriggerSync?: () => void;
+  isSyncing?: boolean;
+  onLogout?: () => void;
+  currentUser?: { name: string; phone?: string; role?: string } | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -52,6 +59,11 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenHelp,
   onOpenOnboarding,
   isImpersonating = false,
+  pendingSyncCount = 0,
+  onTriggerSync,
+  isSyncing = false,
+  onLogout,
+  currentUser,
 }) => {
   const t = translations[lang];
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
@@ -144,6 +156,19 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="hidden lg:inline">{isOffline ? 'অফলাইন মোড' : 'অনলাইন'}</span>
             </button>
 
+            {/* Pending Sync Trigger Button */}
+            {pendingSyncCount > 0 && (
+              <button
+                onClick={onTriggerSync}
+                disabled={isSyncing}
+                title="অপেক্ষমাণ অফলাইন বিক্রয় ক্লাউডে সিঙ্ক করুন"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-xs transition animate-bounce cursor-pointer"
+              >
+                <RotateCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>{pendingSyncCount}টি সিঙ্ক অপেক্ষমাণ</span>
+              </button>
+            )}
+
             {/* Setup / Onboarding Button */}
             <button
               onClick={onOpenOnboarding}
@@ -232,6 +257,22 @@ export const Header: React.FC<HeaderProps> = ({
                       {userRole === r && <span className="w-2 h-2 rounded-full bg-[#1F7A4D]" />}
                     </button>
                   ))}
+
+                  {/* Log Out Option */}
+                  {onLogout && (
+                    <div className="pt-1.5 mt-1.5 border-t border-slate-100">
+                      <button
+                        onClick={() => {
+                          setRoleDropdownOpen(false);
+                          onLogout();
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 transition flex items-center gap-2 cursor-pointer"
+                      >
+                        <LogOut className="w-3.5 h-3.5 text-red-500" />
+                        <span>{lang === 'bn' ? 'লগআউট করুন' : 'Log Out'}</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

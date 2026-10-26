@@ -288,6 +288,113 @@ router.get('/', async (req: AuthenticatedRequest, res: Response, next) => {
   }
 });
 
+// GET /api/v1/purchases - List all purchases
+router.get('/', async (req: AuthenticatedRequest, res: Response, next) => {
+  try {
+    const tenantId = req.tenantId!;
+    const purchases = await prisma.purchase.findMany({
+      where: { tenantId },
+      include: {
+        vendor: true,
+        items: true,
+        expenses: true,
+      },
+      orderBy: { purchaseDate: 'desc' },
+      take: 50,
+    });
+
+    const productIds = Array.from(new Set(purchases.flatMap((p) => p.items.map((it) => it.productId))));
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      include: { units: true },
+    });
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
+    const formatted = purchases.map((pur: any) => {
+      const truckExpense = pur.expenses.find((e: any) => e.expenseType === 'transport');
+      const labourExpense = pur.expenses.find((e: any) => e.expenseType === 'labour');
+      const otherExpenses = pur.expenses
+        .filter((e: any) => e.expenseType !== 'transport' && e.expenseType !== 'labour')
+        .reduce((sum: number, e: any) => sum + Number(e.amountPaisa), 0);
+
+      const items = pur.items.map((it: any) => {
+        const prod = productMap.get(it.productId);
+        const unit = prod?.units.find((u: any) => u.id === it.unitId) || {
+          id: it.unitId,
+          nameBn: '৫০ কেজি বস্তা',
+          nameEn: '50kg bag',
+          kgPerUnit: 50,
+          isBase: false,
+        };
+
+        return {
+          product: {
+            id: prod?.id || it.productId,
+            nameBn: prod?.nameBn || 'চাল',
+            nameEn: prod?.nameEn || '',
+            variety: prod?.variety || '',
+            grade: prod?.grade || '',
+            category: '',
+            sku: prod?.sku || '',
+            stockKg: 0,
+            minStockKg: 0,
+            wacPerKgPaisa: Number(it.landedUnitCostPerKg),
+            retailPricePaisa: 0,
+            wholesalePricePaisa: 0,
+            sack50RetailPricePaisa: 0,
+            sack50WholesalePricePaisa: 0,
+            availableUnits: prod?.units || [],
+          },
+          unit: {
+            id: unit.id,
+            nameBn: unit.nameBn,
+            nameEn: unit.nameEn,
+            kgPerUnit: Number(unit.kgPerUnit),
+            isBase: unit.isBase,
+          },
+          unitQuantity: Number(it.qtyUnit),
+          totalKg: Number(it.qtyKg),
+          rawPricePerKgPaisa: Number(it.unitPricePaisa),
+          truckFareAllocatedPaisa: Math.round(Number(it.allocatedExtraPaisa) * 0.7),
+          labourFareAllocatedPaisa: Math.round(Number(it.allocatedExtraPaisa) * 0.3),
+          landedCostPerKgPaisa: Number(it.landedUnitCostPerKg),
+          lineTotalPaisa: Number(it.lineTotalPaisa),
+        };
+      });
+
+      const grandTotal = Number(pur.grandTotalPaisa);
+      const paidAmount = Number(pur.paidTotalPaisa);
+      const dueAmount = Math.max(0, grandTotal - paidAmount);
+
+      return {
+        id: pur.id,
+        docNo: pur.docNo,
+        date: pur.purchaseDate.toISOString(),
+        vendorName: pur.vendor?.name || 'মিলার / মোকাম',
+        vendorPhone: pur.vendor?.phone || '',
+        warehouseId: pur.warehouseId,
+        vendorBillNo: pur.vendorBillNo || '',
+        items,
+        subtotalPaisa: Number(pur.subtotalPaisa),
+        truckFarePaisa: truckExpense ? Number(truckExpense.amountPaisa) : 0,
+        labourFarePaisa: labourExpense ? Number(labourExpense.amountPaisa) : 0,
+        otherExpensesPaisa: otherExpenses,
+        grandTotalPaisa: grandTotal,
+        paidAmountPaisa: paidAmount,
+        dueAmountPaisa: dueAmount,
+        status: pur.status,
+      };
+    });
+
+    res.json({
+      success: true,
+      data: formatted,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/v1/purchases/:id - Single purchase details
 router.get('/:id', async (req: AuthenticatedRequest, res: Response, next) => {
   try {

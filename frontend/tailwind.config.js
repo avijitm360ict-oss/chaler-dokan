@@ -8,77 +8,71 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Design Brief Section 6 tokens
+        // Modern Crisp Emerald & Slate Design System
         primary: {
-          50: '#E8F4EC',
-          100: '#D1EAD9',
-          500: '#27965F',
-          600: '#1F7A4D', // color.primary.600 - Main action button, active tab, links
-          700: '#16603B', // color.primary.700 - Hover / pressed state
-          800: '#10492C',
-          900: '#0B331F',
+          50: '#ECFDF5',
+          100: '#D1FAE5',
+          200: '#A7F3D0',
+          300: '#6EE7B7',
+          400: '#34D399',
+          500: '#10B981',
+          600: '#059669', // Main Brand Emerald Green
+          700: '#047857', // Hover / Pressed Green
+          800: '#065F46',
+          900: '#064E3B',
         },
         accent: {
-          50: '#FFF4DC',  // color.accent.50 - Warning banner & chip background
-          100: '#FEE8B9',
-          400: '#EAB33E',
-          500: '#E0A526', // color.accent.500 - Highlight, Rate card styling
-          600: '#C78F1B',
-          700: '#9E7013',
+          50: '#FFFBEB',
+          100: '#FEF3C7',
+          200: '#FDE68A',
+          400: '#FBBF24',
+          500: '#F59E0B', // Honey Amber Gold
+          600: '#D97706',
+          700: '#B45309',
         },
         ink: {
-          primary: '#1A1A17',   // color.text.primary - Main text
-          secondary: '#5B574E', // color.text.secondary - Secondary helper text & labels
-          disabled: '#8F8A7E',  // color.text.disabled - Inactive text
+          primary: '#0F172A',   // Deep Slate 900 - High Contrast
+          secondary: '#475569', // Crisp Slate 600 - Highly Legible
+          disabled: '#94A3B8',  // Slate 400
         },
         surface: {
-          page: '#F6F5F1',    // color.bg.page - Warm light gray page background (sunlight-friendly)
-          card: '#FFFFFF',    // color.bg.surface - Cards, forms, sheets
+          page: '#F8FAFC',    // Crisp Slate 50 Page Background
+          card: '#FFFFFF',    // Pure White Surfaces
         },
         stroke: {
-          default: '#DDD9CE', // color.border.default - Borders & dividers
-          strong: '#A9A395',  // color.border.strong - Input borders
+          default: '#E2E8F0', // Clean Slate 200 Border
+          strong: '#CBD5E1',  // Slate 300 Input Border
         },
         state: {
-          success: '#1B7F3B',    // color.success.600 - Success, "মিলেছে", Paid
-          warning: '#8A5A00',    // color.warning.700 - Warning text
-          danger: '#B3261E',     // color.danger.600 - Error, Void, Loss warning
-          dangerBg: '#FDECEA',   // color.danger.50 - Error background
-          info: '#1D5FA8',       // color.info.600 - "পাবেন" (Receivable) blue badge
-          owe: '#9A4A00',        // color.owe.700 - "দেবেন" (Payable) orange badge
+          success: '#10B981',    // Emerald 500
+          warning: '#F59E0B',    // Amber 500
+          danger: '#EF4444',     // Crimson Red 500
+          dangerBg: '#FEF2F2',   // Red 50
+          info: '#2563EB',       // Royal Blue 600 - পাবেন
+          owe: '#EA580C',        // Orange 600 - দেবেন
         },
         rice: {
-          50: '#FBF9F4',
-          100: '#F4EFE6',
+          50: '#FAF8F5',
+          100: '#F5EFE6',
           200: '#E8DDC9',
-          300: '#D5C3A1',
-          400: '#BFA475',
           500: '#A4854D',
           600: '#8A6C3A',
-          700: '#6C532C',
-          800: '#533F23',
-          900: '#3D2F1B',
         },
         paddy: {
-          50: '#F0FDF4',
-          100: '#DCFCE7',
-          200: '#BBF7D0',
-          300: '#86EFAC',
-          400: '#4ADE80',
-          500: '#16A34A',
-          600: '#1F7A4D',
-          700: '#16603B',
-          800: '#14532D',
-          900: '#052E16',
+          50: '#ECFDF5',
+          100: '#D1FAE5',
+          500: '#10B981',
+          600: '#059669',
+          700: '#047857',
         }
       },
       fontFamily: {
-        sans: ['Hind Siliguri', 'Noto Sans Bengali', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['"Anek Bangla"', '"Noto Sans Bengali"', '"Plus Jakarta Sans"', 'Inter', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        'card': '0 1px 3px 0 rgba(26, 26, 23, 0.05), 0 1px 2px -1px rgba(26, 26, 23, 0.05)',
-        'sheet': '0 10px 25px -5px rgba(26, 26, 23, 0.15), 0 8px 10px -6px rgba(26, 26, 23, 0.1)',
-        'modal': '0 25px 50px -12px rgba(26, 26, 23, 0.25)',
+        'card': '0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04)',
+        'sheet': '0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08)',
+        'modal': '0 25px 50px -12px rgba(15, 23, 42, 0.22)',
       }
     },
   },

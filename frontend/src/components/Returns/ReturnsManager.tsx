@@ -32,26 +32,40 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
   const [settlementMethod, setSettlementMethod] = useState<'deduct_due' | 'cash_refund' | 'store_credit'>('deduct_due');
   const [activeReturnPrint, setActiveReturnPrint] = useState<ReturnRecord | null>(null);
 
+  const isSaleReturn = returnType === 'sale_return';
   const selectedSale = sales.find((s) => s.docNo === selectedDocNo) || sales[0];
-  const maxReturnableKg = selectedSale ? selectedSale.totalKg : 50;
-  const unitRatePaisa = selectedSale?.items[0] ? selectedSale.items[0].unitPricePaisa / (selectedSale.items[0].selectedUnit.kgPerUnit || 1) : 7400;
+  const selectedPurchase = purchases.find((p) => p.docNo === selectedDocNo) || purchases[0];
+
+  const maxReturnableKg = isSaleReturn
+    ? (selectedSale ? selectedSale.totalKg : 50)
+    : (selectedPurchase ? (selectedPurchase.items[0]?.totalKg || 1000) : 1000);
+
+  const unitRatePaisa = isSaleReturn
+    ? (selectedSale?.items[0] ? selectedSale.items[0].unitPricePaisa / (selectedSale.items[0].selectedUnit.kgPerUnit || 1) : 7400)
+    : (selectedPurchase?.items[0] ? selectedPurchase.items[0].landedCostPerKgPaisa : 6500);
+
   const returnTotalPaisa = Math.round(returnQtyKg * unitRatePaisa);
 
   const handleReturnSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedSale || returnQtyKg <= 0) return;
+    if (returnQtyKg <= 0) return;
+
+    const originalDocNo = isSaleReturn ? (selectedSale?.docNo || selectedDocNo) : (selectedPurchase?.docNo || selectedDocNo);
+    const partyName = isSaleReturn ? (selectedSale?.clientName || 'খুচরা কাস্টমার') : (selectedPurchase?.vendorName || 'মিলার / মোকাম');
+    const productId = isSaleReturn ? (selectedSale?.items[0]?.product.id || 'prod-1') : (selectedPurchase?.items[0]?.product.id || 'prod-1');
+    const productName = isSaleReturn ? (selectedSale?.items[0]?.product.nameBn || 'মিনিকেট চাল') : (selectedPurchase?.items[0]?.product.nameBn || 'মিনিকেট চাল');
 
     const newRet: ReturnRecord = {
       id: `ret-${Date.now()}`,
-      docNo: `RET-${Date.now().toString().slice(-6)}`,
+      docNo: `${isSaleReturn ? 'SRT' : 'PRT'}-${Date.now().toString().slice(-6)}`,
       date: new Date().toISOString(),
       type: returnType,
-      originalDocNo: selectedSale.docNo,
-      partyName: selectedSale.clientName,
+      originalDocNo,
+      partyName,
       items: [
         {
-          productId: selectedSale.items[0]?.product.id || 'prod-1',
-          productName: selectedSale.items[0]?.product.nameBn || 'মিনিকেট চাল',
+          productId,
+          productName,
           unitName: 'কেজি',
           quantity: returnQtyKg,
           totalKg: returnQtyKg,
@@ -207,19 +221,27 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
 
             <form onSubmit={handleReturnSubmit} className="space-y-4">
               
-              {/* 1. Pick Original Invoice */}
+              {/* 1. Pick Original Document */}
               <div>
-                <label className="block text-xs font-bold text-[#1A1A17] mb-1">১. মূল ইনভয়েস নির্বাচন করুন:</label>
+                <label className="block text-xs font-bold text-[#1A1A17] mb-1">
+                  {isSaleReturn ? '১. মূল বিক্রয় ইনভয়েস নির্বাচন করুন:' : '১. মূল ক্রয় চালান নির্বাচন করুন:'}
+                </label>
                 <select
                   value={selectedDocNo}
                   onChange={(e) => setSelectedDocNo(e.target.value)}
                   className="w-full px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#1F7A4D] bg-white text-[#1A1A17]"
                 >
-                  {sales.map((s) => (
-                    <option key={s.id} value={s.docNo}>
-                      {s.docNo} — {s.clientName} ({s.totalKg} কেজি চাল, ৳{(s.grandTotalPaisa / 100).toFixed(0)})
-                    </option>
-                  ))}
+                  {isSaleReturn
+                    ? sales.map((s) => (
+                        <option key={s.id} value={s.docNo}>
+                          {s.docNo} — {s.clientName} ({s.totalKg} কেজি চাল, ৳{(s.grandTotalPaisa / 100).toFixed(0)})
+                        </option>
+                      ))
+                    : purchases.map((p) => (
+                        <option key={p.id} value={p.docNo}>
+                          {p.docNo} — {p.vendorName} ({p.items[0]?.totalKg || 0} কেজি চাল, ৳{(p.grandTotalPaisa / 100).toFixed(0)})
+                        </option>
+                      ))}
                 </select>
               </div>
 
@@ -227,10 +249,16 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
               <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-500">চাল:</span>
-                  <span className="font-bold">{selectedSale?.items[0]?.product.nameBn || 'মিনিকেট চাল'}</span>
+                  <span className="font-bold">
+                    {isSaleReturn
+                      ? (selectedSale?.items[0]?.product.nameBn || 'মিনিকেট চাল')
+                      : (selectedPurchase?.items[0]?.product.nameBn || 'মিনিকেট চাল')}
+                  </span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-slate-500">বিক্রিত পরিমাণ (সর্বোচ্চ ফেরত সীমা):</span>
+                  <span className="text-slate-500">
+                    {isSaleReturn ? 'বিক্রিত পরিমাণ (সর্বোচ্চ ফেরত সীমা):' : 'ক্রয়কৃত পরিমাণ (সর্বোচ্চ ফেরত সীমা):'}
+                  </span>
                   <span className="font-bold text-[#1F7A4D]">{maxReturnableKg} কেজি</span>
                 </div>
                 <div>

@@ -16,6 +16,7 @@ import partyRoutes from './routes/party.routes';
 import accountRoutes from './routes/account.routes';
 import reportRoutes from './routes/report.routes';
 import returnRoutes from './routes/return.routes';
+import auditRoutes from './routes/audit.routes';
 
 dotenv.config();
 
@@ -62,6 +63,7 @@ app.use('/api/v1/parties', partyRoutes);
 app.use('/api/v1/accounts', accountRoutes);
 app.use('/api/v1/reports', reportRoutes);
 app.use('/api/v1/returns', returnRoutes);
+app.use('/api/v1/audit-logs', auditRoutes);
 
 // Global Error Handler
 app.use(errorHandler);

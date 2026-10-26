@@ -25,6 +25,9 @@ router.get('/', async (req: AuthenticatedRequest, res: Response, next) => {
       return {
         id: wh.id,
         name: wh.name,
+        nameBn: wh.name,
+        nameEn: wh.name,
+        location: wh.address || '',
         address: wh.address,
         isDefault: wh.isDefault,
         totalStockKg: totalKg,
@@ -40,7 +43,11 @@ router.get('/', async (req: AuthenticatedRequest, res: Response, next) => {
       };
     });
 
-    res.json({ warehouses: formatted });
+    res.json({
+      success: true,
+      data: formatted,
+      warehouses: formatted,
+    });
   } catch (err) {
     next(err);
   }

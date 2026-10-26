@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Party, Language, NumberFormat } from '../../types';
 import { translations } from '../../i18n/translations';
 import { formatCurrency, toBengaliDigits } from '../../utils/formatters';
-import { Users, Phone, MapPin, Plus, DollarSign, Calendar, Clock, Printer, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Users, Phone, MapPin, Plus, DollarSign, Calendar, Clock, Printer, CheckCircle2, ShieldCheck, MessageSquare } from 'lucide-react';
+import { api } from '../../api/client';
 
 interface PartyLedgerViewProps {
   parties: Party[];
@@ -24,6 +25,20 @@ export const PartyLedgerView: React.FC<PartyLedgerViewProps> = ({
   const [collectionModalOpen, setCollectionModalOpen] = useState(false);
   const [collectionTaka, setCollectionTaka] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'bkash' | 'nagad' | 'bank'>('cash');
+  const [isSendingSms, setIsSendingSms] = useState(false);
+
+  const handleSendDueSms = async () => {
+    if (!selectedParty) return;
+    try {
+      setIsSendingSms(true);
+      const res: any = await api.parties.sendSms(selectedParty.id);
+      alert(res?.message || `${selectedParty.name}-কে বকেয়া তাগাদা SMS সফলভাবে পাঠানো হয়েছে!`);
+    } catch (err: any) {
+      alert('SMS পাঠাতে সমস্যা হয়েছে: ' + (err?.message || 'সমস্যা'));
+    } finally {
+      setIsSendingSms(false);
+    }
+  };
 
   const filteredParties = parties.filter((p) => {
     if (activeTab === 'clients') return p.type === 'client' || p.type === 'both';
@@ -186,17 +201,32 @@ export const PartyLedgerView: React.FC<PartyLedgerViewProps> = ({
                   </p>
                 </div>
 
-                {/* Collect / Pay Money Button */}
-                <button
-                  onClick={() => {
-                    setCollectionTaka(selectedParty.balancePaisa / 100);
-                    setCollectionModalOpen(true);
-                  }}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition active:scale-98"
-                >
-                  <DollarSign className="w-4 h-4" />
-                  <span>{selectedParty.type === 'vendor' ? 'মিলকে টাকা পরিশোধ' : 'বাকি টাকা আদায়'}</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  {selectedParty.balancePaisa > 0 && selectedParty.type !== 'vendor' && (
+                    <button
+                      type="button"
+                      onClick={handleSendDueSms}
+                      disabled={isSendingSms}
+                      className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-600/20 flex items-center gap-1.5 transition active:scale-98 cursor-pointer disabled:opacity-50"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      <span>{isSendingSms ? 'পাঠানো হচ্ছে...' : 'তাগাদা SMS'}</span>
+                    </button>
+                  )}
+
+                  {/* Collect / Pay Money Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCollectionTaka(selectedParty.balancePaisa / 100);
+                      setCollectionModalOpen(true);
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition active:scale-98 cursor-pointer"
+                  >
+                    <DollarSign className="w-4 h-4" />
+                    <span>{selectedParty.type === 'vendor' ? 'মিলকে টাকা পরিশোধ' : 'বাকি টাকা আদায়'}</span>
+                  </button>
+                </div>
               </div>
 
               {/* Balance Box */}

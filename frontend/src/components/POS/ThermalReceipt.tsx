@@ -25,6 +25,43 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
     window.print();
   };
 
+  const handleShareWhatsApp = () => {
+    const rawPhone = invoice.clientPhone?.replace(/[^0-9]/g, '') || '';
+    const formattedPhone = rawPhone.startsWith('880')
+      ? rawPhone
+      : rawPhone.startsWith('0')
+      ? `88${rawPhone}`
+      : rawPhone
+      ? `880${rawPhone}`
+      : '';
+
+    const text = `🌾 *${tenant.shopNameBn}*\n` +
+      `চালান নং: ${invoice.docNo}\n` +
+      `তারিখ: ${invoice.date}\n` +
+      `ক্রেতা: ${invoice.clientName || 'খুচরা গ্রাহক'}\n` +
+      `--------------------------\n` +
+      invoice.items
+        .map(
+          (it) =>
+            `• ${it.product.nameBn} (${it.unitQuantity} ${it.selectedUnit.nameBn}) = ৳${(it.lineTotalPaisa / 100).toLocaleString('bn-BD')}`
+        )
+        .join('\n') +
+      `\n--------------------------\n` +
+      `মোট বিল: ৳${(invoice.grandTotalPaisa / 100).toLocaleString('bn-BD')}\n` +
+      `পরিশোধ: ৳${(invoice.paidTotalPaisa / 100).toLocaleString('bn-BD')}\n` +
+      (invoice.dueAmountPaisa > 0
+        ? `*বকেয়া বাকি: ৳${(invoice.dueAmountPaisa / 100).toLocaleString('bn-BD')}*\n`
+        : '') +
+      `--------------------------\n` +
+      `ঠিকানা: ${tenant.address}\nমোবাইল: ${tenant.phone}\nধন্যবাদ, আবার আসবেন!`;
+
+    const waUrl = formattedPhone.length >= 10
+      ? `https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}`
+      : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+
+    window.open(waUrl, '_blank');
+  };
+
   const isBn = receiptLang === 'bn';
 
   return (
@@ -72,6 +109,16 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
               className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 text-emerald-400"
             >
               {isBn ? 'In English' : 'বাংলায় দেখুন'}
+            </button>
+
+            {/* WhatsApp Share Button */}
+            <button
+              onClick={handleShareWhatsApp}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-white text-xs font-bold rounded-lg shadow-sm transition"
+              title="হোয়াটসঅ্যাপে চালান শেয়ার করুন"
+            >
+              <Share2 className="w-4 h-4" />
+              <span>WhatsApp</span>
             </button>
 
             {/* Print button */}

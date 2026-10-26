@@ -245,37 +245,114 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
 router.get('/', async (req: AuthenticatedRequest, res: Response, next) => {
   try {
     const tenantId = req.tenantId!;
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(100, parseInt(req.query.limit as string) || 50);
+
     const sales = await prisma.sale.findMany({
       where: { tenantId },
       include: {
         client: true,
         items: true,
       },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
+      orderBy: { saleDate: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
 
-    const formatted = sales.map((s: any) => {
-      const totalKg = s.items.reduce((sum: number, it: any) => sum + Number(it.qtyKg), 0);
+    const productIds = Array.from(new Set(sales.flatMap((s) => s.items.map((it) => it.productId))));
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      include: { units: true },
+    });
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
+    const formatted = sales.map((sale: any) => {
+      let totalKg = 0;
+      let totalCostSnapshotPaisa = 0;
+
+      const items = sale.items.map((it: any) => {
+        const prod = productMap.get(it.productId);
+        const unit = prod?.units.find((u: any) => u.id === it.unitId) || {
+          id: it.unitId,
+          nameBn: 'কেজি',
+          nameEn: 'kg',
+          kgPerUnit: 1,
+          isBase: true,
+        };
+        const kg = Number(it.qtyKg);
+        totalKg += kg;
+        totalCostSnapshotPaisa += kg * Number(it.costPerKgSnapshot);
+
+        return {
+          product: {
+            id: prod?.id || it.productId,
+            nameBn: prod?.nameBn || 'চাল',
+            nameEn: prod?.nameEn || '',
+            variety: prod?.variety || '',
+            grade: prod?.grade || '',
+            category: '',
+            sku: prod?.sku || '',
+            stockKg: 0,
+            minStockKg: 0,
+            wacPerKgPaisa: Number(it.costPerKgSnapshot),
+            retailPricePaisa: Number(it.unitPricePaisa),
+            wholesalePricePaisa: Number(it.unitPricePaisa),
+            sack50RetailPricePaisa: 0,
+            sack50WholesalePricePaisa: 0,
+            availableUnits: prod?.units || [],
+          },
+          selectedUnit: {
+            id: unit.id,
+            nameBn: unit.nameBn,
+            nameEn: unit.nameEn,
+            kgPerUnit: Number(unit.kgPerUnit),
+            isBase: unit.isBase,
+          },
+          unitQuantity: Number(it.qtyUnit),
+          totalKg: kg,
+          unitPricePaisa: Number(it.unitPricePaisa),
+          discountPaisa: Number(it.discountPaisa),
+          lineTotalPaisa: Number(it.lineTotalPaisa),
+          costSnapshotPerKgPaisa: Number(it.costPerKgSnapshot),
+        };
+      });
+
+      const grandTotal = Number(sale.grandTotalPaisa);
+      const paidTotal = Number(sale.paidTotalPaisa);
+      const dueAmount = Number(sale.dueAmountPaisa);
+
       return {
-        id: s.id,
-        docNo: s.docNo,
-        clientName: s.client?.name || 'খুচরা কাস্টমার (Cash)',
-        clientPhone: s.client?.phone || '',
-        saleDate: s.saleDate,
-        status: s.status,
-        subtotalPaisa: Number(s.subtotalPaisa),
-        discountPaisa: Number(s.discountPaisa),
-        grandTotalPaisa: Number(s.grandTotalPaisa),
-        paidTotalPaisa: Number(s.paidTotalPaisa),
-        dueAmountPaisa: Number(s.dueAmountPaisa),
+        id: sale.id,
+        docNo: sale.docNo,
+        date: sale.saleDate.toISOString(),
+        clientName: sale.client?.name || 'খুচরা ক্রেতা (নগদ)',
+        clientPhone: sale.client?.phone || '',
+        clientType: sale.client?.clientType || 'walkin',
+        warehouseId: sale.warehouseId,
+        items,
+        subtotalPaisa: Number(sale.subtotalPaisa),
+        discountPaisa: Number(sale.discountPaisa),
+        deliveryChargePaisa: Number(sale.deliveryChargePaisa),
+        grandTotalPaisa: grandTotal,
+        paidTotalPaisa: paidTotal,
+        dueAmountPaisa: dueAmount,
+        payments: [
+          ...(paidTotal > 0 ? [{ method: 'cash' as const, amountPaisa: paidTotal }] : []),
+          ...(dueAmount > 0 ? [{ method: 'due' as const, amountPaisa: dueAmount }] : []),
+        ],
+        status: sale.status,
         totalKg,
-        totalBags50: Math.floor(totalKg / 50),
-        itemCount: s.items.length,
+        totalCostSnapshotPaisa,
+        estimatedProfitPaisa: Math.max(0, grandTotal - totalCostSnapshotPaisa),
+        createdBy: 'ক্যাশিয়ার',
       };
     });
 
-    res.json({ sales: formatted });
+    res.json({
+      success: true,
+      data: formatted,
+      sales: formatted,
+    });
   } catch (err) {
     next(err);
   }

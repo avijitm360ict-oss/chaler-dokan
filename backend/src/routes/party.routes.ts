@@ -74,12 +74,15 @@ router.get('/', async (req: AuthenticatedRequest, res: Response, next) => {
           ? Number(p.ledgerEntries[0].runningBalance)
           : Number(p.openingBalance);
 
+      const type = p.isClient && p.isVendor ? 'both' : p.isClient ? 'client' : 'vendor';
+
       return {
         id: p.id,
         name: p.name,
         shopName: p.shopName || '',
         phone: p.phone,
         address: p.address || '',
+        type,
         isClient: p.isClient,
         isVendor: p.isVendor,
         clientType: p.clientType,
@@ -342,6 +345,56 @@ router.post('/:id/payments', async (req: AuthenticatedRequest, res: Response, ne
       success: true,
       message: data.direction === 'in' ? 'বাকি আদায় সফলভাবে রেকর্ড করা হয়েছে' : 'পেমেন্ট প্রদান সফলভাবে রেকর্ড করা হয়েছে',
       data: result,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/v1/parties/:id/send-sms - Send Due Collection SMS to party
+router.post('/:id/send-sms', async (req: AuthenticatedRequest, res: Response, next) => {
+  try {
+    const tenantId = req.tenantId!;
+    const partyId = req.params.id as string;
+    const { customMessage } = req.body;
+
+    const [party, tenant] = await Promise.all([
+      prisma.party.findFirst({
+        where: { id: partyId, tenantId },
+        include: {
+          ledgerEntries: {
+            orderBy: { entryDate: 'desc' },
+            take: 1,
+          },
+        },
+      }),
+      prisma.tenant.findUnique({ where: { id: tenantId } }),
+    ]);
+
+    if (!party) {
+      return res.status(404).json({ error: 'Party not found', message: 'পার্টি পাওয়া যায়নি' });
+    }
+
+    const currentBal =
+      party.ledgerEntries.length > 0
+        ? Number(party.ledgerEntries[0].runningBalance)
+        : Number(party.openingBalance);
+
+    const { SmsService } = await import('../services/sms.service');
+    const shopName = tenant?.name || 'চালের দোকান';
+    const message =
+      customMessage || SmsService.buildDueReminderSms(shopName, party.name, Math.round(currentBal / 100));
+
+    const smsResult = await SmsService.sendSms({
+      toPhone: party.phone,
+      message,
+      tenantId,
+    });
+
+    res.json({
+      success: true,
+      message: `${party.name} (${party.phone})-কে তাগাদা SMS সফলভাবে পাঠানো হয়েছে`,
+      data: smsResult,
     });
   } catch (err) {
     next(err);

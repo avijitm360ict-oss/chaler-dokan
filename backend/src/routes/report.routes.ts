@@ -181,4 +181,160 @@ router.get('/dues', async (req: AuthenticatedRequest, res: Response, next) => {
   }
 });
 
+// GET /api/v1/reports/daily - Daily Sales & Cash Summary
+router.get('/daily', async (req: AuthenticatedRequest, res: Response, next) => {
+  try {
+    const tenantId = req.tenantId!;
+    const dateParam = (req.query.date as string) || new Date().toISOString().split('T')[0];
+
+    const startOfDay = new Date(`${dateParam}T00:00:00.000Z`);
+    const endOfDay = new Date(`${dateParam}T23:59:59.999Z`);
+
+    const sales = await prisma.sale.findMany({
+      where: {
+        tenantId,
+        saleDate: { gte: startOfDay, lte: endOfDay },
+      },
+      include: {
+        items: true,
+        client: true,
+      },
+    });
+
+    const activeSales = sales.filter((s) => s.status === 'confirmed');
+    const voidSales = sales.filter((s) => s.status === 'voided');
+
+    const totalSalesAmountPaisa = activeSales.reduce((sum, s) => sum + Number(s.grandTotalPaisa), 0);
+    const totalCashCollectedPaisa = activeSales.reduce((sum, s) => sum + Number(s.paidTotalPaisa), 0);
+    const totalDueGeneratedPaisa = activeSales.reduce((sum, s) => sum + Number(s.dueAmountPaisa), 0);
+
+    let totalCogsPaisa = 0;
+    for (const s of activeSales) {
+      for (const it of s.items) {
+        totalCogsPaisa += Number(it.qtyKg) * Number(it.costPerKgSnapshot);
+      }
+    }
+    const grossProfitPaisa = totalSalesAmountPaisa - totalCogsPaisa;
+
+    // Expenses for the day
+    const expenses = await prisma.expense.findMany({
+      where: {
+        tenantId,
+        spentAt: { gte: startOfDay, lte: endOfDay },
+      },
+      include: {
+        category: true,
+      },
+    });
+    const totalExpensesPaisa = expenses.reduce((sum, e) => sum + Number(e.amountPaisa), 0);
+
+    // Day close record
+    const dayClosing = await prisma.dayClosing.findFirst({
+      where: {
+        tenantId,
+        date: { gte: startOfDay, lte: endOfDay },
+      },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        date: dateParam,
+        isClosed: !!dayClosing,
+        closedAt: dayClosing?.createdAt || null,
+        notes: dayClosing?.note || null,
+        salesCount: activeSales.length,
+        voidSalesCount: voidSales.length,
+        totalSalesAmountPaisa,
+        totalCashCollectedPaisa,
+        totalDueGeneratedPaisa,
+        totalCogsPaisa,
+        grossProfitPaisa,
+        totalExpensesPaisa,
+        netCashFlowPaisa: totalCashCollectedPaisa - totalExpensesPaisa,
+        expenses: expenses.map((e) => ({
+          id: e.id,
+          category: e.category?.nameBn || 'অন্যান্য',
+          amountPaisa: Number(e.amountPaisa),
+          note: e.note,
+        })),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/v1/reports/inventory-valuation - Godown-wise stock & valuation
+router.get('/inventory-valuation', async (req: AuthenticatedRequest, res: Response, next) => {
+  try {
+    const tenantId = req.tenantId!;
+
+    const warehouses = await prisma.warehouse.findMany({
+      where: { tenantId, status: 'active' },
+      include: {
+        balances: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    let grandTotalStockKg = 0;
+    let grandTotalValuationPaisa = 0;
+
+    const godowns = warehouses.map((wh) => {
+      let whTotalKg = 0;
+      let whTotalValuationPaisa = 0;
+
+      const items = wh.balances.map((sb: any) => {
+        const stockKg = Number(sb.qtyKg);
+        const wacPerKgPaisa = Number(sb.avgCostPaisa);
+        const valuationPaisa = Math.round(stockKg * wacPerKgPaisa);
+
+        whTotalKg += stockKg;
+        whTotalValuationPaisa += valuationPaisa;
+
+        return {
+          productId: sb.productId,
+          productNameBn: sb.product.nameBn,
+          variety: sb.product.variety,
+          grade: sb.product.grade,
+          stockKg,
+          bags50: Math.floor(stockKg / 50),
+          looseKg: stockKg % 50,
+          wacPerKgPaisa,
+          valuationPaisa,
+        };
+      });
+
+      grandTotalStockKg += whTotalKg;
+      grandTotalValuationPaisa += whTotalValuationPaisa;
+
+      return {
+        warehouseId: wh.id,
+        warehouseNameBn: wh.name,
+        warehouseCode: wh.id.slice(0, 8),
+        totalStockKg: whTotalKg,
+        totalBags50: Math.floor(whTotalKg / 50),
+        totalValuationPaisa: whTotalValuationPaisa,
+        items,
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        grandTotalStockKg,
+        grandTotalBags50: Math.floor(grandTotalStockKg / 50),
+        grandTotalValuationPaisa,
+        godowns,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

@@ -60,17 +60,27 @@ router.get('/', async (req: AuthenticatedRequest, res: Response, next) => {
         grade: prod.grade,
         sku: prod.sku,
         category: prod.category?.nameBn,
-        minStockKg: Number(prod.minStockKg),
+        stockKg: totalStockKg,
         totalStockKg,
+        minStockKg: Number(prod.minStockKg),
         totalBags50: Math.floor(totalStockKg / 50),
         looseKg: totalStockKg % 50,
+        wacPerKgPaisa: overallAvgCostPerKgPaisa,
         avgCostPerKgPaisa: overallAvgCostPerKgPaisa,
-        wholesaleBag50Paisa: wholesalePriceObj
-          ? Number(wholesalePriceObj.pricePaisa)
-          : 0,
-        retailKgPaisa: retailPriceObj
-          ? Number(retailPriceObj.pricePaisa)
-          : 0,
+        retailPricePaisa: retailPriceObj ? Number(retailPriceObj.pricePaisa) : 0,
+        retailKgPaisa: retailPriceObj ? Number(retailPriceObj.pricePaisa) : 0,
+        wholesalePricePaisa: wholesalePriceObj ? Math.round(Number(wholesalePriceObj.pricePaisa) / 50) : 0,
+        sack50WholesalePricePaisa: wholesalePriceObj ? Number(wholesalePriceObj.pricePaisa) : 0,
+        sack50RetailPricePaisa: wholesalePriceObj ? Math.round(Number(wholesalePriceObj.pricePaisa) * 1.05) : 0,
+        wholesaleBag50Paisa: wholesalePriceObj ? Number(wholesalePriceObj.pricePaisa) : 0,
+        availableUnits: prod.units.map((u: any) => ({
+          id: u.id,
+          nameBn: u.nameBn,
+          nameEn: u.nameEn,
+          kgPerUnit: Number(u.kgPerUnit),
+          isBase: u.isBase,
+          isDefaultSale: u.isDefaultSale,
+        })),
         units: prod.units.map((u: any) => ({
           id: u.id,
           nameBn: u.nameBn,
@@ -89,7 +99,11 @@ router.get('/', async (req: AuthenticatedRequest, res: Response, next) => {
       };
     });
 
-    res.json({ products: formatted });
+    res.json({
+      success: true,
+      data: formatted,
+      products: formatted,
+    });
   } catch (err) {
     next(err);
   }
@@ -101,8 +115,11 @@ const createProductSchema = z.object({
   variety: z.string().optional(),
   grade: z.string().optional(),
   minStockKg: z.number().default(100),
-  wholesaleBag50Paisa: z.number(),
-  retailKgPaisa: z.number(),
+  wholesaleBag50Paisa: z.number().optional(),
+  wholesalePricePaisa: z.number().optional(),
+  retailKgPaisa: z.number().optional(),
+  retailPricePaisa: z.number().optional(),
+  wacPerKgPaisa: z.number().optional(),
   initialStockKg: z.number().default(0),
   warehouseId: z.string().optional(),
 });
@@ -112,6 +129,22 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
   try {
     const tenantId = req.tenantId!;
     const data = createProductSchema.parse(req.body);
+
+    const wholesaleBag50 =
+      data.wholesaleBag50Paisa ||
+      (data.wholesalePricePaisa
+        ? data.wholesalePricePaisa > 5000
+          ? data.wholesalePricePaisa
+          : data.wholesalePricePaisa * 50
+        : 360000);
+
+    const retailKg =
+      data.retailKgPaisa ||
+      (data.retailPricePaisa
+        ? data.retailPricePaisa < 5000
+          ? data.retailPricePaisa
+          : Math.round(data.retailPricePaisa / 50)
+        : 7500);
 
     const defaultWh = data.warehouseId
       ? { id: data.warehouseId }
@@ -164,7 +197,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
           productId: prod.id,
           unitId: bag50Unit.id,
           priceType: 'wholesale',
-          pricePaisa: BigInt(data.wholesaleBag50Paisa),
+          pricePaisa: BigInt(wholesaleBag50),
         },
       });
 
@@ -174,19 +207,20 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
           productId: prod.id,
           unitId: kgUnit.id,
           priceType: 'retail',
-          pricePaisa: BigInt(data.retailKgPaisa),
+          pricePaisa: BigInt(retailKg),
         },
       });
 
       // Initial Stock Balance
       if (defaultWh) {
+        const costPerKg = data.wacPerKgPaisa || Math.round(wholesaleBag50 / 50);
         await tx.stockBalance.create({
           data: {
             tenantId,
             productId: prod.id,
             warehouseId: defaultWh.id,
             qtyKg: data.initialStockKg,
-            avgCostPaisa: BigInt(Math.round(data.wholesaleBag50Paisa / 50)),
+            avgCostPaisa: BigInt(costPerKg),
           },
         });
 
@@ -197,7 +231,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
               productId: prod.id,
               warehouseId: defaultWh.id,
               qtyKg: data.initialStockKg,
-              unitCostPaisa: BigInt(Math.round(data.wholesaleBag50Paisa / 50)),
+              unitCostPaisa: BigInt(costPerKg),
               movementType: 'opening',
               reason: 'নতুন চাল যুক্ত ও প্রাথমিক স্টক',
             },
@@ -208,7 +242,61 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
       return prod;
     });
 
-    res.status(201).json({ message: 'চাল সফলভাবে যুক্ত হয়েছে', product });
+    res.status(201).json({
+      success: true,
+      message: 'চাল সফলভাবে যুক্ত হয়েছে',
+      product,
+      data: product,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/v1/products/:id - Update rice product details
+router.put('/:id', async (req: AuthenticatedRequest, res: Response, next) => {
+  try {
+    const tenantId = req.tenantId!;
+    const productId = req.params.id as string;
+    const { nameBn, nameEn, variety, grade, minStockKg, status } = req.body;
+
+    const updated = await prisma.product.update({
+      where: { id: productId },
+      data: {
+        ...(nameBn && { nameBn }),
+        ...(nameEn && { nameEn }),
+        ...(variety && { variety }),
+        ...(grade && { grade }),
+        ...(typeof minStockKg === 'number' && { minStockKg }),
+        ...(status && { status }),
+      },
+    });
+
+    res.json({
+      success: true,
+      message: 'চালের বিবরণ সফলভাবে আপডেট হয়েছে',
+      data: updated,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/v1/products/:id - Archive product safely
+router.delete('/:id', async (req: AuthenticatedRequest, res: Response, next) => {
+  try {
+    const tenantId = req.tenantId!;
+    const productId = req.params.id as string;
+
+    await prisma.product.update({
+      where: { id: productId },
+      data: { status: 'inactive' },
+    });
+
+    res.json({
+      success: true,
+      message: 'চাল সফলভাবে আর্কাইভ করা হয়েছে',
+    });
   } catch (err) {
     next(err);
   }

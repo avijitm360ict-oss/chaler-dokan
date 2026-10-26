@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { TenantInfo, Language, NumberFormat } from '../../types';
 import { translations } from '../../i18n/translations';
-import { Settings, Store, Printer, Shield, Save, CheckCircle2 } from 'lucide-react';
+import { Settings, Store, Printer, Shield, Save, CheckCircle2, Users, Download } from 'lucide-react';
+import { UsersAndRolesModal } from './UsersAndRolesModal';
+import { api } from '../../api/client';
 
 interface ShopSettingsProps {
   tenant: TenantInfo;
@@ -25,6 +27,31 @@ export const ShopSettings: React.FC<ShopSettingsProps> = ({
   const [defaultPrintSize, setDefaultPrintSize] = useState('thermal80');
   const [footerNote, setFooterNote] = useState('আমাদের পণ্য ব্যবহারের জন্য আন্তরিক ধন্যবাদ। আবার আসবেন।');
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [showUsersModal, setShowUsersModal] = useState(false);
+  const [isBackingUp, setIsBackingUp] = useState(false);
+
+  const handleDownloadBackup = async () => {
+    try {
+      setIsBackingUp(true);
+      const res: any = await api.tenant.getBackup();
+      const backupData = res?.data || res;
+      const jsonStr = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `chal_a_dokan_backup_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      alert('দোকানের সমস্ত ডাটা সফলভাবে ব্যাকআপ ডাউনলোড সম্পন্ন হয়েছে!');
+    } catch (err: any) {
+      alert('ব্যাকআপ ডাউনলোডে ত্রুটি: ' + (err?.message || 'সমস্যা হয়েছে'));
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +70,7 @@ export const ShopSettings: React.FC<ShopSettingsProps> = ({
   return (
     <div className="space-y-4 pb-20 md:pb-6 max-w-4xl">
       
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h2 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
             <Settings className="w-5 h-5 text-emerald-600" />
@@ -54,12 +81,33 @@ export const ShopSettings: React.FC<ShopSettingsProps> = ({
           </p>
         </div>
 
-        {savedSuccess && (
-          <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            সেটিংস সেভ হয়েছে
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleDownloadBackup}
+            disabled={isBackingUp}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+          >
+            <Download className="w-4 h-4 text-blue-600" />
+            <span>{isBackingUp ? 'ব্যাকআপ হচ্ছে...' : 'ডাটা ব্যাকআপ'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowUsersModal(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold transition shadow-xs"
+          >
+            <Users className="w-4 h-4 text-emerald-600" />
+            <span>ব্যবহারকারী ও পারমিশন</span>
+          </button>
+
+          {savedSuccess && (
+            <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              সেটিংস সেভ হয়েছে
+            </span>
+          )}
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 text-xs">
@@ -189,6 +237,13 @@ export const ShopSettings: React.FC<ShopSettingsProps> = ({
         </div>
 
       </form>
+
+      {/* Users and Roles Modal */}
+      <UsersAndRolesModal
+        isOpen={showUsersModal}
+        onClose={() => setShowUsersModal(false)}
+        lang={lang}
+      />
 
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   FileSpreadsheet,
   UploadCloud,
@@ -11,14 +11,15 @@ import {
   FileCheck,
   Edit2
 } from 'lucide-react';
-import { Language, NumberFormat, ImportPreviewRow } from '../../types';
-import { sampleImportRows } from '../../data/mockData';
+import { Language, NumberFormat, ImportPreviewRow, RiceProduct, Party } from '../../types';
+import { sampleImportRows, standardUnits } from '../../data/mockData';
 
 interface ImportWizardModalProps {
   isOpen: boolean;
   onClose: () => void;
   lang: Language;
   numFormat: NumberFormat;
+  onImportProducts?: (products: RiceProduct[]) => void;
   onImportSuccess: (count: number) => void;
 }
 
@@ -27,18 +28,64 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
   onClose,
   lang,
   numFormat,
+  onImportProducts,
   onImportSuccess
 }) => {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [importType, setImportType] = useState<'products' | 'clients' | 'vendors' | 'stock'>('products');
-  const [fileName, setFileName] = useState<string>('chal_stock_babubazar.xlsx');
+  const [fileName, setFileName] = useState<string>('chal_stock_babubazar.csv');
   const [rows, setRows] = useState<ImportPreviewRow[]>(sampleImportRows);
   const [importedCount, setImportedCount] = useState<number>(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
   const validCount = rows.filter((r) => r.isValid).length;
   const invalidCount = rows.filter((r) => !r.isValid).length;
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFileName(file.name);
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+
+      const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+      if (lines.length <= 1) return;
+
+      const dataRows: ImportPreviewRow[] = lines.slice(1).map((line, idx) => {
+        const parts = line.split(',').map((p) => p.trim().replace(/^"|"$/g, ''));
+        const [name = '', variety = '', category = '', unit = '৫০ কেজি বস্তা', price = '', stock = ''] = parts;
+
+        const numPrice = Number(price);
+        const isValid = Boolean(name.trim()) && !isNaN(numPrice) && numPrice > 0;
+        const errorMessage = !name.trim()
+          ? 'চালের নাম নেই'
+          : isNaN(numPrice) || numPrice <= 0
+          ? 'দর সঠিক নয়'
+          : undefined;
+
+        return {
+          rowNumber: idx + 1,
+          name: name || `চাল আইটেম ${idx + 1}`,
+          variety: variety || 'মিনিকেট',
+          category: category || 'সিদ্ধ',
+          unit: unit || '৫০ কেজি বস্তা',
+          price: price || '৭৪',
+          stock: stock || '১০০০',
+          isValid,
+          errorMessage,
+        };
+      });
+
+      setRows(dataRows);
+      setStep(3);
+    };
+    reader.readAsText(file);
+  };
 
   const handleCellEdit = (rowNumber: number, field: keyof ImportPreviewRow, value: string) => {
     setRows((prev) =>
@@ -63,19 +110,51 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
   const handleConfirmImport = (onlyValid: boolean) => {
     const toImport = onlyValid ? rows.filter((r) => r.isValid) : rows;
     setImportedCount(toImport.length);
+
+    if (importType === 'products' && onImportProducts) {
+      const newProducts: RiceProduct[] = toImport.map((r, i) => {
+        const pricePerKg = Number(r.price) || 72;
+        const stockKg = Number(r.stock) || 1000;
+        return {
+          id: `prod-imp-${Date.now()}-${i}`,
+          nameBn: r.name,
+          nameEn: r.name,
+          variety: r.variety,
+          grade: 'স্পেশাল',
+          category: r.category,
+          sku: `IMP-${Date.now().toString().slice(-4)}-${i + 1}`,
+          stockKg: stockKg,
+          minStockKg: 200,
+          wacPerKgPaisa: Math.round(pricePerKg * 90),
+          retailPricePaisa: Math.round(pricePerKg * 100),
+          wholesalePricePaisa: Math.round(pricePerKg * 94),
+          sack50RetailPricePaisa: Math.round(pricePerKg * 50 * 100),
+          sack50WholesalePricePaisa: Math.round(pricePerKg * 50 * 94),
+          availableUnits: standardUnits,
+        };
+      });
+      onImportProducts(newProducts);
+    }
+
     onImportSuccess(toImport.length);
     setStep(4);
   };
 
   const handleDownloadTemplate = () => {
-    const csvContent = "data:text/csv;charset=utf-8,Name,Variety,Category,Unit,Price,Stock\nমিনিকেট চাল,মিনিকেট,সিদ্ধ,৫০ কেজি বস্তা,৭৪,৩০০০\nনাজিরশাইল চাল,নাজিরশাইল,সিদ্ধ,৫০ কেজি বস্তা,৮৪,২৫০০";
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `chal_template_${importType}.csv`);
+    const csvContent =
+      '\uFEFFName,Variety,Category,Unit,Price,Stock\r\n' +
+      'মিনিকেট চাল (কুষ্টিয়া),মিনিকেট,সিদ্ধ,৫০ কেজি বস্তা,৭৪,৩০০০\r\n' +
+      'নাজিরশাইল চাল (দিনাজপুর),নাজিরশাইল,সিদ্ধ,৫০ কেজি বস্তা,৮৪,২৫০০\r\n' +
+      'কাটারিভোগ চাল (প্রিমিয়াম),কাটারিভোগ,আতপ,২৫ কেজি বস্তা,৯৫,১৫০০\r\n';
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `chal_template_${importType}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -185,20 +264,33 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
         {/* Step 2: Upload File */}
         {step === 2 && (
           <div className="space-y-4 py-4 flex-1 overflow-y-auto">
-            <div className="border-2 border-dashed border-[#DDD9CE] hover:border-[#1F7A4D] rounded-3xl p-8 text-center bg-slate-50/50 cursor-pointer transition">
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-[#DDD9CE] hover:border-[#1F7A4D] rounded-3xl p-8 text-center bg-slate-50/50 cursor-pointer transition"
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv, text/csv, .txt"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
               <div className="w-14 h-14 rounded-2xl bg-[#E8F4EC] text-[#1F7A4D] flex items-center justify-center mx-auto mb-3">
                 <UploadCloud className="w-8 h-8" />
               </div>
-              <h4 className="text-sm font-bold text-[#1A1A17]">আপনার Excel বা CSV ফাইল এখানে ছাড়ুন</h4>
-              <p className="text-xs text-slate-500 mt-1">.xlsx, .xls অথবা .csv ফাইল সাপোর্ট করে (সর্বোচ্চ ১০MB)</p>
+              <h4 className="text-sm font-bold text-[#1A1A17]">আপনার CSV ফাইল এখানে ড্রপ করুন অথবা ক্লিক করুন</h4>
+              <p className="text-xs text-slate-500 mt-1">.csv ফাইল সাপোর্ট করে (সর্বোচ্চ ১০MB)</p>
               
               <div className="mt-4">
                 <button
                   type="button"
-                  onClick={() => setStep(3)}
-                  className="px-5 py-2 bg-white border border-slate-300 text-xs font-bold text-slate-800 rounded-xl hover:bg-slate-100 shadow-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                  className="px-5 py-2 bg-white border border-slate-300 text-xs font-bold text-slate-800 rounded-xl hover:bg-slate-100 shadow-xs cursor-pointer"
                 >
-                  কম্পিউটার বা ফোন থেকে বাছুন
+                  কম্পিউটার বা ফোন থেকে CSV ফাইল বাছুন
                 </button>
               </div>
             </div>
@@ -209,7 +301,7 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
                 <span>{fileName}</span>
               </div>
               <span className="text-[10px] text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-semibold">
-                ৫টি সারি সনাক্ত হয়েছে
+                {rows.length}টি সারি সনাক্ত হয়েছে
               </span>
             </div>
 
