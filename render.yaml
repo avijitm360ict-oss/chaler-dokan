@@ -5,8 +5,8 @@ services:
     rootDir: backend
     plan: free
     region: singapore
-    buildCommand: npm install && npx prisma generate && npm run build
-    startCommand: npx prisma db push && node dist/server.js
+    buildCommand: npm install --include=dev && npx prisma generate && npm run build
+    startCommand: npx prisma db push --accept-data-loss && node dist/server.js
     envVars:
       - key: NODE_ENV
         value: production
