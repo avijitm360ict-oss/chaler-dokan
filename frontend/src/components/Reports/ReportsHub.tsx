@@ -29,7 +29,7 @@ interface ReportsHubProps {
 }
 
 type ReportType = 'profit_loss' | 'daily_cash' | 'warehouse_stock' | 'party_dues' | 'rice_margin' | 'aging';
-type DateRange = 'all' | 'today' | 'yesterday' | 'last_7_days' | 'this_month';
+type DateRange = 'all' | 'today' | 'yesterday' | 'last_7_days' | 'this_month' | 'this_year';
 
 export const ReportsHub: React.FC<ReportsHubProps> = ({
   products,
@@ -52,6 +52,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({
     const yesterdayStart = todayStart - 86400000;
     const last7DaysStart = todayStart - 6 * 86400000;
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const thisYearStart = new Date(now.getFullYear(), 0, 1).getTime();
 
     if (dateRange === 'all') {
       return { filteredSales: sales, filteredExpenses: expenses };
@@ -63,6 +64,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({
       if (dateRange === 'yesterday') return d >= yesterdayStart && d < todayStart;
       if (dateRange === 'last_7_days') return d >= last7DaysStart;
       if (dateRange === 'this_month') return d >= thisMonthStart;
+      if (dateRange === 'this_year') return d >= thisYearStart;
       return true;
     };
 
@@ -227,7 +229,8 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({
               <option value="yesterday">গতকাল</option>
               <option value="last_7_days">বিগত ৭ দিন</option>
               <option value="this_month">চলতি মাস</option>
-              <option value="all">সকল সময়</option>
+              <option value="this_year">চলতি অর্থবছর / বাৎসরিক (Yearly)</option>
+              <option value="all">সর্বমোট / হালখাতা (All Time)</option>
             </select>
           </div>
 
