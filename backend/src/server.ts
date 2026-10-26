@@ -65,12 +65,24 @@ app.use('/api/v1/reports', reportRoutes);
 app.use('/api/v1/returns', returnRoutes);
 app.use('/api/v1/audit-logs', auditRoutes);
 
+import { seedDatabase } from './services/seed.service';
+import prisma from './lib/prisma';
+
 // Global Error Handler
 app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
-    console.log(`🌾 চালের দোকান SaaS Backend API running on http://localhost:${PORT}`);
+  app.listen(PORT, async () => {
+    console.log(`🌾 চালের দোকান SaaS Backend API running on port ${PORT}`);
+    try {
+      const count = await prisma.tenant.count();
+      if (count === 0) {
+        console.log('🌾 Cloud database empty. Auto-seeding initial rice products & demo data...');
+        await seedDatabase();
+      }
+    } catch (e) {
+      console.warn('Startup database check:', e);
+    }
   });
 }
 

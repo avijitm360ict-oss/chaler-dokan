@@ -1,8 +1,19 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { AuthenticatedRequest } from '../middleware/tenant';
+import { seedDatabase } from '../services/seed.service';
 
 const router = Router();
+
+// POST /api/v1/tenant/seed - Initialize database with default products and demo shop
+router.post('/seed', async (_req, res, next) => {
+  try {
+    await seedDatabase();
+    res.json({ success: true, message: 'চালের দোকান ডাটাবেজ সফলভাবে ইনিশিয়ালাইজ হয়েছে!' });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // GET /api/v1/tenant/profile
 router.get('/profile', async (req: AuthenticatedRequest, res: Response, next) => {
