@@ -871,6 +871,21 @@ export function App() {
           )}
         </main>
 
+        {/* Global Developer & Support Footer */}
+        <footer className="border-t border-slate-200/90 bg-white/95 py-2.5 px-4 text-center text-[11px] text-slate-500 shadow-xs mb-16 sm:mb-0">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+            <span>☎️ <strong className="text-slate-800">Hotline:</strong> 01629404625</span>
+            <span className="text-slate-300">|</span>
+            <span><strong className="text-slate-800">Software Support:</strong> 01629404625 (Available: 10:00 AM – 06:00 PM)</span>
+            <span className="text-slate-300">|</span>
+            <span>📧 <a href="mailto:avijitsh94@gmail.com" className="text-emerald-700 font-semibold hover:underline">avijitsh94@gmail.com</a></span>
+            <span className="text-slate-300">|</span>
+            <span>Copyright © 2026. All Rights Reserved.</span>
+            <span className="text-slate-300">|</span>
+            <span className="font-bold text-emerald-800">Design & Developed by Avijit Saha</span>
+          </div>
+        </footer>
+
       </div>
 
       {/* Mobile Bottom Navigation */}

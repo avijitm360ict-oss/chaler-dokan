@@ -86,13 +86,13 @@ export const HelpDrawer: React.FC<HelpDrawerProps> = ({ isOpen, onClose, lang })
                 : 'Message our technical team directly on WhatsApp for live setup assistance, printer config or data queries.'}
             </p>
             <a
-              href="https://wa.me/8801700000000?text=%E0%A6%86%E0%A6%AE%E0%A6%BE%E0%A6%B0%20%E0%A6%9A%E0%A6%BE%E0%A6%B2%E0%A7%87%E0%A6%B0%20%E0%A6%A6%E0%A7%8B%E0%A6%95%E0%A6%BE%E0%A6%A8%20SaaS-%E0%A6%8F%20%E0%A6%B8%E0%A6%BE%E0%A6%B9%E0%A6%BE%E0%A6%AF%E0%A7%8D%E0%A6%AF%20%E0%A6%AA%E0%A7%8D%E0%A6%B0%E0%A7%9F%E0%A7%8B%E0%A6%9C%E0%A6%A8"
+              href="https://wa.me/8801629404625?text=%E0%A6%9A%E0%A6%BE%E0%A6%B2%E0%A7%87%E0%A6%B0%20%E0%A6%A6%E0%A7%8B%E0%A6%95%E0%A6%BE%E0%A6%A8%20%E0%A6%B8%E0%A6%BE%E0%A6%AA%E0%A7%8B%E0%A6%B0%E0%A7%8D%E0%A6%9F%20%E0%A6%AA%E0%A7%8D%E0%A6%B0%E0%A7%9F%E0%A7%8B%E0%A6%9C%E0%A6%A8"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-[#1F7A4D] hover:bg-[#16603B] text-white rounded-xl font-bold text-xs shadow-md transition touch-target"
             >
               <MessageCircle className="w-4 h-4" />
-              <span>{lang === 'bn' ? 'হোয়াটসঅ্যাপে চ্যাট করুন (+৮৮০১...)' : 'Open WhatsApp Support'}</span>
+              <span>{lang === 'bn' ? 'হোয়াটসঅ্যাপে মেসেজ দিন (০১৬২৯৪০৪৬২৫)' : 'Open WhatsApp Support'}</span>
             </a>
           </div>
 
@@ -101,16 +101,29 @@ export const HelpDrawer: React.FC<HelpDrawerProps> = ({ isOpen, onClose, lang })
             <div className="flex items-center gap-2.5">
               <Phone className="w-4 h-4 text-[#E0A526]" />
               <div>
-                <div className="text-xs font-bold text-[#1A1A17]">01700-000000 / 09612-000000</div>
-                <div className="text-[10px] text-[#5B574E]">{lang === 'bn' ? 'সকাল ৮টা থেকে রাত ১১টা' : '8:00 AM - 11:00 PM'}</div>
+                <div className="text-xs font-bold text-[#1A1A17]">01629404625</div>
+                <div className="text-[10px] text-[#5B574E]">{lang === 'bn' ? 'সকাল ১০:০০ - সন্ধ্যা ০৬:০০' : '10:00 AM – 06:00 PM'}</div>
               </div>
             </div>
             <a
-              href="tel:01700000000"
+              href="tel:01629404625"
               className="px-3 py-1.5 text-xs font-bold bg-white border border-slate-300 rounded-lg text-[#1F7A4D] hover:bg-slate-100"
             >
               {lang === 'bn' ? 'কল করুন' : 'Call'}
             </a>
+          </div>
+
+          {/* Email Support Card */}
+          <div className="p-3 bg-emerald-50/60 border border-emerald-200/80 rounded-xl text-xs space-y-1">
+            <div className="font-bold text-emerald-900 flex items-center gap-1.5">
+              <span>📧 ইমেইল সাপোর্ট:</span>
+              <a href="mailto:avijitsh94@gmail.com" className="text-emerald-700 underline font-semibold">
+                avijitsh94@gmail.com
+              </a>
+            </div>
+            <div className="text-[10px] text-emerald-800">
+              সফটওয়্যার কাস্টমাইজেশন ও কারিগরি সহায়তার জন্য ইমেইল করতে পারেন।
+            </div>
           </div>
 
           {/* Quick FAQ Guide */}
@@ -144,8 +157,10 @@ export const HelpDrawer: React.FC<HelpDrawerProps> = ({ isOpen, onClose, lang })
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-200 bg-[#F6F5F1] text-center text-[11px] text-[#5B574E]">
-          {lang === 'bn' ? 'চালের দোকান SaaS — ডিজাইন ও সিস্টেম v1.0' : 'Rice Shop SaaS — Design Brief v1.0'}
+        <div className="p-4 border-t border-slate-200 bg-[#F6F5F1] text-center text-[10px] text-[#5B574E] space-y-1">
+          <div>☎️ হটলাইন: 01629404625 | 📧 avijitsh94@gmail.com</div>
+          <div className="font-semibold text-slate-700">Copyright © 2026. All Rights Reserved.</div>
+          <div className="text-emerald-800 font-bold">Design & Developed by Avijit Saha</div>
         </div>
 
       </div>

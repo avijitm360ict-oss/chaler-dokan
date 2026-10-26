@@ -273,7 +273,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
                 {isBn ? 'আমাদের পণ্য ব্যবহারের জন্য আন্তরিক ধন্যবাদ।' : 'Thank you for your business!'}
               </div>
               <div className="text-[10px] text-slate-400">
-                সফটওয়্যার: চালের দোকান SaaS • Powered by Antigravity
+                সফটওয়্যার: চালের দোকান • সাপোর্ট: 01629404625 • Dev by Avijit Saha
               </div>
             </div>
 
