@@ -17,9 +17,21 @@ export const errorHandler = (
     });
   }
 
-  const statusCode = err.statusCode || 500;
+  const isProduction = process.env.NODE_ENV === 'production';
+  const statusCode =
+    typeof err.statusCode === 'number'
+      ? err.statusCode
+      : typeof err.status === 'number'
+      ? err.status
+      : 500;
+
+  const safeMessage =
+    isProduction && statusCode === 500
+      ? 'সার্ভারে অভ্যন্তরীণ ত্রুটি দেখা দিয়েছে। অনুগ্রহ করে পরে আবার চেষ্টা করুন।'
+      : err.message || 'সার্ভারে অভ্যন্তরীণ ত্রুটি দেখা দিয়েছে';
+
   res.status(statusCode).json({
-    error: err.name || 'Internal Server Error',
-    message: err.message || 'সার্ভারে অভ্যন্তরীণ ত্রুটি দেখা দিয়েছে',
+    error: isProduction && statusCode === 500 ? 'Internal Server Error' : err.name || 'Internal Server Error',
+    message: safeMessage,
   });
 };

@@ -260,8 +260,16 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response, next) => {
     const productId = req.params.id as string;
     const { nameBn, nameEn, variety, grade, minStockKg, status } = req.body;
 
+    // Verify product belongs to current tenant (Prevent BOLA/IDOR)
+    const existing = await prisma.product.findFirst({
+      where: { id: productId, tenantId },
+    });
+    if (!existing) {
+      return res.status(404).json({ error: 'Product not found', message: 'চাল পাওয়া যায়নি' });
+    }
+
     const updated = await prisma.product.update({
-      where: { id: productId },
+      where: { id: existing.id },
       data: {
         ...(nameBn && { nameBn }),
         ...(nameEn && { nameEn }),
@@ -288,8 +296,16 @@ router.delete('/:id', async (req: AuthenticatedRequest, res: Response, next) => 
     const tenantId = req.tenantId!;
     const productId = req.params.id as string;
 
+    // Verify product belongs to current tenant
+    const existing = await prisma.product.findFirst({
+      where: { id: productId, tenantId },
+    });
+    if (!existing) {
+      return res.status(404).json({ error: 'Product not found', message: 'চাল পাওয়া যায়নি' });
+    }
+
     await prisma.product.update({
-      where: { id: productId },
+      where: { id: existing.id },
       data: { status: 'inactive' },
     });
 

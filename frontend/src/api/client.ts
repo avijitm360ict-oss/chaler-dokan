@@ -108,6 +108,11 @@ class ApiClient {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+    demo: (role: string = 'owner') =>
+      this.request<any>('/auth/demo', {
+        method: 'POST',
+        body: JSON.stringify({ role }),
+      }),
     getMe: () => this.request<any>('/auth/me'),
   };
 

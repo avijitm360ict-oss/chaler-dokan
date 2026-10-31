@@ -184,7 +184,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleQuickDemoLogin = (role: UserRole) => {
+  const handleQuickDemoLogin = async (role: UserRole) => {
+    setIsLoading(true);
     const roleNames: Record<UserRole, string> = {
       owner: 'হাজী মো: রফিকুল ইসলাম (মালিক)',
       manager: 'আসিফ মাহমুদ (ম্যানেজার)',
@@ -205,6 +206,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       trialDaysLeft: 28,
       planName: 'প্রো প্ল্যান (SaaS Pro)',
     };
+
+    try {
+      const res: any = await api.auth.demo(role);
+      if (res?.token) {
+        api.setToken(res.token);
+        if (res.tenant?.id) {
+          api.setTenantId(res.tenant.id);
+        }
+        onLoginSuccess(res.user, res.tenant || demoTenant);
+        return;
+      }
+    } catch {
+      // Offline fallback
+    } finally {
+      setIsLoading(false);
+    }
 
     onLoginSuccess(
       {

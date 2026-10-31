@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import prisma from '../lib/prisma';
 import { AuthenticatedRequest } from '../middleware/tenant';
+import { requireRole } from '../middleware/auth';
 import { getNextDocNo } from '../utils/docSequence';
 
 const router = Router();
@@ -16,7 +17,7 @@ const transferSchema = z.object({
 });
 
 // POST /api/v1/inventory/transfer - Transfer rice between warehouses
-router.post('/transfer', async (req: AuthenticatedRequest, res: Response, next) => {
+router.post('/transfer', requireRole(['Owner', 'Manager', 'Super Admin']), async (req: AuthenticatedRequest, res: Response, next) => {
   try {
     const tenantId = req.tenantId!;
     const data = transferSchema.parse(req.body);
@@ -29,6 +30,16 @@ router.post('/transfer', async (req: AuthenticatedRequest, res: Response, next) 
     }
 
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Validate both warehouses belong to tenant
+      const [fromWh, toWh] = await Promise.all([
+        tx.warehouse.findFirst({ where: { id: data.fromWarehouseId, tenantId } }),
+        tx.warehouse.findFirst({ where: { id: data.toWarehouseId, tenantId } }),
+      ]);
+
+      if (!fromWh || !toWh) {
+        throw new Error('স্থানান্তরের জন্য নির্বাচিত গোডাউন পাওয়া যায়নি');
+      }
+
       const sourceBalance = await tx.stockBalance.findUnique({
         where: {
           tenantId_productId_warehouseId: {
@@ -210,17 +221,30 @@ router.get('/timeline/:productId', async (req: AuthenticatedRequest, res: Respon
   }
 });
 
+const adjustSchema = z.object({
+  productId: z.string().min(1, 'চাল নির্বাচন করুন'),
+  warehouseId: z.string().min(1, 'গোডাউন নির্বাচন করুন'),
+  adjustmentKg: z.number().refine((val) => val !== 0, 'সমন্বয়ের পরিমাণ ০ হতে পারে না'),
+  reason: z.string().optional(),
+});
+
 // POST /api/v1/inventory/adjust - Stock Adjustment (Drying loss / Shortage / Surplus)
-router.post('/adjust', async (req: AuthenticatedRequest, res: Response, next) => {
+router.post('/adjust', requireRole(['Owner', 'Manager', 'Super Admin']), async (req: AuthenticatedRequest, res: Response, next) => {
   try {
     const tenantId = req.tenantId!;
-    const { productId, warehouseId, adjustmentKg, reason } = req.body;
-
-    if (!adjustmentKg || adjustmentKg === 0) {
-      return res.status(400).json({ error: 'Invalid Adjustment', message: 'সমন্বয়ের পরিমাণ দিন' });
-    }
+    const { productId, warehouseId, adjustmentKg, reason } = adjustSchema.parse(req.body);
 
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Verify product and warehouse belong to tenant
+      const [product, warehouse] = await Promise.all([
+        tx.product.findFirst({ where: { id: productId, tenantId } }),
+        tx.warehouse.findFirst({ where: { id: warehouseId, tenantId } }),
+      ]);
+
+      if (!product || !warehouse) {
+        throw new Error('সমন্বয়ের জন্য নির্বাচিত চাল বা গোডাউন পাওয়া যায়নি');
+      }
+
       const stock = await tx.stockBalance.findUnique({
         where: {
           tenantId_productId_warehouseId: {

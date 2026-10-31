@@ -1,12 +1,19 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
 import { AuthenticatedRequest } from '../middleware/tenant';
+import { requireRole } from '../middleware/auth';
 import { seedDatabase } from '../services/seed.service';
 
 const router = Router();
 
-// POST /api/v1/tenant/seed - Initialize database with default products and demo shop
+// POST /api/v1/tenant/seed - Dev-only database seed
 router.post('/seed', async (_req, res, next) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({
+      error: 'Forbidden',
+      message: 'প্রোডাকশনে ডাটাবেজ সিড করা অনুমোদিত নয়',
+    });
+  }
   try {
     await seedDatabase();
     res.json({ success: true, message: 'চালের দোকান ডাটাবেজ সফলভাবে ইনিশিয়ালাইজ হয়েছে!' });
@@ -98,7 +105,7 @@ router.get('/users', async (req: AuthenticatedRequest, res: Response, next) => {
 });
 
 // POST /api/v1/tenant/users - Add new employee (manager or cashier)
-router.post('/users', async (req: AuthenticatedRequest, res: Response, next) => {
+router.post('/users', requireRole(['Owner', 'Super Admin']), async (req: AuthenticatedRequest, res: Response, next) => {
   try {
     const tenantId = req.tenantId!;
     const { name, phone, role = 'cashier', password = '123456' } = req.body;
@@ -168,11 +175,19 @@ router.post('/users', async (req: AuthenticatedRequest, res: Response, next) => 
 });
 
 // PUT /api/v1/tenant/users/:id - Toggle user active status or update role
-router.put('/users/:id', async (req: AuthenticatedRequest, res: Response, next) => {
+router.put('/users/:id', requireRole(['Owner', 'Super Admin']), async (req: AuthenticatedRequest, res: Response, next) => {
   try {
     const tenantId = req.tenantId!;
     const userId = req.params.id as string;
     const { active, role } = req.body;
+
+    // Verify user belongs to current tenant (Prevent BOLA/IDOR)
+    const targetUser = await prisma.user.findFirst({
+      where: { id: userId, tenantId },
+    });
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found', message: 'ব্যবহারকারী পাওয়া যায়নি' });
+    }
 
     let roleIdToSet: string | undefined;
     if (role) {
@@ -198,7 +213,7 @@ router.put('/users/:id', async (req: AuthenticatedRequest, res: Response, next) 
     }
 
     const updated = await prisma.user.update({
-      where: { id: userId },
+      where: { id: targetUser.id },
       data: {
         ...(typeof active === 'boolean' && { status: active ? 'active' : 'inactive' }),
         ...(roleIdToSet && { roleId: roleIdToSet }),
@@ -223,8 +238,8 @@ router.put('/users/:id', async (req: AuthenticatedRequest, res: Response, next) 
   }
 });
 
-// GET /api/v1/tenant/backup - Full shop data backup export
-router.get('/backup', async (req: AuthenticatedRequest, res: Response, next) => {
+// GET /api/v1/tenant/backup - Full shop data backup export (Owner Only)
+router.get('/backup', requireRole(['Owner', 'Super Admin']), async (req: AuthenticatedRequest, res: Response, next) => {
   try {
     const tenantId = req.tenantId!;
 

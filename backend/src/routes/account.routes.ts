@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { AuthenticatedRequest } from '../middleware/tenant';
+import { requireRole } from '../middleware/auth';
 
 const router = Router();
 
@@ -52,8 +53,8 @@ router.get('/', async (req: AuthenticatedRequest, res: Response, next) => {
   }
 });
 
-// POST /api/v1/accounts - Create new account
-router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
+// POST /api/v1/accounts - Create new account (Owner Only)
+router.post('/', requireRole(['Owner', 'Super Admin']), async (req: AuthenticatedRequest, res: Response, next) => {
   try {
     const tenantId = req.tenantId!;
     const data = createAccountSchema.parse(req.body);
@@ -170,6 +171,11 @@ router.post('/expenses', async (req: AuthenticatedRequest, res: Response, next) 
       });
       if (!account) throw new Error('সিলেক্টেড পেমেন্ট একাউন্ট পাওয়া যায়নি');
 
+      const category = await tx.expenseCategory.findFirst({
+        where: { id: data.categoryId, tenantId },
+      });
+      if (!category) throw new Error('সিলেক্টেড খরচের খাত পাওয়া যায়নি');
+
       const expense = await tx.expense.create({
         data: {
           tenantId,
@@ -249,8 +255,8 @@ router.get('/day-close/summary', async (req: AuthenticatedRequest, res: Response
   }
 });
 
-// POST /api/v1/accounts/day-close - Perform Day Close
-router.post('/day-close', async (req: AuthenticatedRequest, res: Response, next) => {
+// POST /api/v1/accounts/day-close - Perform Day Close (Privileged only)
+router.post('/day-close', requireRole(['Owner', 'Manager', 'Super Admin']), async (req: AuthenticatedRequest, res: Response, next) => {
   try {
     const tenantId = req.tenantId!;
     const data = dayCloseSchema.parse(req.body);

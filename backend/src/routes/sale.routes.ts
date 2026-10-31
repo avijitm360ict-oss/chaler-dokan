@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import prisma from '../lib/prisma';
 import { AuthenticatedRequest } from '../middleware/tenant';
+import { requireRole } from '../middleware/auth';
 import { getNextDocNo } from '../utils/docSequence';
 
 const router = Router();
@@ -12,7 +13,7 @@ const saleItemInputSchema = z.object({
   unitId: z.string(),
   qtyUnit: z.number().positive('পরিমাণ অবশ্যই ০ এর বেশি হতে হবে'),
   unitPricePaisa: z.number().positive('দর অবশ্যই ০ এর বেশি হতে হবে'),
-  discountPaisa: z.number().default(0),
+  discountPaisa: z.number().min(0, 'ডিসকাউন্ট ঋণাত্মক হতে পারে না').default(0),
 });
 
 const paymentInputSchema = z.object({
@@ -25,8 +26,8 @@ const createSaleSchema = z.object({
   warehouseId: z.string(),
   clientId: z.string().optional(),
   clientName: z.string().optional(),
-  discountPaisa: z.number().default(0),
-  deliveryChargePaisa: z.number().default(0),
+  discountPaisa: z.number().min(0, 'ডিসকাউন্ট ঋণাত্মক হতে পারে না').default(0),
+  deliveryChargePaisa: z.number().min(0, 'ডেলিভারি চার্জ ঋণাত্মক হতে পারে না').default(0),
   items: z.array(saleItemInputSchema).min(1, 'কমপক্ষে একটি পণ্য কার্টে যোগ করুন'),
   payments: z.array(paymentInputSchema).default([]),
   note: z.string().optional(),
@@ -381,8 +382,8 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response, next) => {
   }
 });
 
-// POST /api/v1/sales/:id/void - Void invoice and restore stock
-router.post('/:id/void', async (req: AuthenticatedRequest, res: Response, next) => {
+// POST /api/v1/sales/:id/void - Void invoice and restore stock (Privileged only)
+router.post('/:id/void', requireRole(['Owner', 'Manager', 'Super Admin']), async (req: AuthenticatedRequest, res: Response, next) => {
   try {
     const tenantId = req.tenantId!;
     const saleId = req.params.id as string;

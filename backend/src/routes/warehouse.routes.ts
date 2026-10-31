@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { AuthenticatedRequest } from '../middleware/tenant';
+import { requireRole } from '../middleware/auth';
 
 const router = Router();
 
@@ -60,7 +61,7 @@ const warehouseSchema = z.object({
 });
 
 // POST /api/v1/warehouses
-router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
+router.post('/', requireRole(['Owner', 'Manager', 'Super Admin']), async (req: AuthenticatedRequest, res: Response, next) => {
   try {
     const tenantId = req.tenantId!;
     const data = warehouseSchema.parse(req.body);

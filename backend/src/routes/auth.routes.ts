@@ -1,11 +1,23 @@
 import { Router, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
 import prisma from '../lib/prisma';
 import { signToken, requireAuth } from '../middleware/auth';
 import { AuthenticatedRequest } from '../middleware/tenant';
 
 const router = Router();
+
+export const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'Too many requests',
+    message: 'অতিরিক্ত চেষ্টার কারণে সাময়িকভাবে ব্লক করা হয়েছে। অনুগ্রহ করে ১৫ মিনিট পর আবার চেষ্টা করুন।',
+  },
+});
 
 const loginSchema = z.object({
   phone: z.string().min(11, 'সঠিক মোবাইল নম্বর দিন'),
@@ -21,7 +33,7 @@ const registerSchema = z.object({
 });
 
 // POST /api/v1/auth/register - Sign up new rice shop & owner
-router.post('/register', async (req: AuthenticatedRequest, res: Response, next) => {
+router.post('/register', authLimiter, async (req: AuthenticatedRequest, res: Response, next) => {
   try {
     const data = registerSchema.parse(req.body);
 
@@ -135,11 +147,11 @@ router.post('/register', async (req: AuthenticatedRequest, res: Response, next) 
 });
 
 // POST /api/v1/auth/login
-router.post('/login', async (req: AuthenticatedRequest, res: Response, next) => {
+router.post('/login', authLimiter, async (req: AuthenticatedRequest, res: Response, next) => {
   try {
     const { phone, password } = loginSchema.parse(req.body);
 
-    const user = await prisma.user.findFirst({
+    const candidateUsers = await prisma.user.findMany({
       where: { phone },
       include: {
         role: true,
@@ -147,15 +159,23 @@ router.post('/login', async (req: AuthenticatedRequest, res: Response, next) => 
       },
     });
 
-    if (!user) {
+    if (candidateUsers.length === 0) {
       return res.status(401).json({
         error: 'Invalid Credentials',
         message: 'মোবাইল নম্বর অথবা পাসওয়ার্ড ভুল হয়েছে',
       });
     }
 
-    const isValid = await bcrypt.compare(password, user.passwordHash);
-    if (!isValid) {
+    let user = null;
+    for (const candidate of candidateUsers) {
+      const isValid = await bcrypt.compare(password, candidate.passwordHash);
+      if (isValid) {
+        user = candidate;
+        break;
+      }
+    }
+
+    if (!user) {
       return res.status(401).json({
         error: 'Invalid Credentials',
         message: 'মোবাইল নম্বর অথবা পাসওয়ার্ড ভুল হয়েছে',
@@ -192,6 +212,98 @@ router.post('/login', async (req: AuthenticatedRequest, res: Response, next) => 
         ownerName: user.tenant.ownerName,
         phone: user.tenant.phone,
         settings: user.tenant.settings,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/v1/auth/demo - Quick Demo Session with authentic JWT token
+router.post('/demo', async (req: AuthenticatedRequest, res: Response, next) => {
+  try {
+    const requestedRole = (req.body?.role || 'owner').toLowerCase();
+    
+    // Find or seed demo tenant
+    let tenant = await prisma.tenant.findUnique({
+      where: { id: 'tenant-demo-001' },
+      include: { roles: true },
+    });
+
+    if (!tenant) {
+      const { seedDatabase } = await import('../services/seed.service');
+      await seedDatabase();
+      tenant = await prisma.tenant.findUnique({
+        where: { id: 'tenant-demo-001' },
+        include: { roles: true },
+      });
+    }
+
+    if (!tenant) {
+      return res.status(500).json({ error: 'Demo tenant not initialized' });
+    }
+
+    // Role mapping
+    const targetRoleName =
+      requestedRole === 'cashier' ? 'Cashier' : requestedRole === 'manager' ? 'Manager' : 'Owner';
+
+    let role = tenant.roles.find((r) => r.name.toLowerCase() === targetRoleName.toLowerCase());
+    if (!role) {
+      role = await prisma.role.create({
+        data: {
+          tenantId: tenant.id,
+          name: targetRoleName,
+          permissions: { all: targetRoleName === 'Owner' },
+        },
+      });
+    }
+
+    // Find or create demo user
+    let user = await prisma.user.findFirst({
+      where: { tenantId: tenant.id, roleId: role.id },
+      include: { role: true },
+    });
+
+    if (!user) {
+      const passwordHash = await bcrypt.hash('123456', 10);
+      user = await prisma.user.create({
+        data: {
+          tenantId: tenant.id,
+          roleId: role.id,
+          name: `ডেমো ${targetRoleName}`,
+          phone: '01711000000',
+          passwordHash,
+          status: 'active',
+        },
+        include: { role: true },
+      });
+    }
+
+    const token = signToken({
+      userId: user.id,
+      tenantId: tenant.id,
+      role: requestedRole === 'superadmin' ? 'Super Admin' : user.role.name,
+      phone: user.phone,
+    });
+
+    res.json({
+      success: true,
+      message: 'ডেমো লগইন সফল হয়েছে',
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        email: user.email,
+        role: requestedRole === 'superadmin' ? 'superadmin' : user.role.name.toLowerCase(),
+        roleName: user.role.name,
+      },
+      tenant: {
+        id: tenant.id,
+        name: tenant.name,
+        ownerName: tenant.ownerName,
+        phone: tenant.phone,
+        settings: tenant.settings,
       },
     });
   } catch (err) {

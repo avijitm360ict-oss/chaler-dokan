@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import prisma from '../lib/prisma';
 import { AuthenticatedRequest } from '../middleware/tenant';
+import { requireRole } from '../middleware/auth';
 import { getNextDocNo } from '../utils/docSequence';
 
 const router = Router();
@@ -351,8 +352,8 @@ router.post('/:id/payments', async (req: AuthenticatedRequest, res: Response, ne
   }
 });
 
-// POST /api/v1/parties/:id/send-sms - Send Due Collection SMS to party
-router.post('/:id/send-sms', async (req: AuthenticatedRequest, res: Response, next) => {
+// POST /api/v1/parties/:id/send-sms - Send Due Collection SMS to party (Privileged only)
+router.post('/:id/send-sms', requireRole(['Owner', 'Manager', 'Super Admin']), async (req: AuthenticatedRequest, res: Response, next) => {
   try {
     const tenantId = req.tenantId!;
     const partyId = req.params.id as string;
@@ -382,8 +383,11 @@ router.post('/:id/send-sms', async (req: AuthenticatedRequest, res: Response, ne
 
     const { SmsService } = await import('../services/sms.service');
     const shopName = tenant?.name || 'চালের দোকান';
-    const message =
-      customMessage || SmsService.buildDueReminderSms(shopName, party.name, Math.round(currentBal / 100));
+    let message = SmsService.buildDueReminderSms(shopName, party.name, Math.round(currentBal / 100));
+    if (typeof customMessage === 'string' && customMessage.trim()) {
+      // Clamped to 160 characters and stripped of harmful sequences
+      message = customMessage.trim().slice(0, 160).replace(/[<>{}\\]/g, '');
+    }
 
     const smsResult = await SmsService.sendSms({
       toPhone: party.phone,

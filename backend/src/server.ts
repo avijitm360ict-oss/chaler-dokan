@@ -1,8 +1,11 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { tenantMiddleware } from './middleware/tenant';
 import { errorHandler } from './middleware/errorHandler';
+import { requireAuth } from './middleware/auth';
 
 import authRoutes from './routes/auth.routes';
 import tenantRoutes from './routes/tenant.routes';
@@ -23,8 +26,47 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
-app.use(express.json());
+// 1. Security Headers
+app.use(helmet());
+
+// 2. CORS Policy
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+  : [
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'http://localhost:3000',
+      'http://localhost:4173',
+    ];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, server-to-server) or matched origins
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com')) {
+        callback(null, true);
+      } else {
+        callback(new Error('CORS Policy: Origin not allowed'));
+      }
+    },
+    credentials: true,
+  })
+);
+
+app.use(express.json({ limit: '5mb' }));
+
+// 3. Global Rate Limiter
+const globalApiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 600,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'Too many requests',
+    message: 'অতিরিক্ত রিকোয়েস্টের কারণে সাময়িকভাবে ব্লক করা হয়েছে। অনুগ্রহ করে ১৫ মিনিট পর আবার চেষ্টা করুন।',
+  },
+});
+app.use('/api', globalApiLimiter);
 
 // Request logging middleware
 app.use((req: Request, _res: Response, next: NextFunction) => {
@@ -32,7 +74,7 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   next();
 });
 
-// Health check endpoint
+// Health check endpoint (Public)
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({
     status: 'healthy',
@@ -43,22 +85,19 @@ app.get('/api/health', (_req: Request, res: Response) => {
   });
 });
 
-// Global Multi-tenant middleware for /api/v1
-app.use('/api/v1', tenantMiddleware);
-
-// Part 1 Routes
+// Public Authentication routes (/login, /register, /demo)
 app.use('/api/v1/auth', authRoutes);
+
+// Protected routes (Requires valid JWT and verifies tenant context)
+app.use('/api/v1', requireAuth, tenantMiddleware);
+
 app.use('/api/v1/tenant', tenantRoutes);
 app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/warehouses', warehouseRoutes);
 app.use('/api/v1/market-rates', marketRateRoutes);
-
-// Part 2 Routes
 app.use('/api/v1/purchases', purchaseRoutes);
 app.use('/api/v1/sales', saleRoutes);
 app.use('/api/v1/inventory', inventoryRoutes);
-
-// Part 3 Routes (Parties, Money/Accounts, Reports, Returns)
 app.use('/api/v1/parties', partyRoutes);
 app.use('/api/v1/accounts', accountRoutes);
 app.use('/api/v1/reports', reportRoutes);

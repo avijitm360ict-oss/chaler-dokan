@@ -247,46 +247,6 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
   }
 });
 
-// GET /api/v1/purchases - List purchases
-router.get('/', async (req: AuthenticatedRequest, res: Response, next) => {
-  try {
-    const tenantId = req.tenantId!;
-    const purchases = await prisma.purchase.findMany({
-      where: { tenantId },
-      include: {
-        vendor: true,
-        items: true,
-        expenses: true,
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
-
-    const formatted = purchases.map((p: any) => {
-      const totalKg = p.items.reduce((sum: number, it: any) => sum + Number(it.qtyKg), 0);
-      return {
-        id: p.id,
-        docNo: p.docNo,
-        vendorName: p.vendor.name,
-        vendorShop: p.vendor.shopName,
-        purchaseDate: p.purchaseDate,
-        status: p.status,
-        subtotalPaisa: Number(p.subtotalPaisa),
-        extraCostPaisa: Number(p.extraCostPaisa),
-        grandTotalPaisa: Number(p.grandTotalPaisa),
-        paidTotalPaisa: Number(p.paidTotalPaisa),
-        duePaisa: Number(p.grandTotalPaisa) - Number(p.paidTotalPaisa),
-        totalKg,
-        totalBags50: Math.floor(totalKg / 50),
-        itemCount: p.items.length,
-      };
-    });
-
-    res.json({ purchases: formatted });
-  } catch (err) {
-    next(err);
-  }
-});
 
 // GET /api/v1/purchases - List all purchases
 router.get('/', async (req: AuthenticatedRequest, res: Response, next) => {
