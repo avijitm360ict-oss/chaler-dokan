@@ -172,6 +172,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     // Move to OTP Challenge step (BUG-01)
     setShowOtpStep(true);
+    setOtpCode('123456'); // Pre-fill test OTP for seamless testing
   };
 
   const handleVerifyOtpAndRegister = async (e: React.FormEvent) => {
@@ -453,21 +454,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           ) : showOtpStep ? (
             /* 2B. OTP VERIFICATION STEP (BUG-01) */
             <form onSubmit={handleVerifyOtpAndRegister} className="space-y-4 py-2">
-              <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-center space-y-1">
-                <div className="text-xs font-bold text-emerald-950">
-                  মোবাইল নম্বর ভেরিফিকেশন কোড (OTP)
+              <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 text-center space-y-1.5">
+                <div className="text-xs font-bold text-emerald-950 flex items-center justify-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>মোবাইল নম্বর ভেরিফিকেশন (OTP)</span>
                 </div>
                 <div className="text-[11px] text-emerald-800 font-medium">
-                  <span className="font-mono font-bold">{regPhone}</span> নম্বরে ৬ ডিজিটের এসএমএস ওটিপি কোড পাঠানো হয়েছে
+                  <span className="font-mono font-bold">{regPhone}</span> নম্বরের জন্য ওটিপি তৈরি হয়েছে
                 </div>
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setOtpCode('123456')}
-                    className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-600 text-white text-[10px] font-bold rounded-full hover:bg-emerald-700 cursor-pointer shadow-xs"
-                  >
-                    <span>কোড অটো-ফিল করুন (123456)</span>
-                  </button>
+                <div className="p-2.5 bg-white/95 rounded-xl border border-emerald-300 text-left space-y-1 shadow-2xs">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-slate-800">💡 ওটিপি কোড:</span>
+                    <span className="font-mono font-black text-emerald-700 text-sm px-2 py-0.5 bg-emerald-100 rounded-lg tracking-widest border border-emerald-300">
+                      123456
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 leading-normal">
+                    সিস্টেমে লাইভ পেইড SMS গেটওয়ে কানেক্ট না থাকা পর্যন্ত এই টেস্ট কোডটি ব্যবহার করে একাউন্ট খোলা নিশ্চিত করুন।
+                  </p>
                 </div>
               </div>
 
