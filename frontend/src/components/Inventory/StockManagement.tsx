@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { RiceProduct, Warehouse, Language, NumberFormat, StockMovement } from '../../types';
 import { translations } from '../../i18n/translations';
-import { formatCurrency, formatWeight } from '../../utils/formatters';
+import { formatCurrency, formatWeight, toBengaliDigits } from '../../utils/formatters';
 import { Warehouse as WarehouseIcon, ArrowRightLeft, Sliders, AlertTriangle, CheckCircle2, Plus, Clock, Edit2, Trash2 } from 'lucide-react';
 import { StockCardTimelineModal } from './StockCardTimelineModal';
 import { api } from '../../api/client';
@@ -228,7 +228,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
             {formatWeight(totalStockKg, numFormat, lang)}
           </div>
           <span className="text-[10px] text-slate-400 mt-0.5 block">
-            প্রায় {Math.floor(totalStockKg / 50)} বস্তা চাল স্টকে আছে
+            প্রায় {numFormat === 'bn' ? toBengaliDigits(Math.floor(totalStockKg / 50)) : Math.floor(totalStockKg / 50)} বস্তা চাল স্টকে আছে
           </span>
         </div>
 
@@ -246,7 +246,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
           <div>
             <span className="text-xs font-semibold text-slate-500 block">লো-স্টক সতর্কতা</span>
             <div className={`text-2xl font-black mt-1 ${lowStockCount > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
-              {lowStockCount} টি চাল
+              {numFormat === 'bn' ? toBengaliDigits(lowStockCount) : lowStockCount} টি চাল
             </div>
             <span className="text-[10px] text-slate-400 mt-0.5 block">পুনরায় ক্রয় প্রয়োজন</span>
           </div>
@@ -341,7 +341,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
                       {isLow ? (
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
                           <AlertTriangle className="w-3 h-3 text-amber-500" />
-                          লো-স্টক ({p.minStockKg} কেজির কম)
+                          লো-স্টক ({numFormat === 'bn' ? toBengaliDigits(p.minStockKg) : p.minStockKg} কেজির কম)
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
@@ -407,7 +407,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
                   className="w-full p-2.5 rounded-xl border border-slate-300 font-bold bg-white"
                 >
                   {products.map((p) => (
-                    <option key={p.id} value={p.id}>{p.nameBn} (বর্তমান: {p.stockKg} কেজি)</option>
+                    <option key={p.id} value={p.id}>{p.nameBn} (বর্তমান: {numFormat === 'bn' ? toBengaliDigits(p.stockKg) : p.stockKg} কেজি)</option>
                   ))}
                 </select>
               </div>
@@ -562,7 +562,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">মোট কেজি (স্বয়ংক্রিয়)</label>
                   <div className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-100 font-extrabold text-base text-blue-700">
-                    {transferBags * 50} কেজি
+                    {numFormat === 'bn' ? toBengaliDigits(transferBags * 50) : transferBags * 50} কেজি
                   </div>
                 </div>
               </div>

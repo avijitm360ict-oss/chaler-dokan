@@ -125,7 +125,7 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
               : 'border-transparent text-[#5B574E] hover:text-[#1A1A17]'
           }`}
         >
-          বিক্রয় ফেরত তালিকা ({returns.filter((r) => r.type === 'sale_return').length})
+          বিক্রয় ফেরত তালিকা ({numFormat === 'bn' ? toBengaliDigits(returns.filter((r) => r.type === 'sale_return').length) : returns.filter((r) => r.type === 'sale_return').length})
         </button>
         <button
           onClick={() => setReturnType('purchase_return')}
@@ -135,7 +135,7 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
               : 'border-transparent text-[#5B574E] hover:text-[#1A1A17]'
           }`}
         >
-          ক্রয় ফেরত তালিকা ({returns.filter((r) => r.type === 'purchase_return').length})
+          ক্রয় ফেরত তালিকা ({numFormat === 'bn' ? toBengaliDigits(returns.filter((r) => r.type === 'purchase_return').length) : returns.filter((r) => r.type === 'purchase_return').length})
         </button>
       </div>
 
@@ -168,7 +168,7 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
                     <td className="py-3 px-4">
                       {ret.items.map((it, idx) => (
                         <div key={idx}>
-                          {it.productName} ({it.totalKg} কেজি)
+                          {it.productName} ({numFormat === 'bn' ? toBengaliDigits(it.totalKg) : it.totalKg} কেজি)
                         </div>
                       ))}
                     </td>
@@ -212,7 +212,7 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
             
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
               <h3 className="font-extrabold text-base text-[#1A1A17]">
-                {lang === 'bn' ? 'চাল ফেরত ফর্ম (S5)' : 'Return Entry Form'}
+                {isSaleReturn ? 'বিক্রয় ফেরত ফর্ম ও ক্রেডিট নোট (S5)' : 'ক্রয় ফেরত ফর্ম ও ডেবিট নোট (P3)'}
               </h3>
               <button onClick={() => setIsModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-700">
                 <X className="w-5 h-5" />
@@ -234,12 +234,12 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
                   {isSaleReturn
                     ? sales.map((s) => (
                         <option key={s.id} value={s.docNo}>
-                          {s.docNo} — {s.clientName} ({s.totalKg} কেজি চাল, ৳{(s.grandTotalPaisa / 100).toFixed(0)})
+                          {s.docNo} — {s.clientName} ({formatWeight(s.totalKg, numFormat, lang)}, {formatCurrency(s.grandTotalPaisa, numFormat)})
                         </option>
                       ))
                     : purchases.map((p) => (
                         <option key={p.id} value={p.docNo}>
-                          {p.docNo} — {p.vendorName} ({p.items[0]?.totalKg || 0} কেজি চাল, ৳{(p.grandTotalPaisa / 100).toFixed(0)})
+                          {p.docNo} — {p.vendorName} ({formatWeight(p.items[0]?.totalKg || 0, numFormat, lang)}, {formatCurrency(p.grandTotalPaisa, numFormat)})
                         </option>
                       ))}
                 </select>
@@ -259,7 +259,7 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
                   <span className="text-slate-500">
                     {isSaleReturn ? 'বিক্রিত পরিমাণ (সর্বোচ্চ ফেরত সীমা):' : 'ক্রয়কৃত পরিমাণ (সর্বোচ্চ ফেরত সীমা):'}
                   </span>
-                  <span className="font-bold text-[#1F7A4D]">{maxReturnableKg} কেজি</span>
+                  <span className="font-bold text-[#1F7A4D]">{formatWeight(maxReturnableKg, numFormat, lang)}</span>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-[#1A1A17] mb-1">ফেরতের পরিমাণ (কেজি):</label>
@@ -344,7 +344,7 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
                   className="w-full h-12 bg-[#1F7A4D] hover:bg-[#16603B] text-white font-extrabold text-sm rounded-xl shadow-md transition touch-target flex items-center justify-center gap-2"
                 >
                   <CheckCircle2 className="w-5 h-5" />
-                  <span>ফেরত কনফার্ম ও ক্রেডিট নোট তৈরি করুন</span>
+                  <span>{isSaleReturn ? 'ফেরত কনফার্ম ও ক্রেডিট নোট তৈরি করুন' : 'ফেরত কনফার্ম ও ডেবিট নোট তৈরি করুন'}</span>
                 </button>
               </div>
 
@@ -354,12 +354,14 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
         </div>
       )}
 
-      {/* Credit Note Print Preview Modal */}
+      {/* Credit / Debit Note Print Preview Modal */}
       {activeReturnPrint && (
         <div className="fixed inset-0 z-50 bg-[#1A1A17]/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-modal border border-slate-200 space-y-4">
             <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-              <h3 className="font-extrabold text-sm text-[#1A1A17]">ক্রেডিট নোট রসিদ (Credit Note)</h3>
+              <h3 className="font-extrabold text-sm text-[#1A1A17]">
+                {activeReturnPrint.type === 'purchase_return' ? 'ডেবিট নোট রসিদ (Debit Note - P3)' : 'ক্রেডিট নোট রসিদ (Credit Note - S5)'}
+              </h3>
               <button onClick={() => setActiveReturnPrint(null)} className="p-1 text-slate-400 hover:text-slate-700">
                 <X className="w-4 h-4" />
               </button>
@@ -368,8 +370,12 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
             <div id="printable-area" className="p-4 border border-dashed border-slate-300 rounded-2xl space-y-3 text-xs bg-slate-50/50">
               <div className="text-center pb-2 border-b border-slate-200">
                 <div className="font-bold text-sm text-[#1F7A4D]">মেসার্স বিসমিল্লাহ চাউল আড়ত</div>
-                <div className="text-[11px] text-slate-500">ক্রেডিট নোট নম্বর: {activeReturnPrint.docNo}</div>
-                <div className="text-[10px] text-slate-400">মূল ইনভয়েস: {activeReturnPrint.originalDocNo}</div>
+                <div className="text-[11px] text-slate-500">
+                  {activeReturnPrint.type === 'purchase_return' ? 'ডেবিট নোট নম্বর: ' : 'ক্রেডিট নোট নম্বর: '}{activeReturnPrint.docNo}
+                </div>
+                <div className="text-[10px] text-slate-400">
+                  {activeReturnPrint.type === 'purchase_return' ? 'মূল ক্রয় চালান: ' : 'মূল বিক্রয় ইনভয়েস: '}{activeReturnPrint.originalDocNo}
+                </div>
               </div>
 
               <div className="flex justify-between">
@@ -389,7 +395,7 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
                   {activeReturnPrint.items.map((it, idx) => (
                     <tr key={idx} className="border-b border-slate-100">
                       <td className="py-1.5">{it.productName}</td>
-                      <td className="py-1.5 text-center">{it.totalKg} কেজি</td>
+                      <td className="py-1.5 text-center">{formatWeight(it.totalKg, numFormat, lang)}</td>
                       <td className="py-1.5 text-right tabular-nums">{formatCurrency(it.totalAmountPaisa, numFormat)}</td>
                     </tr>
                   ))}
@@ -397,7 +403,7 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
               </table>
 
               <div className="flex justify-between font-black text-sm pt-1 border-t border-slate-300">
-                <span>ফেরতের মোট ক্রেডিট:</span>
+                <span>{activeReturnPrint.type === 'purchase_return' ? 'ফেরতের মোট ডেবিট (দেনা হ্রাস):' : 'ফেরতের মোট ক্রেডিট (বাকি হ্রাস):'}</span>
                 <span className="text-[#1F7A4D] tabular-nums">{formatCurrency(activeReturnPrint.totalAmountPaisa, numFormat)}</span>
               </div>
             </div>

@@ -638,6 +638,15 @@ export function App() {
       );
     }
 
+    // Deduct paid purchase cash from drawer if any
+    if (bill.paidAmountPaisa > 0) {
+      setDayClose((prev) => ({
+        ...prev,
+        vendorPaidCashPaisa: prev.vendorPaidCashPaisa + bill.paidAmountPaisa,
+        expectedSystemCashPaisa: prev.expectedSystemCashPaisa - bill.paidAmountPaisa,
+      }));
+    }
+
     // Backend purchase sync
     if (isServerLive && !isOffline) {
       const vendor = parties.find((p) => p.name === bill.vendorName);

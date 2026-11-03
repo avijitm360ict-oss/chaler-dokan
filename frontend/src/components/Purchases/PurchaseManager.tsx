@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { PurchaseBill, RiceProduct, Party, Warehouse, Language, NumberFormat } from '../../types';
 import { translations } from '../../i18n/translations';
-import { formatCurrency, formatWeight, formatDateBangla } from '../../utils/formatters';
+import { formatCurrency, formatWeight, formatDateBangla, toBengaliDigits } from '../../utils/formatters';
 import { standardUnits } from '../../data/mockData';
 import { Truck, Plus, CheckCircle2, FileText, ArrowDownRight, Sparkles, Building2, Package } from 'lucide-react';
 
@@ -159,7 +159,7 @@ export const PurchaseManager: React.FC<PurchaseManagerProps> = ({
                       <div key={idx}>
                         <span className="font-bold text-slate-900">{item.product.nameBn}</span>
                         <span className="block text-[10px] text-slate-500">
-                          {item.unitQuantity} বস্তা ({item.totalKg} কেজি)
+                          {numFormat === 'bn' ? toBengaliDigits(item.unitQuantity) : item.unitQuantity} বস্তা ({numFormat === 'bn' ? toBengaliDigits(item.totalKg) : item.totalKg} কেজি)
                         </span>
                       </div>
                     ))}
@@ -269,7 +269,7 @@ export const PurchaseManager: React.FC<PurchaseManagerProps> = ({
                       className="w-full p-2 rounded-xl border border-slate-300 font-bold bg-white"
                     />
                     <span className="text-[10px] text-slate-500 mt-0.5 block">
-                      মোট ওজন: {totalKg} কেজি ({totalKg / 40} মণ)
+                      মোট ওজন: {numFormat === 'bn' ? toBengaliDigits(totalKg) : totalKg} কেজি ({numFormat === 'bn' ? toBengaliDigits((totalKg / 40).toFixed(1)) : (totalKg / 40).toFixed(1)} মণ)
                     </span>
                   </div>
 
@@ -296,7 +296,7 @@ export const PurchaseManager: React.FC<PurchaseManagerProps> = ({
                       className="w-full p-2 rounded-xl border border-slate-300 font-bold bg-white"
                     />
                     <span className="text-[10px] text-emerald-700 font-semibold block mt-0.5">
-                      প্রতি কেজিতে যুক্ত হবে: +{truckPerKgTaka.toFixed(2)} ৳
+                      প্রতি কেজিতে যুক্ত হবে: +{formatCurrency(Math.round(truckPerKgTaka * 100), numFormat)}
                     </span>
                   </div>
 
@@ -309,7 +309,7 @@ export const PurchaseManager: React.FC<PurchaseManagerProps> = ({
                       className="w-full p-2 rounded-xl border border-slate-300 font-bold bg-white"
                     />
                     <span className="text-[10px] text-emerald-700 font-semibold block mt-0.5">
-                      প্রতি কেজিতে যুক্ত হবে: +{labourPerKgTaka.toFixed(2)} ৳
+                      প্রতি কেজিতে যুক্ত হবে: +{formatCurrency(Math.round(labourPerKgTaka * 100), numFormat)}
                     </span>
                   </div>
                 </div>
@@ -325,14 +325,14 @@ export const PurchaseManager: React.FC<PurchaseManagerProps> = ({
                   <div className="text-right">
                     <span className="text-xs text-slate-500">প্রতি কেজির আসল ক্রয়মূল্য:</span>
                     <div className="text-lg font-extrabold text-emerald-800">
-                      ৳ {landedCostPerKgTaka.toFixed(2)} / কেজি
+                      {formatCurrency(Math.round(landedCostPerKgTaka * 100), numFormat)}/কেজি
                     </div>
                   </div>
                 </div>
 
                 <div className="flex justify-between text-[11px] text-emerald-700 border-t border-emerald-200/60 pt-1.5">
-                  <span>পূর্বের গড় খরচ: ৳{(selectedProduct.wacPerKgPaisa / 100).toFixed(2)}</span>
-                  <span className="font-bold">নতুন Weighted Average Cost (WAC): ৳{newForecastWacTaka.toFixed(2)}</span>
+                  <span>পূর্বের গড় খরচ: {formatCurrency(selectedProduct.wacPerKgPaisa, numFormat)}</span>
+                  <span className="font-bold">নতুন Weighted Average Cost (WAC): {formatCurrency(Math.round(newForecastWacTaka * 100), numFormat)}</span>
                 </div>
               </div>
 
@@ -341,7 +341,7 @@ export const PurchaseManager: React.FC<PurchaseManagerProps> = ({
                 <div>
                   <label className="font-bold text-slate-700 block mb-1">সর্বমোট প্রদেয় বিল</label>
                   <div className="text-base font-extrabold text-slate-900 p-2 bg-slate-100 rounded-xl">
-                    ৳ {grandTotalTaka.toLocaleString()}
+                    {formatCurrency(Math.round(grandTotalTaka * 100), numFormat)}
                   </div>
                 </div>
                 <div>
@@ -353,7 +353,7 @@ export const PurchaseManager: React.FC<PurchaseManagerProps> = ({
                     className="w-full p-2 rounded-xl border border-slate-300 font-extrabold text-emerald-700"
                   />
                   <span className="text-[10px] text-amber-700 font-semibold block mt-0.5">
-                    মিল পাবে (বাকি): ৳{dueTaka.toLocaleString()}
+                    মিল পাবে (বাকি): {formatCurrency(Math.round(dueTaka * 100), numFormat)}
                   </span>
                 </div>
               </div>
