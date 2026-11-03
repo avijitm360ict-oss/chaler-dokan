@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { RiceProduct, Warehouse, Language, NumberFormat, StockMovement } from '../../types';
 import { translations } from '../../i18n/translations';
 import { formatCurrency, formatWeight } from '../../utils/formatters';
-import { Warehouse as WarehouseIcon, ArrowRightLeft, Sliders, AlertTriangle, CheckCircle2, Plus, Clock, Edit2 } from 'lucide-react';
+import { Warehouse as WarehouseIcon, ArrowRightLeft, Sliders, AlertTriangle, CheckCircle2, Plus, Clock, Edit2, Trash2 } from 'lucide-react';
 import { StockCardTimelineModal } from './StockCardTimelineModal';
 import { api } from '../../api/client';
 
@@ -19,6 +19,8 @@ interface StockManagementProps {
     qtyKg: number,
     note?: string
   ) => Promise<void> | void;
+  onUpdateProduct?: (updatedProduct: RiceProduct) => void;
+  onDeleteProduct?: (productId: string) => void;
 }
 
 export const StockManagement: React.FC<StockManagementProps> = ({
@@ -28,6 +30,8 @@ export const StockManagement: React.FC<StockManagementProps> = ({
   numFormat,
   onAdjustStock,
   onTransferStock,
+  onUpdateProduct,
+  onDeleteProduct,
 }) => {
   const t = translations[lang];
 
@@ -75,16 +79,36 @@ export const StockManagement: React.FC<StockManagementProps> = ({
         grade: editGrade,
         minStockKg: editMinStockKg,
       });
-      editingProduct.nameBn = editNameBn;
-      editingProduct.variety = editVariety;
-      editingProduct.grade = editGrade;
-      editingProduct.minStockKg = editMinStockKg;
+
+      // Immutable state update (BUG-08)
+      const updated: RiceProduct = {
+        ...editingProduct,
+        nameBn: editNameBn,
+        variety: editVariety,
+        grade: editGrade,
+        minStockKg: editMinStockKg,
+      };
+      onUpdateProduct?.(updated);
       setEditingProduct(null);
       alert('চালের তথ্য সফলভাবে আপডেট সম্পন্ন হয়েছে!');
     } catch (err: any) {
       alert('আপডেট ব্যর্থ হয়েছে: ' + (err?.message || 'সমস্যা হয়েছে'));
     } finally {
       setIsSavingProduct(false);
+    }
+  };
+
+  // Archive / Delete Product Handler (BUG-10)
+  const handleDeleteProduct = async (p: RiceProduct) => {
+    if (!window.confirm(`আপনি কি নিশ্চিত যে "${p.nameBn}" পণ্যটি তালিকা থেকে মুছে বা আর্কাইভ করতে চান?`)) {
+      return;
+    }
+    try {
+      await api.products.archive(p.id);
+      onDeleteProduct?.(p.id);
+      alert('পণ্যটি সফলভাবে আর্কাইভ করা হয়েছে!');
+    } catch (err: any) {
+      alert('আর্কাইভ করতে সমস্যা হয়েছে: ' + (err?.message || 'ত্রুটি'));
     }
   };
 
@@ -342,6 +366,14 @@ export const StockManagement: React.FC<StockManagementProps> = ({
                         >
                           <Edit2 className="w-3.5 h-3.5 text-slate-600" />
                           <span>এডিট</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProduct(p)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold transition border border-rose-200 shadow-2xs"
+                          title="পণ্যটি আর্কাইভ / ডিলিট করুন"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                          <span>আর্কাইভ</span>
                         </button>
                       </div>
                     </td>

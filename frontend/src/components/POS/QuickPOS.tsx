@@ -82,6 +82,10 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
   const [paidBkashTaka, setPaidBkashTaka] = useState<number>(0);
   const [paidNagadTaka, setPaidNagadTaka] = useState<number>(0);
   const [paidBankTaka, setPaidBankTaka] = useState<number>(0);
+  const [paidBkashTrxId, setPaidBkashTrxId] = useState<string>('');
+  const [paidNagadTrxId, setPaidNagadTrxId] = useState<string>('');
+  const [paidBankTrxId, setPaidBankTrxId] = useState<string>('');
+  const [ownerCreditApproved, setOwnerCreditApproved] = useState<boolean>(false);
   const [cashTenderedTaka, setCashTenderedTaka] = useState<number>(0); // e.g. দিলেন ২০০০, ফেরত ১২০
   const [showSplitPayment, setShowSplitPayment] = useState<boolean>(false);
 
@@ -163,9 +167,13 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
     setModalCustomPriceTaka(defaultPricePaisa / 100);
   };
 
-  // Add product to cart with custom unit & price
+  // Add product to cart with custom unit & price (BUG-06)
   const addToCartFromModal = () => {
     if (!activeModalProduct) return;
+    if (modalQty <= 0 || modalCustomPriceTaka < 0 || isNaN(modalQty) || isNaN(modalCustomPriceTaka)) {
+      alert('অনুগ্রহ করে সঠিক পরিমাণ ও বিক্রয় দর দিন (০ বা তার বেশি হতে হবে)');
+      return;
+    }
     const unit = activeModalProduct.availableUnits.find((u) => u.id === modalUnitId) || activeModalProduct.availableUnits[0];
     const totalKg = modalQty * unit.kgPerUnit;
     const unitPricePaisa = Math.round(modalCustomPriceTaka * 100);
@@ -398,11 +406,28 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
       return;
     }
 
+    // Strict Credit Limit Hard Stop & Manager Approval (BUG-15)
+    if (selectedClient && dueAmountPaisa > 0 && selectedClient.creditLimitPaisa > 0) {
+      const projectedBalance = (selectedClient.balancePaisa || 0) + dueAmountPaisa;
+      if (projectedBalance > selectedClient.creditLimitPaisa) {
+        if (userRole === 'cashier') {
+          alert('ক্রেডিট লিমিট অতিক্রম করেছে! মালিকের অনুমোদন ব্যতীত ক্যাশিয়ার বাকি বিক্রি সম্পন্ন করতে পারবে না।');
+          return;
+        }
+        if (!ownerCreditApproved) {
+          const confirmOverride = window.confirm(
+            `সতর্কতা: কাস্টমারের ক্রেডিট লিমিট অতিক্রম করেছে!\nমোট বাকি হবে: ৳${(projectedBalance / 100).toFixed(0)}\nক্রেডিট লিমিট: ৳${(selectedClient.creditLimitPaisa / 100).toFixed(0)}\n\nআপনি কি মালিক হিসেবে এই বিক্রি অনুমোদন করতে চান?`
+          );
+          if (!confirmOverride) return;
+        }
+      }
+    }
+
     const payments: PaymentSplit[] = [];
     if (paidCashPaisa > 0) payments.push({ method: 'cash', amountPaisa: paidCashPaisa, accountName: 'প্রধান ক্যাশ ড্রয়ার' });
-    if (paidBkashPaisa > 0) payments.push({ method: 'bkash', amountPaisa: paidBkashPaisa, accountName: 'বিকাশ মার্চেন্ট' });
-    if (paidNagadPaisa > 0) payments.push({ method: 'nagad', amountPaisa: paidNagadPaisa, accountName: 'নগদ উদ্যোক্তা' });
-    if (paidBankPaisa > 0) payments.push({ method: 'bank', amountPaisa: paidBankPaisa, accountName: 'ব্যাংক একাউন্ট' });
+    if (paidBkashPaisa > 0) payments.push({ method: 'bkash', amountPaisa: paidBkashPaisa, accountName: 'বিকাশ মার্চেন্ট', trxId: paidBkashTrxId.trim() || undefined });
+    if (paidNagadPaisa > 0) payments.push({ method: 'nagad', amountPaisa: paidNagadPaisa, accountName: 'নগদ উদ্যোক্তা', trxId: paidNagadTrxId.trim() || undefined });
+    if (paidBankPaisa > 0) payments.push({ method: 'bank', amountPaisa: paidBankPaisa, accountName: 'ব্যাংক একাউন্ট', trxId: paidBankTrxId.trim() || undefined });
 
     const newInvoice: SaleInvoice = {
       id: `inv-${Date.now()}`,
@@ -1178,6 +1203,15 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                     placeholder="০"
                     className="w-full p-1.5 bg-white border border-pink-300 rounded-lg font-black text-pink-900"
                   />
+                  {paidBkashTaka > 0 && (
+                    <input
+                      type="text"
+                      value={paidBkashTrxId}
+                      onChange={(e) => setPaidBkashTrxId(e.target.value)}
+                      placeholder="বিকাশ TrxID (ঐচ্ছিক)"
+                      className="w-full mt-1.5 p-1 bg-white border border-pink-200 rounded text-[10px] font-mono text-pink-950 placeholder:text-pink-300"
+                    />
+                  )}
                 </div>
 
                 {/* Nagad */}
@@ -1193,6 +1227,15 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                     placeholder="০"
                     className="w-full p-1.5 bg-white border border-orange-300 rounded-lg font-black text-orange-900"
                   />
+                  {paidNagadTaka > 0 && (
+                    <input
+                      type="text"
+                      value={paidNagadTrxId}
+                      onChange={(e) => setPaidNagadTrxId(e.target.value)}
+                      placeholder="নগদ TrxID (ঐচ্ছিক)"
+                      className="w-full mt-1.5 p-1 bg-white border border-orange-200 rounded text-[10px] font-mono text-orange-950 placeholder:text-orange-300"
+                    />
+                  )}
                 </div>
 
                 {/* Bank */}
@@ -1208,22 +1251,69 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                     placeholder="০"
                     className="w-full p-1.5 bg-white border border-blue-300 rounded-lg font-black text-blue-900"
                   />
+                  {paidBankTaka > 0 && (
+                    <input
+                      type="text"
+                      value={paidBankTrxId}
+                      onChange={(e) => setPaidBankTrxId(e.target.value)}
+                      placeholder="ব্যাংক স্লিপ নং / TrxID (ঐচ্ছিক)"
+                      className="w-full mt-1.5 p-1 bg-white border border-blue-200 rounded text-[10px] font-mono text-blue-950 placeholder:text-blue-300"
+                    />
+                  )}
                 </div>
 
               </div>
             </div>
 
-            {/* Calculated Due or Paid */}
+            {/* Calculated Due or Paid & Credit Limit Validation */}
             {(() => {
               const totalPaidPaisa = Math.round((paidCashTaka + paidBkashTaka + paidNagadTaka + paidBankTaka) * 100);
               const duePaisa = grandTotalPaisa - totalPaidPaisa;
+              const projectedBalance = (selectedClient?.balancePaisa || 0) + Math.max(0, duePaisa);
+              const isCreditBreached = !!(
+                selectedClient &&
+                selectedClient.creditLimitPaisa > 0 &&
+                duePaisa > 0 &&
+                projectedBalance > selectedClient.creditLimitPaisa
+              );
 
               return (
-                <div className={`p-2.5 rounded-xl text-xs font-bold flex justify-between ${
-                  duePaisa > 0 ? 'bg-[#FFF4DC] text-[#8A5A00]' : 'bg-[#E8F4EC] text-[#1F7A4D]'
-                }`}>
-                  <span>{duePaisa > 0 ? `${t.dueAmount}:` : 'সম্পূর্ণ পরিশোধ:'}</span>
-                  <span className="tabular-nums">{formatCurrency(Math.abs(duePaisa), numFormat)}</span>
+                <div className="space-y-2">
+                  <div
+                    className={`p-2.5 rounded-xl text-xs font-bold flex justify-between ${
+                      duePaisa > 0 ? 'bg-[#FFF4DC] text-[#8A5A00]' : 'bg-[#E8F4EC] text-[#1F7A4D]'
+                    }`}
+                  >
+                    <span>{duePaisa > 0 ? `${t.dueAmount}:` : 'সম্পূর্ণ পরিশোধ:'}</span>
+                    <span className="tabular-nums">{formatCurrency(Math.abs(duePaisa), numFormat)}</span>
+                  </div>
+
+                  {isCreditBreached && (
+                    <div className="p-3 bg-rose-50 border border-rose-300 rounded-xl text-rose-800 text-xs space-y-1.5">
+                      <div className="flex items-center gap-1.5 font-bold text-rose-900">
+                        <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                        <span>ক্রেডিট লিমিট অতিক্রম করেছে!</span>
+                      </div>
+                      <div className="text-[11px] text-rose-700 leading-relaxed">
+                        বর্তমান বাকি: {formatCurrency(selectedClient.balancePaisa, numFormat)} + নতুন বাকি: {formatCurrency(duePaisa, numFormat)} = মোট {formatCurrency(projectedBalance, numFormat)} (নির্ধারিত লিমিট: {formatCurrency(selectedClient.creditLimitPaisa, numFormat)})
+                      </div>
+                      {userRole === 'cashier' ? (
+                        <div className="font-extrabold text-rose-950 bg-rose-100 p-2 rounded-lg text-center">
+                          ⛔ ক্যাশিয়ারের এই বাকি বিক্রয় অনুমোদনের অনুমতি নেই। মালিকের অনুমোদন প্রয়োজন।
+                        </div>
+                      ) : (
+                        <label className="flex items-center gap-2 cursor-pointer pt-1 font-bold text-slate-800">
+                          <input
+                            type="checkbox"
+                            checked={ownerCreditApproved}
+                            onChange={(e) => setOwnerCreditApproved(e.target.checked)}
+                            className="rounded text-rose-600 focus:ring-rose-500 w-4 h-4"
+                          />
+                          <span>মালিক হিসেবে বিশেষ অনুমোদন প্রদান করছি</span>
+                        </label>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })()}
@@ -1238,7 +1328,21 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
               </button>
               <button
                 onClick={handleFinalizeSale}
-                className="flex-1 h-14 rounded-2xl bg-[#1F7A4D] hover:bg-[#16603B] text-white font-black text-base shadow-lg flex items-center justify-center gap-2 touch-target-pos"
+                disabled={(() => {
+                  const totalPaidPaisa = Math.round((paidCashTaka + paidBkashTaka + paidNagadTaka + paidBankTaka) * 100);
+                  const duePaisa = grandTotalPaisa - totalPaidPaisa;
+                  const projectedBalance = (selectedClient?.balancePaisa || 0) + Math.max(0, duePaisa);
+                  const isCreditBreached = !!(
+                    selectedClient &&
+                    selectedClient.creditLimitPaisa > 0 &&
+                    duePaisa > 0 &&
+                    projectedBalance > selectedClient.creditLimitPaisa
+                  );
+                  if (!isCreditBreached) return false;
+                  if (userRole === 'cashier') return true;
+                  return !ownerCreditApproved;
+                })()}
+                className="flex-1 h-14 rounded-2xl bg-[#1F7A4D] hover:bg-[#16603B] disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-black text-base shadow-lg flex items-center justify-center gap-2 touch-target-pos"
               >
                 <CheckCircle2 className="w-5 h-5" />
                 <span>{lang === 'bn' ? 'বিক্রি কনফার্ম ও প্রিন্ট (সম্পূর্ণ)' : 'Confirm & Print'}</span>

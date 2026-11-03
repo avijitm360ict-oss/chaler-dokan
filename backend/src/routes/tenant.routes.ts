@@ -294,4 +294,144 @@ router.get('/backup', requireRole(['Owner', 'Super Admin']), async (req: Authent
   }
 });
 
+// POST /api/v1/tenant/subscription/upgrade - Self-service subscription upgrade (BUG-13)
+router.post('/subscription/upgrade', requireRole(['Owner', 'Super Admin']), async (req: AuthenticatedRequest, res: Response, next) => {
+  try {
+    const tenantId = req.tenantId!;
+    const { planName = 'প্রো প্ল্যান (Pro Plan)', paymentMethod = 'bkash', trxId = '' } = req.body;
+
+    const currentTenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+    if (!currentTenant) {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+
+    const currentSettings = (currentTenant.settings as any) || {};
+    const newTrialEnds = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // +30 days
+
+    const updated = await prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        status: 'active',
+        trialEndsAt: newTrialEnds,
+        settings: {
+          ...currentSettings,
+          planName,
+          lastPaymentMethod: paymentMethod,
+          lastTrxId: trxId,
+          lastUpgradedAt: new Date().toISOString(),
+        },
+      },
+    });
+
+    res.json({
+      success: true,
+      message: `${planName} সফলভাবে সক্রিয় করা হয়েছে!`,
+      tenant: updated,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/v1/tenant/all - SuperAdmin list all tenants with live stats (BUG-14)
+router.get('/all', requireRole(['Super Admin']), async (_req: AuthenticatedRequest, res: Response, next) => {
+  try {
+    const tenants = await prisma.tenant.findMany({
+      include: {
+        plan: true,
+        _count: {
+          select: {
+            users: true,
+            sales: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const now = Date.now();
+    const formatted = tenants.map((t) => {
+      const trialMs = new Date(t.trialEndsAt).getTime() - now;
+      const trialDays = Math.max(0, Math.ceil(trialMs / (1000 * 60 * 60 * 24)));
+      const settings = (t.settings as any) || {};
+
+      return {
+        id: t.id,
+        name: t.name,
+        owner: t.ownerName,
+        phone: t.phone,
+        location: settings.address || 'বাংলাদেশ',
+        plan: settings.planName || t.plan?.name || (t.status === 'trial' ? 'Basic Trial' : 'Pro Plan (প্রো)'),
+        status: t.status,
+        trialDays,
+        usersCount: t._count.users || 1,
+        monthlySalesCount: t._count.sales || 0,
+      };
+    });
+
+    res.json({
+      success: true,
+      data: formatted,
+      tenants: formatted,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/v1/tenant/:id/status - SuperAdmin toggle tenant status (BUG-14)
+router.put('/:id/status', requireRole(['Super Admin']), async (req: AuthenticatedRequest, res: Response, next) => {
+  try {
+    const targetTenantId = req.params.id as string;
+    const { status } = req.body;
+
+    if (!['active', 'suspended', 'trial'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    const updated = await prisma.tenant.update({
+      where: { id: targetTenantId },
+      data: { status },
+    });
+
+    res.json({
+      success: true,
+      message: `দোকানের স্ট্যাটাস পরিবর্তন করে "${status}" করা হয়েছে`,
+      tenant: updated,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/v1/tenant/:id/extend-trial - SuperAdmin extend trial by days (BUG-14)
+router.put('/:id/extend-trial', requireRole(['Super Admin']), async (req: AuthenticatedRequest, res: Response, next) => {
+  try {
+    const targetTenantId = req.params.id as string;
+    const { days = 14 } = req.body;
+
+    const tenant = await prisma.tenant.findUnique({ where: { id: targetTenantId } });
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+
+    const currentExpiry = new Date(tenant.trialEndsAt).getTime();
+    const baseTime = currentExpiry > Date.now() ? currentExpiry : Date.now();
+    const newExpiry = new Date(baseTime + days * 24 * 60 * 60 * 1000);
+
+    const updated = await prisma.tenant.update({
+      where: { id: targetTenantId },
+      data: { trialEndsAt: newExpiry, status: 'active' },
+    });
+
+    res.json({
+      success: true,
+      message: `ট্রায়াল মেয়াদ আরও ${days} দিন বৃদ্ধি করা হয়েছে`,
+      tenant: updated,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

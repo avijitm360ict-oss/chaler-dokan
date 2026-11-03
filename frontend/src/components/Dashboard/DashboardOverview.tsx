@@ -253,7 +253,13 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </div>
           </div>
           <div className="text-xl sm:text-2xl font-black text-[#1A1A17] mt-2 tabular-nums">
-            {formatCurrency(totalSalesTodayPaisa, numFormat)}
+            {userRole === 'cashier' ? (
+              <span className="text-sm text-slate-400 font-bold flex items-center gap-1">
+                <Lock className="w-3.5 h-3.5" /> শুধুমাত্র মালিকের জন্য
+              </span>
+            ) : (
+              formatCurrency(totalSalesTodayPaisa, numFormat)
+            )}
           </div>
           <div className="text-[11px] text-[#1F7A4D] font-bold mt-1">
             {sales.length} টি মেমো • {formatWeight(totalKgSoldToday, numFormat, lang)}
@@ -269,7 +275,13 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </div>
           </div>
           <div className="text-xl sm:text-2xl font-black text-[#1B7F3B] mt-2 tabular-nums">
-            {formatCurrency(totalPaidTodayPaisa, numFormat)}
+            {userRole === 'cashier' ? (
+              <span className="text-sm text-slate-400 font-bold flex items-center gap-1">
+                <Lock className="w-3.5 h-3.5" /> শুধুমাত্র মালিকের জন্য
+              </span>
+            ) : (
+              formatCurrency(totalPaidTodayPaisa, numFormat)
+            )}
           </div>
           <div className="text-[11px] text-[#5B574E] mt-1">
             নগদ ও ব্যাংক মিলে আদায়
@@ -285,7 +297,13 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </div>
           </div>
           <div className="text-xl sm:text-2xl font-black text-[#1D5FA8] mt-2 tabular-nums">
-            {formatCurrency(totalDueTodayPaisa, numFormat)}
+            {userRole === 'cashier' ? (
+              <span className="text-sm text-slate-400 font-bold flex items-center gap-1">
+                <Lock className="w-3.5 h-3.5" /> শুধুমাত্র মালিকের জন্য
+              </span>
+            ) : (
+              formatCurrency(totalDueTodayPaisa, numFormat)
+            )}
           </div>
           <div className="text-[11px] text-[#1D5FA8] font-bold mt-1">
             পাবেন (কাস্টমার খাতা)
@@ -322,35 +340,45 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               </h3>
               <span className="text-[11px] text-[#5B574E]">দৈনিক সর্বমোট বিক্রি ও গতিবিধি</span>
             </div>
-            <span className="text-xs font-bold text-[#1F7A4D]">
-              সর্বোচ্চ: {formatCurrency(maxDayAmount, numFormat)}
-            </span>
+            {userRole !== 'cashier' && (
+              <span className="text-xs font-bold text-[#1F7A4D]">
+                সর্বোচ্চ: {formatCurrency(maxDayAmount, numFormat)}
+              </span>
+            )}
           </div>
 
-          <div className="h-40 flex items-end justify-between gap-2 pt-4 px-1">
-            {last7Days.map((d, idx) => {
-              const heightPct = Math.max(15, Math.round((d.amountPaisa / maxDayAmount) * 100));
-              const isToday = idx === last7Days.length - 1;
-              return (
-                <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
-                  <span className="text-[9px] font-bold text-[#5B574E] opacity-0 group-hover:opacity-100 transition tabular-nums">
-                    ৳{toBengaliDigits(Math.round(d.amountPaisa / 100000))}L
-                  </span>
-                  <div
-                    style={{ height: `${heightPct}%` }}
-                    className={`w-full rounded-t-xl transition-all duration-300 ${
-                      isToday
-                        ? 'bg-[#1F7A4D] shadow-sm shadow-[#1F7A4D]/30'
-                        : 'bg-[#D1EAD9] group-hover:bg-[#1F7A4D]/70'
-                    }`}
-                  />
-                  <span className={`text-[11px] font-bold ${isToday ? 'text-[#1F7A4D]' : 'text-[#5B574E]'}`}>
-                    {lang === 'bn' ? d.dayBn : d.dayEn}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+          {userRole === 'cashier' ? (
+            <div className="h-40 flex flex-col items-center justify-center bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-4 text-center">
+              <Lock className="w-6 h-6 text-slate-400 mb-2" />
+              <div className="font-bold text-slate-700 text-xs">বিক্রয় ও আর্থিক গ্রাফ শুধুমাত্র মালিক এবং ম্যানেজারের জন্য উন্মুক্ত</div>
+              <div className="text-[11px] text-slate-400 mt-1">কাউন্টার ক্যাশিয়ার হিসেবে আপনি সরাসরি পিওএস ও মেমো পরিচালনা করতে পারবেন</div>
+            </div>
+          ) : (
+            <div className="h-40 flex items-end justify-between gap-2 pt-4 px-1">
+              {last7Days.map((d, idx) => {
+                const heightPct = Math.max(15, Math.round((d.amountPaisa / maxDayAmount) * 100));
+                const isToday = idx === last7Days.length - 1;
+                return (
+                  <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
+                    <span className="text-[9px] font-bold text-[#5B574E] opacity-0 group-hover:opacity-100 transition tabular-nums">
+                      ৳{toBengaliDigits(Math.round(d.amountPaisa / 100000))}L
+                    </span>
+                    <div
+                      style={{ height: `${heightPct}%` }}
+                      className={`w-full rounded-t-xl transition-all duration-300 ${
+                        isToday
+                          ? 'bg-[#1F7A4D] shadow-sm shadow-[#1F7A4D]/30'
+                          : 'bg-[#D1EAD9] group-hover:bg-[#1F7A4D]/70'
+                      }`}
+                    />
+                    <span className={`text-[11px] font-bold ${isToday ? 'text-[#1F7A4D]' : 'text-[#5B574E]'}`}>
+                      {lang === 'bn' ? d.dayBn : d.dayEn}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Right 1 Col: "সবচেয়ে বেশি চলা ৫ চাল" per Section 4.2 */}

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { RiceProduct, TenantInfo, Language, NumberFormat } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
+import { standardUnits } from '../../data/mockData';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -80,6 +81,40 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       ownerName: ownerName,
       phone: phone
     });
+
+    // Create real starter rice products from selected items (BUG-05)
+    const selectedProds: RiceProduct[] = selectedItems
+      .filter((item) => item.selected)
+      .map((item, idx) => {
+        const ratePerKgPaisa = Math.round(item.rate * 100);
+        const wholesalePerKgPaisa = Math.max(100, ratePerKgPaisa - 200);
+        const costPerKgPaisa = Math.max(100, Math.round(ratePerKgPaisa * 0.9));
+        return {
+          id: `prod-onb-${Date.now()}-${idx}`,
+          nameBn: item.name,
+          nameEn: item.name,
+          variety: item.name.includes('মিনিকেট') ? 'মিনিকেট' : item.name.includes('নাজিরশাইল') ? 'নাজিরশাইল' : item.name.includes('পোলাও') ? 'কাটারিভোগ' : item.name.includes('চিনিগুঁড়া') ? 'চিনিগুঁড়া' : 'বিআর-২৮',
+          grade: 'প্রিমিয়াম',
+          category: item.name.includes('পোলাও') || item.name.includes('চিনিগুঁড়া') ? 'সুগন্ধি' : 'সিদ্ধ',
+          sku: `ONB-${idx + 1}`,
+          stockKg: item.stockBags * 50,
+          minStockKg: 250,
+          wacPerKgPaisa: costPerKgPaisa,
+          retailPricePaisa: ratePerKgPaisa,
+          wholesalePricePaisa: wholesalePerKgPaisa,
+          sack50RetailPricePaisa: ratePerKgPaisa * 50,
+          sack50WholesalePricePaisa: wholesalePerKgPaisa * 50,
+          availableUnits: standardUnits,
+        };
+      });
+
+    if (selectedProds.length > 0) {
+      onAddProducts(selectedProds);
+    }
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`chal_onboarding_done_${tenant.id}`, 'true');
+    }
 
     onClose();
     onGoToPos();

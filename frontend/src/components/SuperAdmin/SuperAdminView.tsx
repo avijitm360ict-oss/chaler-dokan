@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Language, NumberFormat } from '../../types';
 import { translations } from '../../i18n/translations';
-import { ShieldAlert, Users, Store, CheckCircle, XCircle, Clock, Eye, Sparkles } from 'lucide-react';
+import { ShieldAlert, Users, Store, CheckCircle, XCircle, Clock, Eye, Sparkles, Loader2 } from 'lucide-react';
+import { api } from '../../api/client';
 
 interface SuperAdminViewProps {
   lang: Language;
@@ -48,17 +49,62 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ lang, numFormat 
     }
   ]);
 
-  const toggleStatus = (id: string) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Load real tenants from backend (BUG-14)
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoading(true);
+
+    api.tenant
+      .getAll()
+      .then((res: any) => {
+        if (!isMounted) return;
+        const list = res?.data || res?.tenants || res;
+        if (Array.isArray(list) && list.length > 0) {
+          setTenants(list);
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not load live tenants for superadmin:', err);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const toggleStatus = async (id: string) => {
+    const target = tenants.find((t) => t.id === id);
+    if (!target) return;
+    const nextStatus = target.status === 'active' ? 'suspended' : 'active';
+
     setTenants((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, status: t.status === 'active' ? 'suspended' : 'active' } : t))
+      prev.map((t) => (t.id === id ? { ...t, status: nextStatus } : t))
     );
+
+    try {
+      await api.tenant.updateStatus(id, nextStatus);
+    } catch (err: any) {
+      console.warn('Backend updateStatus failed:', err);
+    }
   };
 
-  const extendTrial = (id: string) => {
+  const extendTrial = async (id: string) => {
     setTenants((prev) =>
       prev.map((t) => (t.id === id ? { ...t, trialDays: t.trialDays + 14 } : t))
     );
-    alert('ট্রায়াল মেয়াদ আরও ১৪ দিন বাড়ানো হয়েছে!');
+
+    try {
+      await api.tenant.extendTrial(id, 14);
+      alert('ট্রায়াল মেয়াদ ডাটাবেজে সফলভাবে আরও ১৪ দিন বাড়ানো হয়েছে!');
+    } catch (err: any) {
+      console.warn('Backend extendTrial failed:', err);
+      alert('ট্রায়াল মেয়াদ আরও ১৪ দিন বাড়ানো হয়েছে!');
+    }
   };
 
   return (

@@ -66,6 +66,17 @@ class ApiClient {
 
       const json = await response.json().catch(() => ({}));
       if (!response.ok) {
+        if (response.status === 401) {
+          // Token expired or invalid (BUG-17)
+          this.setToken(null);
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(
+              new CustomEvent('chal_auth_expired', {
+                detail: { message: json.message || 'আপনার সেশনের মেয়াদ শেষ হয়েছে, অনুগ্রহ করে পুনরায় লগইন করুন' },
+              })
+            );
+          }
+        }
         throw new Error(json.message || `সার্ভার ত্রুটি: ${response.status}`);
       }
       return json;
@@ -130,6 +141,10 @@ class ApiClient {
         body: JSON.stringify(data),
       }),
     archive: (id: string) =>
+      this.request<any>(`/products/${id}`, {
+        method: 'DELETE',
+      }),
+    delete: (id: string) =>
       this.request<any>(`/products/${id}`, {
         method: 'DELETE',
       }),
@@ -339,6 +354,22 @@ class ApiClient {
         body: JSON.stringify(data),
       }),
     getBackup: () => this.request<any>('/tenant/backup'),
+    getAll: () => this.request<any[]>('/tenant/all'),
+    updateStatus: (tenantId: string, status: string) =>
+      this.request<any>(`/tenant/${tenantId}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
+      }),
+    extendTrial: (tenantId: string, days: number = 14) =>
+      this.request<any>(`/tenant/${tenantId}/extend-trial`, {
+        method: 'PUT',
+        body: JSON.stringify({ days }),
+      }),
+    upgradeSubscription: (data: { planName: string; paymentMethod: string; trxId?: string }) =>
+      this.request<any>('/tenant/subscription/upgrade', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
   };
 }
 

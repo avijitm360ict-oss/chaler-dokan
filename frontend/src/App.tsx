@@ -151,6 +151,11 @@ export function App() {
       setAuditLogs([]);
       setDayClose(cleanDayClose);
       setWarehouses(cleanWarehouse);
+
+      // Auto-trigger Onboarding for new store (BUG-04)
+      if (newTenant || !localStorage.getItem(`chal_onboarding_done_${activeTenant.id}`)) {
+        setShowOnboarding(true);
+      }
     } else {
       setProducts(initialProducts);
       setParties(initialParties);
@@ -258,6 +263,10 @@ export function App() {
           if (productsList.length > 0 || !isDemo) {
             setProducts(productsList);
           }
+          // Auto-trigger onboarding if store has no products yet (BUG-04)
+          if (!isDemo && productsList.length === 0 && !localStorage.getItem(`chal_onboarding_done_${activeTenantId}`)) {
+            setShowOnboarding(true);
+          }
         }
         const partiesList = partyRes?.data || (partyRes as any)?.parties;
         if (Array.isArray(partiesList)) {
@@ -344,6 +353,17 @@ export function App() {
   useEffect(() => {
     checkAndSyncData();
   }, [currentUser?.id, tenant.id]);
+
+  // Session expiry listener (BUG-17)
+  useEffect(() => {
+    const handleAuthExpired = (e: any) => {
+      const msg = e.detail?.message || 'আপনার সেশনের মেয়াদ শেষ হয়েছে, অনুগ্রহ করে পুনরায় লগইন করুন';
+      handleLogout();
+      alert(msg);
+    };
+    window.addEventListener('chal_auth_expired', handleAuthExpired);
+    return () => window.removeEventListener('chal_auth_expired', handleAuthExpired);
+  }, []);
 
   // Modals & Drawers
   const [showShortcuts, setShowShortcuts] = useState<boolean>(false);
@@ -466,14 +486,27 @@ export function App() {
       prev.map((s) => (s.id === invoiceId ? { ...s, status: 'voided', voidReason: reason } : s))
     );
 
-    // Revert product stocks
+    // Revert product stocks (BUG-09)
     setProducts((prev) =>
       prev.map((prod) => {
-        const item = targetInvoice.items.find((it) => it.product.id === prod.id);
+        const item = targetInvoice.items.find(
+          (it) => (it.product && it.product.id === prod.id) || (it as any).productId === prod.id
+        );
         if (item) {
-          return { ...prod, stockKg: prod.stockKg + item.totalKg };
+          const addKg = Number(item.totalKg || (item as any).qtyKg || 0);
+          return { ...prod, stockKg: prod.stockKg + addKg };
         }
         return prod;
+      })
+    );
+
+    // Revert warehouse stocks (BUG-09)
+    setWarehouses((prev) =>
+      prev.map((w) => {
+        if (w.id === targetInvoice.warehouseId) {
+          return { ...w, totalStockKg: w.totalStockKg + (targetInvoice.totalKg || 0) };
+        }
+        return w;
       })
     );
 
@@ -494,9 +527,17 @@ export function App() {
 
     // Live server void sync
     if (isServerLive && !isOffline) {
-      api.sales.voidInvoice(invoiceId, reason).catch((err) =>
-        console.warn('Backend void failed:', err)
-      );
+      api.sales
+        .voidInvoice(invoiceId, reason)
+        .then(() => {
+          api.products.getAll().then((res) => {
+            const list = res?.data || (res as any)?.products;
+            if (Array.isArray(list) && list.length > 0) {
+              setProducts(list);
+            }
+          });
+        })
+        .catch((err) => console.warn('Backend void failed:', err));
     }
 
     alert('ইনভয়েস বাতিল (Voided) করা হয়েছে এবং চালের স্টক ফিরিয়ে নেওয়া হয়েছে।');
@@ -858,6 +899,7 @@ export function App() {
               tenant={tenant}
               lang={lang}
               numFormat={numFormat}
+              userRole={userRole}
               onSelectTab={handleSelectTab}
               onOpenReceipt={(inv) => setActiveReceipt(inv)}
             />
@@ -870,6 +912,7 @@ export function App() {
               warehouses={warehouses}
               lang={lang}
               numFormat={numFormat}
+              userRole={userRole}
               onCompleteSale={handleCompleteSale}
               onOpenReceipt={(inv) => setActiveReceipt(inv)}
             />
@@ -925,6 +968,8 @@ export function App() {
               numFormat={numFormat}
               onAdjustStock={handleAdjustStock}
               onTransferStock={handleTransferStock}
+              onUpdateProduct={(up) => setProducts((prev) => prev.map((p) => (p.id === up.id ? up : p)))}
+              onDeleteProduct={(id) => setProducts((prev) => prev.filter((p) => p.id !== id))}
             />
           )}
 
@@ -1077,7 +1122,30 @@ export function App() {
         onClose={() => setShowOnboarding(false)}
         tenant={tenant}
         onUpdateTenant={setTenant}
-        onAddProducts={(newProds) => setProducts((prev) => [...prev, ...newProds])}
+        onAddProducts={async (newProds) => {
+          setProducts((prev) => [...prev, ...newProds]);
+          // Persist each onboarding rice product to database (BUG-05)
+          for (const p of newProds) {
+            try {
+              await api.products.create({
+                nameBn: p.nameBn,
+                nameEn: p.nameEn,
+                category: p.category,
+                variety: p.variety,
+                grade: p.grade,
+                sku: p.sku,
+                stockKg: p.stockKg,
+                minStockAlertKg: p.minStockKg,
+                costPricePaisa: p.wacPerKgPaisa,
+                retailPricePaisa: p.retailPricePaisa,
+                wholesalePricePaisa: p.wholesalePricePaisa,
+                specialPricePaisa: p.wholesalePricePaisa,
+              });
+            } catch (err) {
+              console.warn('Could not persist onboarding product:', err);
+            }
+          }
+        }}
         onGoToPos={() => {
           setShowOnboarding(false);
           setActiveTab('pos');

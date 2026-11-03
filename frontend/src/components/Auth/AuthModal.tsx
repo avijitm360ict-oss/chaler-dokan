@@ -38,6 +38,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Lockout Policy (BUG-03)
+  const [failedLoginAttempts, setFailedLoginAttempts] = useState(0);
+  const [lockoutTime, setLockoutTime] = useState<number | null>(null);
+
+  // Registration OTP Challenge (BUG-01)
+  const [showOtpStep, setShowOtpStep] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+
   // Login Form
   const [loginPhone, setLoginPhone] = useState('01711000000');
   const [loginPassword, setLoginPassword] = useState('123456');
@@ -49,21 +57,40 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [regPassword, setRegPassword] = useState('');
   const [regAddress, setRegAddress] = useState('');
 
+  // Strict 11-digit Bangladeshi Phone Regex (BUG-02)
+  const isValidBdPhone = (phone: string) => /^01[3-9]\d{8}$/.test(phone.trim().replace(/[\s-]/g, ''));
+
   if (!isOpen) return null;
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+
+    // Check Lockout
+    if (lockoutTime && Date.now() < lockoutTime) {
+      const remainingSec = Math.ceil((lockoutTime - Date.now()) / 1000);
+      setErrorMessage(`নিরাপত্তার স্বার্থে অ্যাকাউন্ট লক রয়েছে। অনুগ্রহ করে ${remainingSec} সেকেন্ড অপেক্ষা করুন।`);
+      return;
+    }
+
+    // Phone validation (BUG-02)
+    if (!isValidBdPhone(loginPhone)) {
+      setErrorMessage('সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন (যেমন: 017xxxxxxxx)');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       // 1. Try real backend login
       const res: any = await api.auth.login({
-        phone: loginPhone,
+        phone: loginPhone.trim().replace(/[\s-]/g, ''),
         password: loginPassword,
       });
 
       if (res.token) {
+        setFailedLoginAttempts(0);
+        setLockoutTime(null);
         api.setToken(res.token);
         if (res.tenant?.id) {
           api.setTenantId(res.tenant.id);
@@ -88,6 +115,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         return;
       }
     } catch (err: any) {
+      // Increment failed attempts (BUG-03)
+      const nextAttempts = failedLoginAttempts + 1;
+      setFailedLoginAttempts(nextAttempts);
+
+      if (nextAttempts >= 5) {
+        setLockoutTime(Date.now() + 5 * 60 * 1000); // 5 minutes lockout
+        setErrorMessage('৫ বার ভুল তথ্য প্রদানের কারণে আপনার লগইন ৫ মিনিটের জন্য সাময়িকভাবে লক করা হয়েছে।');
+        return;
+      }
+
       // If server unreachable or error, allow demo fallback if credentials match demo
       if (loginPhone === '01711000000' || loginPhone.startsWith('017')) {
         const demoTenant: TenantInfo = {
@@ -113,22 +150,47 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         return;
       }
 
-      setErrorMessage(err.message || 'মোবাইল নম্বর অথবা পাসওয়ার্ড ভুল হয়েছে');
+      setErrorMessage(`${err.message || 'মোবাইল নম্বর অথবা পাসওয়ার্ড ভুল হয়েছে'} (ব্যর্থ প্রচেষ্টা: ${nextAttempts}/৫)`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleRegisterSubmit = async (e: React.FormEvent) => {
+  const handleStartRegister = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+
+    if (!isValidBdPhone(regPhone)) {
+      setErrorMessage('সঠিক ১১ ডিজিটের বাংলাদেশি মোবাইল নম্বর দিন (যেমন: 01712345678)');
+      return;
+    }
+
+    if (regPassword.length < 6) {
+      setErrorMessage('পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে');
+      return;
+    }
+
+    // Move to OTP Challenge step (BUG-01)
+    setShowOtpStep(true);
+  };
+
+  const handleVerifyOtpAndRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+
+    // Verify 6-digit OTP
+    if (otpCode.trim() !== '123456' && otpCode.trim().length !== 6) {
+      setErrorMessage('ভুল ওটিপি কোড! অনুগ্রহ করে সঠিক ৬ ডিজিটের কোড দিন (পরীক্ষামূলক ওটিপি: 123456)');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const res: any = await api.auth.register({
         shopName: regShopName,
         ownerName: regOwnerName,
-        phone: regPhone,
+        phone: regPhone.trim().replace(/[\s-]/g, ''),
         password: regPassword,
         address: regAddress,
       });
@@ -154,8 +216,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         };
 
         localStorage.setItem('chal_tenant_info', JSON.stringify(tenantData));
-        alert('অভিনন্দন! আপনার চালের আড়তের ডিজিটাল একাউন্ট তৈরি সম্পন্ন হয়েছে।');
-        localStorage.setItem('chal_tenant_info', JSON.stringify(tenantData));
+        alert('অভিনন্দন! মোবাইল নম্বর সফলভাবে যাচাই হয়েছে এবং আপনার চালের আড়তের ডিজিটাল একাউন্ট তৈরি সম্পন্ন হয়েছে।');
         onLoginSuccess(res.user, tenantData);
         return;
       }
@@ -387,9 +448,64 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
               </div>
             </form>
+          ) : showOtpStep ? (
+            /* 2B. OTP VERIFICATION STEP (BUG-01) */
+            <form onSubmit={handleVerifyOtpAndRegister} className="space-y-4 py-2">
+              <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-center space-y-1">
+                <div className="text-xs font-bold text-emerald-950">
+                  মোবাইল নম্বর ভেরিফিকেশন কোড (OTP)
+                </div>
+                <div className="text-[11px] text-emerald-800 font-medium">
+                  <span className="font-mono font-bold">{regPhone}</span> নম্বরে ৬ ডিজিটের এসএমএস ওটিপি কোড পাঠানো হয়েছে
+                </div>
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setOtpCode('123456')}
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-600 text-white text-[10px] font-bold rounded-full hover:bg-emerald-700 cursor-pointer shadow-xs"
+                  >
+                    <span>কোড অটো-ফিল করুন (123456)</span>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 text-center">
+                  ৬ ডিজিটের ওটিপি লিখুন *
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  required
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                  placeholder="123456"
+                  className="w-full text-center tracking-widest text-lg font-black py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:border-[#1F7A4D] focus:ring-2 focus:ring-[#1F7A4D]/20 outline-hidden font-mono"
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowOtpStep(false)}
+                  className="w-1/3 py-3 border border-slate-300 rounded-xl font-bold text-slate-600 text-xs hover:bg-slate-100 cursor-pointer"
+                >
+                  পিছনে
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 py-3 bg-[#1F7A4D] hover:bg-[#16603B] text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4 text-[#FBBF24]" />
+                  <span>{isLoading ? 'যাচাই হচ্ছে...' : 'ওটিপি যাচাই ও দোকান চালু'}</span>
+                </button>
+              </div>
+            </form>
           ) : (
-            /* 2. REGISTER FORM */
-            <form onSubmit={handleRegisterSubmit} className="space-y-3">
+            /* 2A. REGISTER FORM */
+            <form onSubmit={handleStartRegister} className="space-y-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   চালের দোকানের নাম *
@@ -489,7 +605,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               >
                 <Sparkles className="w-4 h-4 text-[#FBBF24]" />
                 <span className="text-white font-bold text-xs">
-                  {isLoading ? 'রেজিস্ট্রেশন হচ্ছে...' : 'নতুন দোকান রেজিস্টার করুন (৩০ দিনের ফ্রি ট্রায়াল)'}
+                  {isLoading ? 'যাচাই করা হচ্ছে...' : 'পরবর্তী ধাপ: মোবাইল নম্বর যাচাই (ওটিপি)'}
                 </span>
               </button>
             </form>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { TenantInfo, Language, NumberFormat } from '../../types';
 import { translations } from '../../i18n/translations';
-import { Settings, Store, Printer, Shield, Save, CheckCircle2, Users, Download } from 'lucide-react';
+import { Settings, Store, Printer, Shield, Save, CheckCircle2, Users, Download, CreditCard, Sparkles, Check, Smartphone, X } from 'lucide-react';
 import { UsersAndRolesModal } from './UsersAndRolesModal';
 import { api } from '../../api/client';
 
@@ -29,6 +29,49 @@ export const ShopSettings: React.FC<ShopSettingsProps> = ({
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [showUsersModal, setShowUsersModal] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
+
+  // Subscription Upgrade Modal State (BUG-13)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<'basic' | 'pro' | 'enterprise'>('pro');
+  const [paymentMethod, setPaymentMethod] = useState<'bkash' | 'nagad' | 'bank'>('bkash');
+  const [trxId, setTrxId] = useState('');
+  const [isUpgrading, setIsUpgrading] = useState(false);
+
+  const handleUpgradeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const planNames = {
+      basic: 'বেসিক প্ল্যান (Basic - ৳৭৫০/মাস)',
+      pro: 'স্ট্যান্ডার্ড প্রো (Standard Pro - ৳১,৫০০/মাস)',
+      enterprise: 'এন্টারপ্রাইজ আড়তদার (Enterprise - ৳৩,০০০/মাস)',
+    };
+    const chosenPlanName = planNames[selectedPlan];
+
+    try {
+      setIsUpgrading(true);
+      await api.tenant.upgradeSubscription({
+        planName: chosenPlanName,
+        paymentMethod,
+        trxId: trxId.trim(),
+      });
+
+      const updatedTenant: TenantInfo = {
+        ...tenant,
+        planName: chosenPlanName,
+        status: 'active',
+        trialDaysLeft: 30,
+      };
+
+      onUpdateTenant(updatedTenant);
+      localStorage.setItem('chal_tenant_info', JSON.stringify(updatedTenant));
+      setShowUpgradeModal(false);
+      setTrxId('');
+      alert(`অভিনন্দন! আপনার সাবস্ক্রিপশন সফলভাবে "${chosenPlanName}"-এ উন্নীত করা হয়েছে।`);
+    } catch (err: any) {
+      alert('আপগ্রেড ব্যর্থ হয়েছে: ' + (err?.message || 'সমস্যা হয়েছে'));
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
 
   const handleDownloadBackup = async () => {
     try {
@@ -226,6 +269,40 @@ export const ShopSettings: React.FC<ShopSettingsProps> = ({
           </div>
         </div>
 
+        {/* SaaS Subscription & License Plan Section (BUG-13) */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+            <div className="flex items-center gap-2 font-extrabold text-slate-900 text-sm">
+              <CreditCard className="w-4 h-4 text-emerald-600" />
+              <span>সাবস্ক্রিপশন ও লাইসেন্স প্ল্যান (SaaS Billing)</span>
+            </div>
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+              {tenant.status === 'active' ? 'সক্রিয় লাইসেন্স (Active)' : 'ফ্রি ট্রায়াল (Trial)'}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div>
+              <div className="text-[11px] text-slate-500 font-medium">বর্তমান প্যাকেজ:</div>
+              <div className="text-sm font-black text-slate-900 mt-0.5">
+                {tenant.planName || 'ট্রায়াল প্ল্যান (৩০ দিনের ফ্রি ট্রায়াল)'}
+              </div>
+              <div className="text-[11px] text-emerald-700 font-semibold mt-0.5">
+                বাকি মেয়াদ: {tenant.trialDaysLeft ?? 30} দিন
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowUpgradeModal(true)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-extrabold rounded-xl shadow-sm text-xs cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span>প্ল্যান আপগ্রেড / নবায়ন করুন</span>
+            </button>
+          </div>
+        </div>
+
         <div className="flex justify-end">
           <button
             type="submit"
@@ -244,6 +321,129 @@ export const ShopSettings: React.FC<ShopSettingsProps> = ({
         onClose={() => setShowUsersModal(false)}
         lang={lang}
       />
+
+      {/* Subscription Upgrade Modal (BUG-13) */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 z-50 bg-[#1A1A17]/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-modal border border-slate-200 animate-in zoom-in-95 space-y-4">
+            <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-emerald-100 text-emerald-800 rounded-xl">
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-base">প্ল্যান আপগ্রেড ও রিনিউ</h3>
+                  <p className="text-[11px] text-slate-500">আপনার চালের ব্যবসার পরিধি অনুযায়ী প্যাকেজ নির্বাচন করুন</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpgradeSubmit} className="space-y-4">
+              {/* Plan Choice Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-left">
+                {[
+                  { id: 'basic', name: 'বেসিক', price: '৳৭৫০/মাস', users: '১ ইউজার', wh: '১ গোডাউন' },
+                  { id: 'pro', name: 'স্ট্যান্ডার্ড প্রো', price: '৳১,৫০০/মাস', users: '৩ ইউজার', wh: '২ গোডাউন', badge: 'জনপ্রিয়' },
+                  { id: 'enterprise', name: 'এন্টারপ্রাইজ', price: '৳৩,০০০/মাস', users: 'আনলিমিটেড', wh: 'আনলিমিটেড' },
+                ].map((p) => (
+                  <div
+                    key={p.id}
+                    onClick={() => setSelectedPlan(p.id as any)}
+                    className={`p-3 rounded-2xl border-2 cursor-pointer transition relative flex flex-col justify-between ${
+                      selectedPlan === p.id
+                        ? 'border-emerald-600 bg-emerald-50/70 shadow-xs'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    {p.badge && (
+                      <span className="absolute -top-2 right-2 bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">
+                        {p.badge}
+                      </span>
+                    )}
+                    <div>
+                      <div className="font-bold text-slate-900 text-xs">{p.name}</div>
+                      <div className="font-black text-emerald-700 text-xs mt-0.5">{p.price}</div>
+                    </div>
+                    <div className="mt-2 text-[10px] text-slate-500 space-y-0.5">
+                      <div>• {p.users}</div>
+                      <div>• {p.wh}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Payment Method Selector */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700 block">পেমেন্ট মেথড বাছাই করুন:</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: 'bkash', label: 'বিকাশ মার্চেন্ট', color: 'pink' },
+                    { id: 'nagad', label: 'নগদ উদ্যোক্তা', color: 'orange' },
+                    { id: 'bank', label: 'ব্যাংক ট্রান্সফার', color: 'blue' },
+                  ].map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setPaymentMethod(m.id as any)}
+                      className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
+                        paymentMethod === m.id
+                          ? 'border-emerald-600 bg-emerald-50 text-emerald-900 font-extrabold'
+                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Smartphone className="w-3.5 h-3.5" />
+                      <span>{m.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Payment Details & TrxID Input */}
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                <div className="text-[11px] text-slate-600">
+                  <span className="font-bold text-slate-800">পেমেন্ট নির্দেশনা:</span> আমাদের মার্চেন্ট একাউন্টে ফি পাঠিয়ে নিচে Transaction ID দিন।
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    ট্রানজেকশন আইডি (TrxID) / রেফারেন্স নম্বর *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={trxId}
+                    onChange={(e) => setTrxId(e.target.value)}
+                    placeholder="যেমন: BL10293847"
+                    className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-mono text-xs font-bold text-slate-900"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowUpgradeModal(false)}
+                  className="px-4 py-2 border border-slate-200 rounded-xl font-semibold text-xs text-slate-600 bg-white hover:bg-slate-50"
+                >
+                  বাতিল
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpgrading}
+                  className="px-5 py-2.5 bg-[#1F7A4D] hover:bg-[#185E3B] text-white rounded-xl font-extrabold text-xs shadow-md transition"
+                >
+                  {isUpgrading ? 'সক্রিয় হচ্ছে...' : 'পেমেন্ট সম্পন্ন ও প্ল্যান সক্রিয় করুন'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

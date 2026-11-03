@@ -147,6 +147,27 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
     const tenantId = req.tenantId!;
     const data = createPartySchema.parse(req.body);
 
+    // Check for duplicate party phone or name within tenant (BUG-07)
+    const existing = await prisma.party.findFirst({
+      where: {
+        tenantId,
+        OR: [
+          { phone: data.phone },
+          { name: { equals: data.name, mode: 'insensitive' } },
+        ],
+      },
+    });
+
+    if (existing) {
+      return res.status(400).json({
+        error: 'Duplicate party',
+        message:
+          existing.phone === data.phone
+            ? `এই ফোন নম্বরে (${data.phone}) ইতোমধ্যে একটি পার্টি বা কাস্টমার তৈরি করা আছে (${existing.name})`
+            : `"${data.name}" নামে ইতোমধ্যে একটি পার্টি বা কাস্টমার তৈরি করা আছে`,
+      });
+    }
+
     const result = await prisma.$transaction(async (tx) => {
       const party = await tx.party.create({
         data: {

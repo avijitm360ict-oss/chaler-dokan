@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { UserRole, Language } from '../../types';
-import { Users, Shield, Check, X, UserPlus, Key, AlertTriangle, Loader2 } from 'lucide-react';
+import { Users, Shield, Check, X, UserPlus, Key, AlertTriangle, Loader2, Eye, EyeOff } from 'lucide-react';
 import { api } from '../../api/client';
 
 interface UsersAndRolesModalProps {
@@ -33,6 +33,8 @@ export const UsersAndRolesModal: React.FC<UsersAndRolesModalProps> = ({
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [newRole, setNewRole] = useState<'manager' | 'cashier'>('cashier');
+  const [newPassword, setNewPassword] = useState('123456');
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -126,12 +128,18 @@ export const UsersAndRolesModal: React.FC<UsersAndRolesModalProps> = ({
       return;
     }
 
+    if (!newPassword.trim() || newPassword.trim().length < 6) {
+      setErrorMsg('লগইন পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const res: any = await api.tenant.createUser({
         name: newName.trim(),
         phone: newPhone.trim(),
         role: newRole,
+        password: newPassword.trim(),
       });
 
       const created = res?.data || {
@@ -145,8 +153,9 @@ export const UsersAndRolesModal: React.FC<UsersAndRolesModalProps> = ({
       setUsers((prev) => [...prev, created]);
       setNewName('');
       setNewPhone('');
+      setNewPassword('123456');
       setShowAddForm(false);
-      alert(`${created.name} (${newRole === 'manager' ? 'ম্যানেজার' : 'ক্যাশিয়ার'}) সফলভাবে যুক্ত হয়েছেন!`);
+      alert(`${created.name} (${newRole === 'manager' ? 'ম্যানেজার' : 'ক্যাশিয়ার'}) সফলভাবে যুক্ত হয়েছেন!\nলগইন পাসওয়ার্ড: ${newPassword.trim()}`);
     } catch (err: any) {
       setErrorMsg(err?.message || 'কর্মচারী যুক্ত করতে সমস্যা হয়েছে');
     } finally {
@@ -214,31 +223,64 @@ export const UsersAndRolesModal: React.FC<UsersAndRolesModalProps> = ({
                     <span>{errorMsg}</span>
                   </div>
                 )}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <input
-                    type="text"
-                    placeholder="কর্মচারীর নাম"
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    className="p-2 bg-white border border-slate-300 rounded-xl font-medium"
-                    required
-                  />
-                  <input
-                    type="tel"
-                    placeholder="মোবাইল নম্বর (১১ ডিজিট)"
-                    value={newPhone}
-                    onChange={(e) => setNewPhone(e.target.value)}
-                    className="p-2 bg-white border border-slate-300 rounded-xl font-mono"
-                    required
-                  />
-                  <select
-                    value={newRole}
-                    onChange={(e) => setNewRole(e.target.value as any)}
-                    className="p-2 bg-white border border-slate-300 rounded-xl font-bold"
-                  >
-                    <option value="cashier">ক্যাশিয়ার (Cashier)</option>
-                    <option value="manager">ম্যানেজার (Manager)</option>
-                  </select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-0.5">কর্মচারীর নাম *</label>
+                    <input
+                      type="text"
+                      placeholder="যেমন: রফিক মিয়া"
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      className="w-full p-2 bg-white border border-slate-300 rounded-xl font-medium"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-0.5">মোবাইল নম্বর (১১ ডিজিট) *</label>
+                    <input
+                      type="tel"
+                      placeholder="01xxxxxxxxx"
+                      value={newPhone}
+                      onChange={(e) => setNewPhone(e.target.value)}
+                      className="w-full p-2 bg-white border border-slate-300 rounded-xl font-mono"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-0.5">দায়িত্ব ও রোল *</label>
+                    <select
+                      value={newRole}
+                      onChange={(e) => setNewRole(e.target.value as any)}
+                      className="w-full p-2 bg-white border border-slate-300 rounded-xl font-bold"
+                    >
+                      <option value="cashier">ক্যাশিয়ার (Cashier - শুধুমাত্র পিওএস ও ক্যাশ)</option>
+                      <option value="manager">ম্যানেজার (Manager - পূর্ণ দোকান পরিচালনা)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-0.5">লগইন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর) *</label>
+                    <div className="relative">
+                      <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        placeholder="পাসওয়ার্ড দিন"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full p-2 pr-9 bg-white border border-slate-300 rounded-xl font-mono"
+                        required
+                        minLength={6}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword((v) => !v)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 <div className="flex justify-end gap-2 pt-1">
                   <button
