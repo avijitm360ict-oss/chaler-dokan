@@ -16,6 +16,15 @@ const backupLimiter = rateLimit({
   },
 });
 
+const upgradeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: {
+    error: 'Too Many Requests',
+    message: 'সাবস্ক্রিপশন পরিবর্তনের অনুমোদিত সীমা অতিক্রান্ত হয়েছে। অনুগ্রহ করে ১৫ মিনিট পর আবার চেষ্টা করুন।',
+  },
+});
+
 // POST /api/v1/tenant/seed - Dev-only database seed
 router.post('/seed', async (_req, res, next) => {
   if (process.env.NODE_ENV === 'production') {
@@ -124,6 +133,15 @@ router.post('/users', requireRole(['Owner', 'Super Admin']), async (req: Authent
       return res.status(400).json({ error: 'Name and phone are required' });
     }
 
+    // Defense: Prevent vertical privilege escalation (SEC-06)
+    const normalizedRole = (role || 'cashier').toLowerCase();
+    if (!['cashier', 'manager'].includes(normalizedRole)) {
+      return res.status(400).json({
+        error: 'Invalid Role',
+        message: 'দোকানের কর্মচারীর পদ শুধুমাত্র ক্যাশিয়ার (cashier) বা ম্যানেজার (manager) হতে পারে',
+      });
+    }
+
     const existing = await prisma.user.findFirst({
       where: { tenantId, phone },
     });
@@ -201,7 +219,16 @@ router.put('/users/:id', requireRole(['Owner', 'Super Admin']), async (req: Auth
 
     let roleIdToSet: string | undefined;
     if (role) {
-      const roleCapitalized = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+      // Defense: Prevent elevation to Super Admin or Owner (SEC-06)
+      const normalizedRole = role.toLowerCase();
+      if (!['cashier', 'manager'].includes(normalizedRole)) {
+        return res.status(400).json({
+          error: 'Invalid Role',
+          message: 'কর্মচারীর পদ শুধুমাত্র ক্যাশিয়ার (cashier) বা ম্যানেজার (manager) হতে পারে',
+        });
+      }
+
+      const roleCapitalized = normalizedRole.charAt(0).toUpperCase() + normalizedRole.slice(1);
       let roleRecord = await prisma.role.findFirst({
         where: { tenantId, name: { equals: roleCapitalized, mode: 'insensitive' } },
       });
@@ -305,10 +332,17 @@ router.get('/backup', requireRole(['Owner', 'Super Admin']), backupLimiter, asyn
 });
 
 // POST /api/v1/tenant/subscription/upgrade - Self-service subscription upgrade (BUG-13)
-router.post('/subscription/upgrade', requireRole(['Owner', 'Super Admin']), async (req: AuthenticatedRequest, res: Response, next) => {
+router.post('/subscription/upgrade', requireRole(['Owner', 'Super Admin']), upgradeLimiter, async (req: AuthenticatedRequest, res: Response, next) => {
   try {
     const tenantId = req.tenantId!;
     const { planName = 'প্রো প্ল্যান (Pro Plan)', paymentMethod = 'bkash', trxId = '' } = req.body;
+
+    if (!trxId || typeof trxId !== 'string' || trxId.trim().length < 6) {
+      return res.status(400).json({
+        error: 'Invalid Transaction ID',
+        message: 'পেমেন্ট ভেরিফিকেশনের জন্য সঠিক ট্রানজেকশন আইডি (TrxID) প্রদান করুন (কমপক্ষে ৬ অক্ষর)',
+      });
+    }
 
     const currentTenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
     if (!currentTenant) {

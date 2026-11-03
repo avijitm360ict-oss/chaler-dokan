@@ -220,9 +220,17 @@ router.post('/login', authLimiter, async (req: AuthenticatedRequest, res: Respon
 });
 
 // POST /api/v1/auth/demo - Quick Demo Session with authentic JWT token
-router.post('/demo', async (req: AuthenticatedRequest, res: Response, next) => {
+router.post('/demo', authLimiter, async (req: AuthenticatedRequest, res: Response, next) => {
   try {
     const requestedRole = (req.body?.role || 'owner').toLowerCase();
+
+    // Defense: Disallow Super Admin elevation via demo endpoint (SEC-07)
+    if (requestedRole === 'superadmin' || requestedRole === 'super admin') {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'পাবলিক ডেমো মোড থেকে সুপার এডমিন এক্সেস গ্রহণ করা সম্পূর্ণ নিষিদ্ধ',
+      });
+    }
     
     // Find or seed demo tenant
     let tenant = await prisma.tenant.findUnique({
@@ -282,7 +290,7 @@ router.post('/demo', async (req: AuthenticatedRequest, res: Response, next) => {
     const token = signToken({
       userId: user.id,
       tenantId: tenant.id,
-      role: requestedRole === 'superadmin' ? 'Super Admin' : user.role.name,
+      role: user.role.name,
       phone: user.phone,
     });
 
@@ -295,7 +303,7 @@ router.post('/demo', async (req: AuthenticatedRequest, res: Response, next) => {
         name: user.name,
         phone: user.phone,
         email: user.email,
-        role: requestedRole === 'superadmin' ? 'superadmin' : user.role.name.toLowerCase(),
+        role: user.role.name.toLowerCase(),
         roleName: user.role.name,
       },
       tenant: {

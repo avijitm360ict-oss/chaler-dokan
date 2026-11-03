@@ -1,12 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
+import prisma from '../lib/prisma';
 
 export interface AuthenticatedRequest extends Request {
   tenantId?: string;
   userId?: string;
   userRole?: string;
+  isImpersonating?: boolean;
 }
 
-export const tenantMiddleware = (
+export const tenantMiddleware = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
@@ -25,7 +27,29 @@ export const tenantMiddleware = (
     req.userRole?.toLowerCase() === 'super admin' || req.userRole?.toLowerCase() === 'superadmin';
 
   if (headerTenant && isSuperAdmin) {
+    // 1. Verify target tenant existence in database
+    const targetTenant = await prisma.tenant.findUnique({
+      where: { id: headerTenant },
+      select: { id: true, name: true, status: true },
+    });
+
+    if (!targetTenant) {
+      return res.status(404).json({
+        error: 'Tenant Not Found',
+        message: 'ইমপার্সনেশনের জন্য নির্দিষ্ট দোকানটি পাওয়া যায়নি',
+      });
+    }
+
+    // 2. Strict Defense: Enforce READ-ONLY restriction for impersonation sessions (Prevent malicious/accidental mutation)
+    if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
+      return res.status(403).json({
+        error: 'Impersonation Read-Only Violation',
+        message: 'নিরাপত্তা বিধি: ইমপার্সনেশন মোডে কোনো ডাটা পরিবর্তন বা নতুন রেকর্ড তৈরি করা সম্পূর্ণ নিষিদ্ধ (Read-Only Mode Enforced)',
+      });
+    }
+
     req.tenantId = headerTenant;
+    req.isImpersonating = true;
   }
 
   next();
