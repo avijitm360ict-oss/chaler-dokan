@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AuthenticatedRequest } from './tenant';
+import prisma from '../lib/prisma';
 
 const rawSecret = process.env.JWT_SECRET;
 const DEFAULT_INSECURE_SECRET = 'super-secret-chal-a-dokan-saas-jwt-key-2026';
@@ -23,7 +24,7 @@ export const signToken = (payload: TokenPayload): string => {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
 };
 
-export const requireAuth = (
+export const requireAuth = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
@@ -36,9 +37,40 @@ export const requireAuth = (
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as TokenPayload;
-    req.userId = decoded.userId;
-    req.tenantId = decoded.tenantId;
-    req.userRole = decoded.role;
+
+    // Defense-in-depth: Live database verification for active status (SEC-02)
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { id: true, status: true, tenantId: true, role: { select: { name: true } } },
+    });
+
+    if (user) {
+      if (user.status !== 'active') {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'একাউন্টটি নিষ্ক্রিয় করা হয়েছে অথবা ব্যবহারকারী পাওয়া যায়নি',
+        });
+      }
+      req.userId = user.id;
+      req.tenantId = user.tenantId;
+      req.userRole = user.role?.name || decoded.role;
+    } else {
+      // Allow verified Super Admin bypass or reject non-existent user
+      const isSuper =
+        decoded.role?.toLowerCase() === 'superadmin' ||
+        decoded.role?.toLowerCase() === 'super admin';
+      if (isSuper) {
+        req.userId = decoded.userId;
+        req.tenantId = decoded.tenantId;
+        req.userRole = 'Super Admin';
+      } else {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'ব্যবহারকারী পাওয়া যায়নি',
+        });
+      }
+    }
+
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Unauthorized', message: 'টোকেন মেয়াদোত্তীর্ণ বা অবৈধ' });

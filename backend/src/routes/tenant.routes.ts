@@ -1,10 +1,20 @@
 import { Router, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import prisma from '../lib/prisma';
 import { AuthenticatedRequest } from '../middleware/tenant';
 import { requireRole } from '../middleware/auth';
 import { seedDatabase } from '../services/seed.service';
 
 const router = Router();
+
+const backupLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: {
+    error: 'Too Many Requests',
+    message: 'ব্যাকআপ নেওয়ার অনুমোদিত সীমা অতিক্রান্ত হয়েছে। অনুগ্রহ করে ১৫ মিনিট পর আবার চেষ্টা করুন।',
+  },
+});
 
 // POST /api/v1/tenant/seed - Dev-only database seed
 router.post('/seed', async (_req, res, next) => {
@@ -239,7 +249,7 @@ router.put('/users/:id', requireRole(['Owner', 'Super Admin']), async (req: Auth
 });
 
 // GET /api/v1/tenant/backup - Full shop data backup export (Owner Only)
-router.get('/backup', requireRole(['Owner', 'Super Admin']), async (req: AuthenticatedRequest, res: Response, next) => {
+router.get('/backup', requireRole(['Owner', 'Super Admin']), backupLimiter, async (req: AuthenticatedRequest, res: Response, next) => {
   try {
     const tenantId = req.tenantId!;
 

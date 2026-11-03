@@ -348,4 +348,107 @@ router.get('/me', requireAuth, async (req: AuthenticatedRequest, res: Response, 
   }
 });
 
+interface ResetOtpEntry {
+  otpHash: string;
+  expiresAt: number;
+  attempts: number;
+}
+const resetOtpStore = new Map<string, ResetOtpEntry>();
+
+// POST /api/v1/auth/forgot-password - Send SMS OTP code to reset password (SEC-01)
+router.post('/forgot-password', authLimiter, async (req: AuthenticatedRequest, res: Response, next) => {
+  try {
+    const { phone } = req.body;
+    if (!phone || typeof phone !== 'string' || phone.length < 11) {
+      return res.status(400).json({ error: 'Invalid phone', message: 'সঠিক মোবাইল নম্বর দিন' });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { phone },
+    });
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpHash = await bcrypt.hash(otp, 10);
+    resetOtpStore.set(phone, {
+      otpHash,
+      expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
+      attempts: 0,
+    });
+
+    console.log(`[SMS OTP SIMULATOR] Password reset OTP for ${phone}: ${otp}`);
+
+    res.json({
+      success: true,
+      message: 'আপনার মোবাইল নম্বরে ৬ ডিজিটের পাসওয়ার্ড রিসেট কোড পাঠানো হয়েছে',
+      // Provide devOtp when not in production or for testing
+      ...(process.env.NODE_ENV !== 'production' && { devOtp: otp }),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/v1/auth/reset-password - Verify OTP code and update password (SEC-01)
+router.post('/reset-password', authLimiter, async (req: AuthenticatedRequest, res: Response, next) => {
+  try {
+    const { phone, otp, newPassword } = req.body;
+    if (!phone || !otp || !newPassword || newPassword.length < 6) {
+      return res.status(400).json({
+        error: 'Invalid Request',
+        message: 'মোবাইল নম্বর, ওটিপি এবং কমপক্ষে ৬ অক্ষরের নতুন পাসওয়ার্ড প্রদান করুন',
+      });
+    }
+
+    const entry = resetOtpStore.get(phone);
+    if (!entry) {
+      return res.status(400).json({
+        error: 'Invalid OTP',
+        message: 'কোনো সক্রিয় ওটিপি অনুরোধ পাওয়া যায়নি। অনুগ্রহ করে নতুন করে কোড নিন।',
+      });
+    }
+
+    if (Date.now() > entry.expiresAt) {
+      resetOtpStore.delete(phone);
+      return res.status(400).json({
+        error: 'Expired OTP',
+        message: 'ওটিপি কোডের মেয়াদ শেষ হয়ে গেছে। নতুন করে কোড নিন।',
+      });
+    }
+
+    entry.attempts += 1;
+    if (entry.attempts > 5) {
+      resetOtpStore.delete(phone);
+      return res.status(429).json({
+        error: 'Too Many Attempts',
+        message: 'অতিরিক্ত ভুল ওটিপির কারণে অনুরোধটি বাতিল করা হয়েছে।',
+      });
+    }
+
+    const isValid = await bcrypt.compare(otp, entry.otpHash);
+    if (!isValid) {
+      return res.status(400).json({
+        error: 'Invalid OTP',
+        message: `ভুল ওটিপি কোড (ভুল প্রচেষ্টা: ${entry.attempts}/৫)`,
+      });
+    }
+
+    // Success: Update user passwords across tenant shops linked to this phone
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await prisma.user.updateMany({
+      where: { phone },
+      data: { passwordHash: newHash },
+    });
+
+    resetOtpStore.delete(phone);
+
+    res.json({
+      success: true,
+      message: 'পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে। নতুন পাসওয়ার্ড দিয়ে লগইন করুন।',
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;
