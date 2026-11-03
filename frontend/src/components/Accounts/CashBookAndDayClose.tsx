@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ExpenseRecord, DayCloseRecord, Language, NumberFormat } from '../../types';
 import { translations } from '../../i18n/translations';
 import { formatCurrency, formatDateBangla } from '../../utils/formatters';
-import { Wallet, Plus, CheckCircle2, Lock, Unlock, AlertTriangle, ArrowUpRight, ArrowDownLeft, Building2 } from 'lucide-react';
+import { Wallet, Plus, CheckCircle2, Lock, Unlock, AlertTriangle, ArrowUpRight, ArrowDownLeft, Building2, ArrowRightLeft } from 'lucide-react';
 
 interface CashBookAndDayCloseProps {
   expenses: ExpenseRecord[];
@@ -11,6 +11,7 @@ interface CashBookAndDayCloseProps {
   numFormat: NumberFormat;
   onAddExpense: (expense: ExpenseRecord) => void;
   onPerformDayClose: (countedCashPaisa: number, note: string) => void;
+  onAccountTransfer?: (fromAccount: string, toAccount: string, amountPaisa: number, note?: string) => void;
 }
 
 export const CashBookAndDayClose: React.FC<CashBookAndDayCloseProps> = ({
@@ -19,18 +20,26 @@ export const CashBookAndDayClose: React.FC<CashBookAndDayCloseProps> = ({
   lang,
   numFormat,
   onAddExpense,
-  onPerformDayClose
+  onPerformDayClose,
+  onAccountTransfer,
 }) => {
   const t = translations[lang];
 
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [dayCloseModalOpen, setDayCloseModalOpen] = useState(false);
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
 
   // New Expense state
   const [expenseCategory, setExpenseCategory] = useState<'rent' | 'electricity' | 'labour' | 'transport' | 'tea_snacks' | 'other'>('labour');
   const [expenseTaka, setExpenseTaka] = useState<number>(0);
   const [expenseAccount, setExpenseAccount] = useState<string>('প্রধান ক্যাশ ড্রয়ার');
   const [expenseNote, setExpenseNote] = useState<string>('');
+
+  // Transfer state (BUG-ACC-03)
+  const [transferFrom, setTransferFrom] = useState<string>('প্রধান ক্যাশ ড্রয়ার');
+  const [transferTo, setTransferTo] = useState<string>('ডাচ বাংলা ব্যাংক (A/C: 151.120.9876)');
+  const [transferTaka, setTransferTaka] = useState<number>(0);
+  const [transferNote, setTransferNote] = useState<string>('');
 
   // Day close state
   const [countedCashTaka, setCountedCashTaka] = useState<number>(dayClose.expectedSystemCashPaisa / 100);
@@ -68,6 +77,20 @@ export const CashBookAndDayClose: React.FC<CashBookAndDayCloseProps> = ({
     setExpenseNote('');
   };
 
+  const handleTransferSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (transferTaka <= 0) return;
+    if (transferFrom === transferTo) {
+      alert('উৎস এবং গন্তব্য একাউন্ট একই হতে পারে না। ভিন্ন একাউন্ট নির্বাচন করুন।');
+      return;
+    }
+
+    onAccountTransfer?.(transferFrom, transferTo, Math.round(transferTaka * 100), transferNote);
+    setTransferModalOpen(false);
+    setTransferTaka(0);
+    setTransferNote('');
+  };
+
   const handleDayCloseSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onPerformDayClose(countedCashPaisa, dayCloseNote);
@@ -95,18 +118,29 @@ export const CashBookAndDayClose: React.FC<CashBookAndDayCloseProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Transfer Button */}
+          <button
+            onClick={() => setTransferModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-800/90 hover:bg-slate-700 text-white rounded-xl text-xs font-bold border border-slate-700 transition cursor-pointer active:scale-98"
+          >
+            <ArrowRightLeft className="w-4 h-4 text-emerald-400" />
+            <span>{lang === 'bn' ? 'টাকা স্থানান্তর (Transfer)' : 'Account Transfer'}</span>
+          </button>
+
+          {/* Add Expense Button */}
           <button
             onClick={() => setExpenseModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold border border-slate-700 transition"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-800/90 hover:bg-slate-700 text-white rounded-xl text-xs font-bold border border-slate-700 transition cursor-pointer active:scale-98"
           >
             <Plus className="w-4 h-4 text-emerald-400" />
             <span>{lang === 'bn' ? '+ খরচ এন্ট্রি' : '+ Record Expense'}</span>
           </button>
 
+          {/* Perform Day Close Button */}
           <button
             onClick={() => setDayCloseModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 active:scale-98 text-slate-950 font-extrabold text-sm rounded-xl shadow-lg transition"
+            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 active:scale-98 text-slate-950 font-extrabold text-sm rounded-xl shadow-lg transition cursor-pointer"
           >
             <Lock className="w-4 h-4" />
             <span>{lang === 'bn' ? 'আজকের ডে-ক্লোজ করুন' : 'Perform Day Close'}</span>
@@ -125,29 +159,29 @@ export const CashBookAndDayClose: React.FC<CashBookAndDayCloseProps> = ({
           <span className="text-[10px] text-slate-400 mt-0.5 block">সকালে ড্রয়ারে থাকা ক্যাশ</span>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500 block">আজকের মোট নগদ বিক্রি ও আদায়</span>
+        <div className="bg-white p-4 rounded-2xl border border-emerald-200/90 shadow-xs bg-emerald-50/20">
+          <span className="text-xs font-bold text-emerald-950 block">আজকের মোট নগদ বিক্রি ও আদায়</span>
           <div className="text-xl font-extrabold text-emerald-700 mt-1">
             {formatCurrency(dayClose.totalSalesCashPaisa + dayClose.dueCollectedCashPaisa, numFormat)}
           </div>
           <span className="text-[10px] text-emerald-600 font-bold mt-0.5 block flex items-center gap-1">
             <ArrowDownLeft className="w-3 h-3" />
-            ক্যাশ জমা
+            ক্যাশ জমা (ইনকাম)
           </span>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500 block">আজকের মোট খরচ ও মিলকে পরিশোধ</span>
+        <div className="bg-white p-4 rounded-2xl border border-red-200/90 shadow-xs bg-red-50/20">
+          <span className="text-xs font-bold text-red-950 block">আজকের মোট খরচ ও মিলকে পরিশোধ</span>
           <div className="text-xl font-extrabold text-red-700 mt-1">
             {formatCurrency(dayClose.expensesPaidCashPaisa + dayClose.vendorPaidCashPaisa, numFormat)}
           </div>
           <span className="text-[10px] text-red-600 font-bold mt-0.5 block flex items-center gap-1">
             <ArrowUpRight className="w-3 h-3" />
-            ক্যাশ বের হওয়া
+            ক্যাশ বের হওয়া (আউটগোয়িং)
           </span>
         </div>
 
-        <div className="bg-emerald-50/80 p-4 rounded-2xl border border-emerald-200 shadow-xs">
+        <div className="bg-emerald-50/80 p-4 rounded-2xl border border-emerald-300 shadow-xs">
           <span className="text-xs font-bold text-emerald-900 block">সিস্টেম ড্রয়ার ক্যাশ ব্যালেন্স</span>
           <div className="text-2xl font-black text-emerald-900 mt-1">
             {formatCurrency(dayClose.expectedSystemCashPaisa, numFormat)}
@@ -204,7 +238,7 @@ export const CashBookAndDayClose: React.FC<CashBookAndDayCloseProps> = ({
               <h3 className="font-extrabold text-slate-900 text-base">
                 {lang === 'bn' ? 'নতুন খরচ এন্ট্রি' : 'Add Expense Record'}
               </h3>
-              <button onClick={() => setExpenseModalOpen(false)} className="text-slate-400 hover:text-slate-700">
+              <button onClick={() => setExpenseModalOpen(false)} className="text-slate-400 hover:text-slate-700 text-lg">
                 ✕
               </button>
             </div>
@@ -266,15 +300,112 @@ export const CashBookAndDayClose: React.FC<CashBookAndDayCloseProps> = ({
                 <button
                   type="button"
                   onClick={() => setExpenseModalOpen(false)}
-                  className="px-4 py-2 border border-slate-300 rounded-xl font-semibold text-slate-700"
+                  className="px-4 py-2 border border-slate-300 rounded-xl font-semibold text-slate-700 cursor-pointer"
                 >
                   বাতিল
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold shadow-md"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold shadow-md cursor-pointer"
                 >
                   খরচ সংরক্ষণ করুন
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ACCOUNT TO ACCOUNT TRANSFER MODAL (BUG-ACC-03) */}
+      {transferModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3">
+          <div className="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-emerald-100 text-emerald-800 rounded-xl">
+                  <ArrowRightLeft className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-base">
+                    টাকা স্থানান্তর (Account Transfer)
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    ক্যাশ ড্রয়ার থেকে ব্যাংকে জমা বা ব্যাংক/বিকাশ হতে ড্রয়ারে ক্যাশ আনুন
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setTransferModalOpen(false)} className="text-slate-400 hover:text-slate-700 text-lg">
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleTransferSubmit} className="space-y-3 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">উৎস একাউন্ট (যেখান থেকে টাকা যাবে) *</label>
+                <select
+                  value={transferFrom}
+                  onChange={(e) => setTransferFrom(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 font-bold bg-white"
+                >
+                  <option value="প্রধান ক্যাশ ড্রয়ার">প্রধান ক্যাশ ড্রয়ার (ক্যাশ)</option>
+                  <option value="ডাচ বাংলা ব্যাংক (A/C: 151.120.9876)">ডাচ বাংলা ব্যাংক (A/C: 151.120.9876)</option>
+                  <option value="বিকাশ মার্চেন্ট (01712-345678)">বিকাশ মার্চেন্ট (01712-345678)</option>
+                  <option value="নগদ মার্চেন্ট">নগদ মার্চেন্ট</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">গন্তব্য একাউন্ট (যেখানে টাকা জমা হবে) *</label>
+                <select
+                  value={transferTo}
+                  onChange={(e) => setTransferTo(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 font-bold bg-white"
+                >
+                  <option value="ডাচ বাংলা ব্যাংক (A/C: 151.120.9876)">ডাচ বাংলা ব্যাংক (A/C: 151.120.9876)</option>
+                  <option value="প্রধান ক্যাশ ড্রয়ার">প্রধান ক্যাশ ড্রয়ার (ক্যাশ)</option>
+                  <option value="বিকাশ মার্চেন্ট (01712-345678)">বিকাশ মার্চেন্ট (01712-345678)</option>
+                  <option value="নগদ মার্চেন্ট">নগদ মার্চেন্ট</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">স্থানান্তরের পরিমাণ (৳) *</label>
+                <input
+                  type="number"
+                  required
+                  value={transferTaka || ''}
+                  onChange={(e) => setTransferTaka(Number(e.target.value))}
+                  placeholder="০"
+                  className="w-full p-2.5 rounded-xl border border-slate-300 font-black text-emerald-800 text-lg bg-white"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">রেফারেন্স / নোট (ঐচ্ছিক)</label>
+                <input
+                  type="text"
+                  value={transferNote}
+                  onChange={(e) => setTransferNote(e.target.value)}
+                  placeholder="যেমন: ব্যাংক স্লিপ নং #১২৩৪৭"
+                  className="w-full p-2.5 rounded-xl border border-slate-300 font-medium bg-white"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setTransferModalOpen(false)}
+                  className="px-4 py-2 border border-slate-300 rounded-xl font-semibold text-slate-700 cursor-pointer"
+                >
+                  বাতিল
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold shadow-md flex items-center gap-1.5 cursor-pointer"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>স্থানান্তর সম্পন্ন করুন</span>
                 </button>
               </div>
             </form>
@@ -300,7 +431,7 @@ export const CashBookAndDayClose: React.FC<CashBookAndDayCloseProps> = ({
                   </span>
                 </div>
               </div>
-              <button onClick={() => setDayCloseModalOpen(false)} className="text-slate-400 hover:text-slate-700">
+              <button onClick={() => setDayCloseModalOpen(false)} className="text-slate-400 hover:text-slate-700 text-lg">
                 ✕
               </button>
             </div>
@@ -352,20 +483,20 @@ export const CashBookAndDayClose: React.FC<CashBookAndDayCloseProps> = ({
               </div>
 
               <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 text-[11px] leading-tight">
-                ⚠️ সতর্কতা: ডে-ক্লোজ সম্পন্ন করার পর আজকের তারিখের পূর্ববর্তী কোনো লেনদেন সাধারণ ক্যাশিয়ার পরিবর্তন করতে পারবে না।
+                ⚠️ সতর্কতা: ডে-ক্লোজ সম্পন্ন করার পর আজকের তারিখের পূর্ববর্তী কোনো লেনদেন সাধারণ ক্যাশিয়ার পরিবর্তন বা ভয়েড করতে পারবে না।
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setDayCloseModalOpen(false)}
-                  className="px-4 py-2 border border-slate-300 rounded-xl font-semibold text-slate-700"
+                  className="px-4 py-2 border border-slate-300 rounded-xl font-semibold text-slate-700 cursor-pointer"
                 >
                   বাতিল
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold shadow-md flex items-center gap-1.5"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-extrabold shadow-md flex items-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   <span>ডে-ক্লোজ সম্পন্ন ও লক করুন</span>

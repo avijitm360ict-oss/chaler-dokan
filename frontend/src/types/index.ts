@@ -109,6 +109,7 @@ export interface Party {
   clientType?: 'retail' | 'wholesale' | 'dealer';
   vendorType?: 'mill' | 'arot' | 'mohajon';
   balancePaisa: number; // Positive = Customer owes us / We owe vendor
+  balanceType?: 'receivable' | 'payable';
   creditLimitPaisa: number;
   totalPurchasedPaisa?: number;
   totalSoldPaisa?: number;

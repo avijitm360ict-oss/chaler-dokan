@@ -493,6 +493,12 @@ export function App() {
     const targetInvoice = sales.find((s) => s.id === invoiceId);
     if (!targetInvoice || targetInvoice.status === 'voided') return;
 
+    // Audit Lock: Block modifying transactions after Day Close (BUG-ACC-04)
+    if (dayClose.isClosed) {
+      alert('সতর্কতা: আজকের ডে-ক্লোজ সম্পন্ন হয়ে গেছে! অডিট সুরক্ষার কারণে ডে-ক্লোজের পর কোনো বিক্রয় চালান বাতিল বা পরিবর্তন করা সম্ভব নয়।');
+      return;
+    }
+
     // Mark as voided
     setSales((prev) =>
       prev.map((s) => (s.id === invoiceId ? { ...s, status: 'voided', voidReason: reason } : s))
@@ -739,8 +745,13 @@ export function App() {
     }
   };
 
-  // 6. Update Party Balance (Collections from Customer / Payment to Mill)
+  // 6. Update Party Balance (Collections from Customer / Payment to Mill, BUG-ACC-02)
   const handleUpdatePartyBalance = (partyId: string, paymentPaisa: number) => {
+    const targetParty = parties.find((p) => p.id === partyId);
+    if (!targetParty) return;
+
+    const isVendor = targetParty.type === 'vendor';
+
     setParties((prev) =>
       prev.map((party) => {
         if (party.id === partyId) {
@@ -751,24 +762,79 @@ export function App() {
       })
     );
 
-    // Add to cash register
-    setDayClose((prev) => ({
-      ...prev,
-      dueCollectedCashPaisa: prev.dueCollectedCashPaisa + paymentPaisa,
-      expectedSystemCashPaisa: prev.expectedSystemCashPaisa + paymentPaisa
-    }));
+    // Update cash register based on whether it is customer collection or vendor payment
+    setDayClose((prev) => {
+      if (isVendor) {
+        // Paying vendor reduces drawer cash
+        return {
+          ...prev,
+          vendorPaidCashPaisa: prev.vendorPaidCashPaisa + paymentPaisa,
+          expectedSystemCashPaisa: prev.expectedSystemCashPaisa - paymentPaisa,
+        };
+      } else {
+        // Collecting from customer increases drawer cash
+        return {
+          ...prev,
+          dueCollectedCashPaisa: prev.dueCollectedCashPaisa + paymentPaisa,
+          expectedSystemCashPaisa: prev.expectedSystemCashPaisa + paymentPaisa,
+        };
+      }
+    });
 
     if (isServerLive && !isOffline) {
       api.parties.recordPayment(partyId, {
-        direction: 'in',
+        direction: isVendor ? 'out' : 'in',
         accountId: 'acc-cash',
         amountPaisa: paymentPaisa,
         method: 'cash',
-        note: 'বাকি আদায় (Customer Collection)',
+        note: isVendor ? 'মিলকে টাকা পরিশোধ (Vendor Payment)' : 'বাকি আদায় (Customer Collection)',
       }).catch((err) => console.warn('Payment record sync failed:', err));
     }
 
-    alert('টাকা সফলভাবে আদায় ও লেজারে ক্রেডিট করা হয়েছে!');
+    alert(isVendor ? 'মিলারকে টাকা সফলভাবে পরিশোধ ও লেজারে সমন্বয় করা হয়েছে!' : 'টাকা সফলভাবে আদায় ও লেজারে ক্রেডিট করা হয়েছে!');
+  };
+
+  // 6B. Create New Party (BUG-ACC-01)
+  const handleCreateParty = (newParty: Party) => {
+    setParties((prev) => [newParty, ...prev]);
+    if (isServerLive && !isOffline) {
+      api.parties.create({
+        name: newParty.name,
+        partyType: newParty.type === 'vendor' ? 'supplier' : 'customer',
+        phone: newParty.phone,
+        address: newParty.address,
+        creditLimitPaisa: newParty.creditLimitPaisa || 0,
+        openingBalancePaisa: newParty.balancePaisa || 0,
+        balanceType: newParty.balanceType || (newParty.type === 'vendor' ? 'payable' : 'receivable'),
+      }).catch((err) => console.warn('Party create sync failed:', err));
+    }
+    alert(`${newParty.type === 'vendor' ? 'মিলার / মহাজন' : 'কাস্টমার'} সফলভাবে যুক্ত হয়েছে!`);
+  };
+
+  // 6C. Account Transfer (BUG-ACC-03)
+  const handleAccountTransfer = (fromAccount: string, toAccount: string, amountPaisa: number, note?: string) => {
+    if (fromAccount.includes('ক্যাশ') && !toAccount.includes('ক্যাশ')) {
+      setDayClose((prev) => ({
+        ...prev,
+        expectedSystemCashPaisa: prev.expectedSystemCashPaisa - amountPaisa,
+      }));
+    } else if (!fromAccount.includes('ক্যাশ') && toAccount.includes('ক্যাশ')) {
+      setDayClose((prev) => ({
+        ...prev,
+        expectedSystemCashPaisa: prev.expectedSystemCashPaisa + amountPaisa,
+      }));
+    }
+
+    if (isServerLive && !isOffline) {
+      api.accounts.transfer({
+        fromAccountId: fromAccount.includes('ক্যাশ') ? 'acc-cash' : 'acc-bank',
+        toAccountId: toAccount.includes('ক্যাশ') ? 'acc-cash' : 'acc-bank',
+        amountPaisa,
+        note: note || `স্থানান্তর: ${fromAccount} হতে ${toAccount}`,
+      }).catch((err) => console.warn('Account transfer sync failed:', err));
+    }
+
+    alert(`টাকা স্থানান্তর সম্পন্ন: ${fromAccount} হতে ${toAccount}-এ ৳${amountPaisa / 100} জমা করা হয়েছে।`);
   };
 
   // 7. Add Expense
@@ -979,6 +1045,7 @@ export function App() {
               sales={sales}
               lang={lang}
               numFormat={numFormat}
+              isDayClosed={dayClose.isClosed}
               onOpenReceipt={(inv) => setActiveReceipt(inv)}
               onVoidInvoice={handleVoidInvoice}
             />
@@ -1025,6 +1092,7 @@ export function App() {
               parties={parties}
               lang={lang}
               numFormat={numFormat}
+              onCreateParty={handleCreateParty}
               onUpdatePartyBalance={handleUpdatePartyBalance}
             />
           )}
@@ -1037,6 +1105,7 @@ export function App() {
               numFormat={numFormat}
               onAddExpense={handleAddExpense}
               onPerformDayClose={handlePerformDayClose}
+              onAccountTransfer={handleAccountTransfer}
             />
           )}
 

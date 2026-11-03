@@ -8,6 +8,7 @@ interface SalesListViewProps {
   sales: SaleInvoice[];
   lang: Language;
   numFormat: NumberFormat;
+  isDayClosed?: boolean;
   onOpenReceipt: (invoice: SaleInvoice) => void;
   onVoidInvoice: (invoiceId: string, reason: string) => void;
 }
@@ -16,6 +17,7 @@ export const SalesListView: React.FC<SalesListViewProps> = ({
   sales,
   lang,
   numFormat,
+  isDayClosed = false,
   onOpenReceipt,
   onVoidInvoice
 }) => {
@@ -144,11 +146,20 @@ export const SalesListView: React.FC<SalesListViewProps> = ({
                     {s.status !== 'voided' && (
                       <button
                         onClick={() => {
+                          if (isDayClosed) {
+                            alert('সতর্কতা: আজকের ডে-ক্লোজ সম্পন্ন হয়েছে! ডে-ক্লোজের পর কোনো বিক্রয় চালান বাতিল করা যাবে না।');
+                            return;
+                          }
                           setTargetInvoiceId(s.id);
                           setVoidModalOpen(true);
                         }}
-                        className="p-1.5 bg-slate-100 hover:bg-red-100 hover:text-red-700 rounded-lg text-slate-400 transition"
-                        title="ইনভয়েস বাতিল করুন (Void)"
+                        disabled={isDayClosed}
+                        className={`p-1.5 rounded-lg transition ${
+                          isDayClosed
+                            ? 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                            : 'bg-slate-100 hover:bg-red-100 hover:text-red-700 text-slate-400'
+                        }`}
+                        title={isDayClosed ? 'লক করা: ডে-ক্লোজ সম্পন্ন হয়েছে' : 'ইনভয়েস বাতিল করুন (Void)'}
                       >
                         <Ban className="w-4 h-4" />
                       </button>

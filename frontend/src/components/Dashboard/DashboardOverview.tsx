@@ -135,7 +135,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-xs font-bold text-[#1D5FA8]">
+            <div className="flex items-center gap-2 text-xs font-bold text-[#1F7A4D]">
               <span>আদায় করুন</span>
               <ChevronRight className="w-4 h-4" />
             </div>
@@ -288,15 +288,15 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
         </div>
 
-        {/* Card 3: মোট বাকি পাওনা (পাবেন ৳...) */}
-        <div className="bg-white p-4 rounded-2xl border border-stroke-default shadow-xs hover:border-[#1D5FA8]/50 transition">
+        {/* Card 3: মোট বাকি পাওনা (পাবেন ৳... - সবুজ) */}
+        <div className="bg-white p-4 rounded-2xl border border-stroke-default shadow-xs hover:border-[#1F7A4D]/50 transition">
           <div className="flex items-center justify-between text-ink-secondary">
             <span className="text-xs font-bold">{lang === 'bn' ? 'মোট বাকি পাওনা' : 'Receivable Due'}</span>
-            <div className="p-2 bg-blue-50 text-[#1D5FA8] rounded-xl">
+            <div className="p-2 bg-[#E8F4EC] text-[#1F7A4D] rounded-xl">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl font-black text-[#1D5FA8] mt-2 tabular-nums">
+          <div className="text-xl sm:text-2xl font-black text-[#1F7A4D] mt-2 tabular-nums">
             {userRole === 'cashier' ? (
               <span className="text-sm text-slate-400 font-bold flex items-center gap-1">
                 <Lock className="w-3.5 h-3.5" /> শুধুমাত্র মালিকের জন্য
@@ -305,7 +305,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               formatCurrency(totalDueTodayPaisa, numFormat)
             )}
           </div>
-          <div className="text-[11px] text-[#1D5FA8] font-bold mt-1">
+          <div className="text-[11px] text-[#1F7A4D] font-bold mt-1">
             পাবেন (কাস্টমার খাতা)
           </div>
         </div>

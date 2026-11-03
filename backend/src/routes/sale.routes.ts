@@ -398,6 +398,19 @@ router.post('/:id/void', requireRole(['Owner', 'Manager', 'Super Admin']), async
       if (!sale) throw new Error('চালান পাওয়া যায়নি');
       if (sale.status === 'voided') throw new Error('এই চালানটি আগেই বাতিল করা হয়েছে');
 
+      // Audit Integrity: Check if day closing was already performed for this sale date (BUG-ACC-04)
+      const saleDateStart = new Date(sale.saleDate);
+      saleDateStart.setHours(0, 0, 0, 0);
+      const isDayClosed = await tx.dayClosing.findFirst({
+        where: {
+          tenantId,
+          date: saleDateStart,
+        },
+      });
+      if (isDayClosed) {
+        throw new Error('এই তারিখের ডে-ক্লোজ সম্পন্ন হয়েছে। অডিট নিয়মানুযায়ী ক্লোজ করা দিনের চালান বাতিল করা অনুমোদিত নয়।');
+      }
+
       // 1. Mark sale as voided
       const updatedSale = await tx.sale.update({
         where: { id: sale.id },

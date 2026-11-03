@@ -83,6 +83,62 @@ router.post('/', requireRole(['Owner', 'Super Admin']), async (req: Authenticate
   }
 });
 
+const transferAccountSchema = z.object({
+  fromAccountId: z.string().min(1, 'উৎস একাউন্ট নির্বাচন করুন'),
+  toAccountId: z.string().min(1, 'গন্তব্য একাউন্ট নির্বাচন করুন'),
+  amountPaisa: z.number().positive('স্থানান্তরের পরিমাণ ০ এর বেশি হতে হবে'),
+  note: z.string().optional(),
+});
+
+// POST /api/v1/accounts/transfer - Account to Account transfer (BUG-ACC-03)
+router.post('/transfer', requireRole(['Owner', 'Manager', 'Super Admin']), async (req: AuthenticatedRequest, res: Response, next) => {
+  try {
+    const tenantId = req.tenantId!;
+    const data = transferAccountSchema.parse(req.body);
+
+    if (data.fromAccountId === data.toAccountId) {
+      return res.status(400).json({ error: 'Invalid transfer', message: 'একই একাউন্টের মধ্যে স্থানান্তর সম্ভব নয়' });
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const [fromAcc, toAcc] = await Promise.all([
+        tx.account.findFirst({ where: { id: data.fromAccountId, tenantId } }),
+        tx.account.findFirst({ where: { id: data.toAccountId, tenantId } }),
+      ]);
+
+      if (!fromAcc || !toAcc) {
+        throw new Error('স্থানান্তরের জন্য নির্বাচিত একাউন্ট পাওয়া যায়নি');
+      }
+
+      if (Number(fromAcc.currentBalance) < data.amountPaisa) {
+        throw new Error(`উৎস একাউন্টে পর্যাপ্ত ব্যালেন্স নেই (বর্তমান ব্যালেন্স: ৳${Number(fromAcc.currentBalance) / 100})`);
+      }
+
+      // 1. Deduct from source
+      await tx.account.update({
+        where: { id: fromAcc.id },
+        data: { currentBalance: { decrement: BigInt(data.amountPaisa) } },
+      });
+
+      // 2. Add to destination
+      await tx.account.update({
+        where: { id: toAcc.id },
+        data: { currentBalance: { increment: BigInt(data.amountPaisa) } },
+      });
+
+      return { fromAcc: fromAcc.name, toAcc: toAcc.name, amountPaisa: data.amountPaisa };
+    });
+
+    res.json({
+      success: true,
+      message: `${result.fromAcc} হতে ${result.toAcc}-এ ৳${result.amountPaisa / 100} সফলভাবে স্থানান্তর হয়েছে`,
+      data: result,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/v1/accounts/expense-categories - List categories
 router.get('/expense-categories', async (req: AuthenticatedRequest, res: Response, next) => {
   try {

@@ -293,6 +293,16 @@ class ApiClient {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+    transfer: (data: {
+      fromAccountId: string;
+      toAccountId: string;
+      amountPaisa: number;
+      note?: string;
+    }) =>
+      this.request<any>('/accounts/transfer', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
   };
 
   // Warehouses
