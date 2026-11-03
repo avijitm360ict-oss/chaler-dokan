@@ -319,18 +319,19 @@ router.post('/:id/payments', async (req: AuthenticatedRequest, res: Response, ne
         },
       });
 
-      // 2. Calculate new Party Ledger balance
-      const lastLedger = await tx.partyLedger.findFirst({
-        where: { tenantId, partyId: party.id },
-        orderBy: { entryDate: 'desc' },
-      });
-      const previousBal = lastLedger ? Number(lastLedger.runningBalance) : Number(party.openingBalance);
-
-      // direction 'in' = Received from customer -> credit party ledger, runningBalance decreases
-      // direction 'out' = Paid to vendor -> debit party ledger, runningBalance increases towards positive (less debt)
+      // 2. Atomically calculate and update Party balance (Single Source of Truth)
       const debitPaisa = data.direction === 'out' ? data.amountPaisa : 0;
       const creditPaisa = data.direction === 'in' ? data.amountPaisa : 0;
-      const newBalance = previousBal + debitPaisa - creditPaisa;
+      const balChangePaisa = data.direction === 'in' ? -data.amountPaisa : data.amountPaisa;
+
+      const updatedParty = await tx.party.update({
+        where: { id: party.id },
+        data: {
+          openingBalance: { increment: BigInt(balChangePaisa) },
+        },
+      });
+
+      const newBalance = Number(updatedParty.openingBalance);
 
       await tx.partyLedger.create({
         data: {

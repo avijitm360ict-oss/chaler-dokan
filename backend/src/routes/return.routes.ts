@@ -75,12 +75,13 @@ router.post('/sale', async (req: AuthenticatedRequest, res: Response, next) => {
 
       // 4. If customer ledger adjustment needed
       if (data.clientId) {
-        const lastLedger = await tx.partyLedger.findFirst({
-          where: { tenantId, partyId: data.clientId },
-          orderBy: { entryDate: 'desc' },
+        const updatedParty = await tx.party.update({
+          where: { id: data.clientId },
+          data: {
+            openingBalance: { increment: BigInt(-data.refundAmountPaisa) },
+          },
         });
-        const currentBal = lastLedger ? Number(lastLedger.runningBalance) : 0;
-        const newBal = currentBal - data.refundAmountPaisa;
+        const newBal = Number(updatedParty.openingBalance);
 
         await tx.partyLedger.create({
           data: {
@@ -169,6 +170,12 @@ router.post('/purchase', async (req: AuthenticatedRequest, res: Response, next) 
         },
       });
 
+      if (Number(balance.qtyKg) < 0) {
+        throw new Error(
+          `ক্রয় ফেরত ব্যর্থ: গোডাউনে পর্যাপ্ত চাল নেই (মজুদ ঋণাত্মক হয়ে যাচ্ছে)`
+        );
+      }
+
       await tx.stockMovement.create({
         data: {
           tenantId,
@@ -183,12 +190,13 @@ router.post('/purchase', async (req: AuthenticatedRequest, res: Response, next) 
       });
 
       if (data.vendorId) {
-        const lastLedger = await tx.partyLedger.findFirst({
-          where: { tenantId, partyId: data.vendorId },
-          orderBy: { entryDate: 'desc' },
+        const updatedVendor = await tx.party.update({
+          where: { id: data.vendorId },
+          data: {
+            openingBalance: { increment: BigInt(data.returnAmountPaisa) },
+          },
         });
-        const currentBal = lastLedger ? Number(lastLedger.runningBalance) : 0;
-        const newBal = currentBal - data.returnAmountPaisa;
+        const newBal = Number(updatedVendor.openingBalance);
 
         await tx.partyLedger.create({
           data: {

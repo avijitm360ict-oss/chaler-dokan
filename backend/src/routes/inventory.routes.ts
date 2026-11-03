@@ -60,8 +60,8 @@ router.post('/transfer', requireRole(['Owner', 'Manager', 'Super Admin']), async
       const transferDocNo = await getNextDocNo(tx, tenantId, 'transfer', 'TRF');
       const unitCostPaisa = sourceBalance ? Number(sourceBalance.avgCostPaisa) : 0;
 
-      // 1. Deduct from Source Warehouse
-      await tx.stockBalance.update({
+      // 1. Deduct from Source Warehouse with negative stock guard
+      const updatedSource = await tx.stockBalance.update({
         where: {
           tenantId_productId_warehouseId: {
             tenantId,
@@ -71,6 +71,12 @@ router.post('/transfer', requireRole(['Owner', 'Manager', 'Super Admin']), async
         },
         data: { qtyKg: { decrement: data.qtyKg } },
       });
+
+      if (Number(updatedSource.qtyKg) < 0) {
+        throw new Error(
+          `স্থানান্তর ব্যর্থ: উৎস গোডাউনে পর্যাপ্ত চাল নেই (সমসাময়িক বিক্রয় বা স্থানান্তরের কারণে স্টক ঋণাত্মক হয়ে যাচ্ছে)`
+        );
+      }
 
       await tx.stockMovement.create({
         data: {
@@ -117,14 +123,14 @@ router.post('/transfer', requireRole(['Owner', 'Manager', 'Super Admin']), async
           },
         },
         update: {
-          qtyKg: destNewKg,
+          qtyKg: { increment: data.qtyKg }, // Atomic increment to prevent overwriting concurrent sales/transfers
           avgCostPaisa: BigInt(destNewWac),
         },
         create: {
           tenantId,
           productId: data.productId,
           warehouseId: data.toWarehouseId,
-          qtyKg: destNewKg,
+          qtyKg: data.qtyKg,
           avgCostPaisa: BigInt(destNewWac),
         },
       });

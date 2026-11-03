@@ -178,14 +178,14 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
             },
           },
           update: {
-            qtyKg: newQtyKg,
+            qtyKg: { increment: item.qtyKg }, // Atomic increment to prevent lost updates during concurrent sales
             avgCostPaisa: BigInt(newWacPaisa),
           },
           create: {
             tenantId,
             productId: item.productId,
             warehouseId: data.warehouseId,
-            qtyKg: newQtyKg,
+            qtyKg: item.qtyKg,
             avgCostPaisa: BigInt(newWacPaisa),
           },
         });
@@ -209,17 +209,15 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
       // 7. Update Vendor Balance & Ledger Entry
       const dueToVendorPaisa = grandTotalPaisa - data.paidTotalPaisa;
       if (dueToVendorPaisa > 0) {
-        const vendor = await tx.party.findUnique({
+        // Atomic balance update to prevent lost updates across concurrent purchases/payments
+        const updatedVendor = await tx.party.update({
           where: { id: data.vendorId },
+          data: {
+            openingBalance: { increment: BigInt(-dueToVendorPaisa) },
+          },
         });
-        const currentBal = vendor ? Number(vendor.openingBalance) : 0;
-        // In party balance: negative = payable (we owe vendor)
-        const updatedBal = currentBal - dueToVendorPaisa;
 
-        await tx.party.update({
-          where: { id: data.vendorId },
-          data: { openingBalance: BigInt(updatedBal) },
-        });
+        const newBal = Number(updatedVendor.openingBalance);
 
         await tx.partyLedger.create({
           data: {
@@ -230,7 +228,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
             refId: purchase.id,
             debitPaisa: BigInt(0),
             creditPaisa: BigInt(dueToVendorPaisa), // We owe credit
-            runningBalance: BigInt(updatedBal),
+            runningBalance: BigInt(newBal),
           },
         });
       }

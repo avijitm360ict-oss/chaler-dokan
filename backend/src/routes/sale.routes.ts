@@ -40,6 +40,21 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
     const data = createSaleSchema.parse(req.body);
 
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // 0. Audit Integrity: Guard against sales after Day Close
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const isDayClosed = await tx.dayClosing.findFirst({
+        where: {
+          tenantId,
+          date: { gte: startOfDay },
+        },
+      });
+      if (isDayClosed) {
+        throw new Error(
+          'আজকের দিনের ডে-ক্লোজ সম্পন্ন হয়েছে। অডিট নিয়মানুযায়ী ক্লোজ করা দিনে নতুন বিক্রয় চালান তৈরি করা যাবে না।'
+        );
+      }
+
       // 1. Generate Invoice No: INV-YYYY-xxxxx
       const docNo = await getNextDocNo(tx, tenantId, 'invoice', 'INV');
 
@@ -144,7 +159,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
 
       // 5. Deduct Stock & Record Movement for each item
       for (const item of preparedItems) {
-        await tx.stockBalance.update({
+        const updatedStock = await tx.stockBalance.update({
           where: {
             tenantId_productId_warehouseId: {
               tenantId,
@@ -156,6 +171,12 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
             qtyKg: { decrement: item.qtyKg },
           },
         });
+
+        if (Number(updatedStock.qtyKg) < 0) {
+          throw new Error(
+            `বিক্রয় ব্যর্থ: ${item.productNameBn}-এর স্টক অপর্যাপ্ত। সমসাময়িক বিক্রয়ের কারণে স্টক ঋণাত্মক হয়ে যাচ্ছে।`
+          );
+        }
 
         await tx.stockMovement.create({
           data: {
@@ -204,17 +225,15 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
 
       // 7. Update Client Party Ledger if there is due
       if (dueAmountPaisa > 0 && data.clientId) {
-        const client = await tx.party.findUnique({
+        // Atomic balance update to prevent lost updates across concurrent sales/payments
+        const updatedParty = await tx.party.update({
           where: { id: data.clientId },
+          data: {
+            openingBalance: { increment: BigInt(dueAmountPaisa) },
+          },
         });
-        const currentBal = client ? Number(client.openingBalance) : 0;
-        // In party balance: positive = receivable (client owes us)
-        const updatedBal = currentBal + dueAmountPaisa;
 
-        await tx.party.update({
-          where: { id: data.clientId },
-          data: { openingBalance: BigInt(updatedBal) },
-        });
+        const newBal = Number(updatedParty.openingBalance);
 
         await tx.partyLedger.create({
           data: {
@@ -225,7 +244,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
             refId: sale.id,
             debitPaisa: BigInt(dueAmountPaisa), // Client debited with due
             creditPaisa: BigInt(0),
-            runningBalance: BigInt(updatedBal),
+            runningBalance: BigInt(newBal),
           },
         });
       }
