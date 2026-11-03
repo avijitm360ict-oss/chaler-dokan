@@ -222,6 +222,21 @@ router.post('/expenses', async (req: AuthenticatedRequest, res: Response, next) 
     const data = createExpenseSchema.parse(req.body);
 
     const result = await prisma.$transaction(async (tx) => {
+      // 0. Audit Integrity: Guard against expenses after Day Close
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const isDayClosed = await tx.dayClosing.findFirst({
+        where: {
+          tenantId,
+          date: { gte: startOfDay },
+        },
+      });
+      if (isDayClosed) {
+        throw new Error(
+          'আজকের দিনের ডে-ক্লোজ সম্পন্ন হয়েছে। অডিট নিয়মানুযায়ী ক্লোজ করা দিনে নতুন খরচ এন্ট্রি করা যাবে না।'
+        );
+      }
+
       const account = await tx.account.findFirst({
         where: { id: data.accountId, tenantId },
       });

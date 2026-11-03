@@ -38,6 +38,7 @@ interface QuickPOSProps {
   lang: Language;
   numFormat: NumberFormat;
   userRole?: string;
+  isDayClosed?: boolean;
   onCompleteSale: (invoice: SaleInvoice) => void;
   onOpenReceipt: (invoice: SaleInvoice) => void;
 }
@@ -49,6 +50,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
   lang,
   numFormat,
   userRole = 'owner',
+  isDayClosed = false,
   onCompleteSale,
   onOpenReceipt
 }) => {
@@ -392,6 +394,14 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
 
   // Complete Sale
   const handleFinalizeSale = () => {
+    // Audit Integrity: Guard against sales after Day Close
+    if (isDayClosed) {
+      alert(lang === 'bn'
+        ? 'সতর্কতা: আজকের ডে-ক্লোজ সম্পন্ন হয়েছে! ডে-ক্লোজের পর নতুন বিক্রয় চালান তৈরি করা যাবে না।'
+        : 'Warning: Day Close has already been completed today. Sales are locked.');
+      return;
+    }
+
     const paidCashPaisa = Math.round(paidCashTaka * 100);
     const paidBkashPaisa = Math.round(paidBkashTaka * 100);
     const paidNagadPaisa = Math.round(paidNagadTaka * 100);
@@ -521,6 +531,23 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
       
       {/* LEFT: Rice Catalog & Quick Select (60% width) */}
       <div className="flex-1 flex flex-col bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+        
+        {/* Day Close Lock Warning Banner */}
+        {isDayClosed && (
+          <div className="bg-red-600 text-white px-4 py-2 text-xs font-bold flex items-center justify-between border-b border-red-700 shadow-xs shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">🔒</span>
+              <span>
+                {lang === 'bn'
+                  ? 'সতর্কতা: আজকের ডে-ক্লোজ সম্পন্ন হয়েছে। অডিট নিয়মানুযায়ী ক্লোজ করা দিনে নতুন বিক্রয় চালান তৈরি করা বন্ধ রয়েছে।'
+                  : 'Warning: Day Close has been completed. New sales are locked to protect audit integrity.'}
+              </span>
+            </div>
+            <span className="bg-red-800 text-red-100 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wide">
+              {lang === 'bn' ? 'হিসাব লকড' : 'LOCKED'}
+            </span>
+          </div>
+        )}
         
         {/* Top Controls: Search, Price Type, Category */}
         <div className="p-3.5 border-b border-slate-200/90 space-y-3 bg-slate-50/50">

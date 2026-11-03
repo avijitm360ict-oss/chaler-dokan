@@ -412,8 +412,41 @@ export function App() {
     setNumFormat((prev) => (prev === 'bn' ? 'en' : 'bn'));
   };
 
+  // Centralized Immutable Audit Logger
+  const logAuditAction = (
+    action: string,
+    entityType: 'sale' | 'purchase' | 'return' | 'party' | 'stock' | 'rate' | 'day_close' | 'user' | 'expense' | 'settings' | 'tenant',
+    entityId: string,
+    details: string,
+    oldValue?: string,
+    newValue?: string
+  ) => {
+    const auditEntry: AuditLogEntry = {
+      id: `aud-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      timestamp: new Date().toISOString(),
+      userName: userRole === 'owner' ? 'মালিক / ম্যানেজার' : 'ক্যাশিয়ার',
+      userRole: userRole,
+      action,
+      entityType,
+      entityId,
+      details,
+      oldValue,
+      newValue
+    };
+    setAuditLogs((prev) => [auditEntry, ...prev]);
+    if (isServerLive && !isOffline) {
+      api.audit.create(auditEntry).catch((e) => console.warn('Could not persist audit:', e));
+    }
+  };
+
   // 1. Complete Sale Handler
   const handleCompleteSale = async (invoice: SaleInvoice) => {
+    // Day Close Guard (Audit Integrity)
+    if (dayClose.isClosed) {
+      alert('সতর্কতা: আজকের ডে-ক্লোজ সম্পন্ন হয়েছে! ডে-ক্লোজের পর নতুন বিক্রয় চালান তৈরি করা যাবে না।');
+      return;
+    }
+
     // Append to sales ledger
     setSales((prev) => [invoice, ...prev]);
 
@@ -491,6 +524,13 @@ export function App() {
       // Offline mode: queue for later sync
       savePendingSales([...pendingOfflineSales, salePayload]);
     }
+
+    logAuditAction(
+      'নতুন বিক্রয় চালান',
+      'sale',
+      invoice.id,
+      `চালান #${invoice.docNo}: ${invoice.clientName || 'খুচরা গ্রাহক'} • মোট বিল ৳${(invoice.grandTotalPaisa / 100).toLocaleString('bn-BD')} (নগদ জমা: ৳${(invoice.paidTotalPaisa / 100).toLocaleString('bn-BD')}, বাকি: ৳${(invoice.dueAmountPaisa / 100).toLocaleString('bn-BD')})`
+    );
   };
 
   // 2. Void Invoice Handler (Revert stock and balances, PRD 10.2)
@@ -563,12 +603,30 @@ export function App() {
         .catch((err) => console.warn('Backend void failed:', err));
     }
 
+    logAuditAction(
+      'বিক্রয় চালান বাতিল (Void)',
+      'sale',
+      invoiceId,
+      `চালান #${targetInvoice.docNo} বাতিল (Void) করা হয়েছে। কারণ: ${reason}`,
+      'স্ট্যাটাস: কনফার্মড',
+      'স্ট্যাটাস: বাতিল'
+    );
+
     alert('ইনভয়েস বাতিল (Voided) করা হয়েছে এবং চালের স্টক ফিরিয়ে নেওয়া হয়েছে।');
   };
 
   // 3. Daily Rates update handler
   const handleUpdateRates = async (updatedProducts: RiceProduct[]) => {
     setProducts(updatedProducts);
+
+    logAuditAction(
+      'বাজার দর পরিবর্তন',
+      'rate',
+      'daily-rates',
+      `আজকের চালের বাজার দর আপডেট করা হয়েছে (${updatedProducts.length}টি জাতের নতুন দর নির্ধারিত)`,
+      undefined,
+      'নতুন দর কার্যকর'
+    );
 
     if (isServerLive && !isOffline) {
       try {
@@ -600,6 +658,12 @@ export function App() {
 
   // 4. Add Purchase Handler
   const handleAddPurchase = (bill: PurchaseBill) => {
+    // Day Close Guard (Audit Integrity)
+    if (dayClose.isClosed) {
+      alert('সতর্কতা: আজকের ডে-ক্লোজ সম্পন্ন হয়েছে! ডে-ক্লোজের পর নতুন ক্রয় চালান এন্ট্রি করা যাবে না।');
+      return;
+    }
+
     setPurchases((prev) => [bill, ...prev]);
 
     // Increase stock & update WAC
@@ -674,6 +738,13 @@ export function App() {
         }).catch((err) => console.warn('Purchase sync failed:', err));
       }
     }
+
+    logAuditAction(
+      'নতুন ক্রয় চালান',
+      'purchase',
+      bill.id,
+      `ক্রয় চালান #${bill.docNo}: সাপ্লায়ার ${bill.vendorName} • মোট ৳${(bill.grandTotalPaisa / 100).toLocaleString('bn-BD')} (নগদ পরিশোধ: ৳${(bill.paidAmountPaisa / 100).toLocaleString('bn-BD')}, দেনা: ৳${(bill.dueAmountPaisa / 100).toLocaleString('bn-BD')})`
+    );
   };
 
   // 5. Stock Adjustment (Moisture loss etc.)
@@ -761,10 +832,18 @@ export function App() {
 
   // 6. Update Party Balance (Collections from Customer / Payment to Mill, BUG-ACC-02)
   const handleUpdatePartyBalance = (partyId: string, paymentPaisa: number) => {
+    // Day Close Guard (Audit Integrity)
+    if (dayClose.isClosed) {
+      alert('সতর্কতা: আজকের ডে-ক্লোজ সম্পন্ন হয়েছে! ডে-ক্লোজের পর নগদ টাকা আদায় বা পরিশোধ এন্ট্রি করা যাবে না।');
+      return;
+    }
+
     const targetParty = parties.find((p) => p.id === partyId);
     if (!targetParty) return;
 
     const isVendor = targetParty.type === 'vendor';
+    const oldBal = targetParty.balancePaisa;
+    const newBal = Math.max(0, targetParty.balancePaisa - paymentPaisa);
 
     setParties((prev) =>
       prev.map((party) => {
@@ -805,6 +884,15 @@ export function App() {
       }).catch((err) => console.warn('Payment record sync failed:', err));
     }
 
+    logAuditAction(
+      isVendor ? 'সাপ্লায়ার দেনা পরিশোধ' : 'কাস্টমার বাকি আদায়',
+      'party',
+      partyId,
+      `${targetParty.name}-এর ${isVendor ? 'দেনা পরিশোধ' : 'বাকি আদায়'} বাবদ ৳${(paymentPaisa / 100).toLocaleString('bn-BD')} জমা/পরিশোধ করা হয়েছে।`,
+      `আগের ব্যালেন্স: ৳${(oldBal / 100).toLocaleString('bn-BD')}`,
+      `নতুন ব্যালেন্স: ৳${(newBal / 100).toLocaleString('bn-BD')}`
+    );
+
     alert(isVendor ? 'মিলারকে টাকা সফলভাবে পরিশোধ ও লেজারে সমন্বয় করা হয়েছে!' : 'টাকা সফলভাবে আদায় ও লেজারে ক্রেডিট করা হয়েছে!');
   };
 
@@ -822,6 +910,14 @@ export function App() {
         balanceType: newParty.balanceType || (newParty.type === 'vendor' ? 'payable' : 'receivable'),
       }).catch((err) => console.warn('Party create sync failed:', err));
     }
+
+    logAuditAction(
+      'নতুন পার্টি তৈরি',
+      'party',
+      newParty.id,
+      `নতুন ${newParty.type === 'vendor' ? 'সাপ্লায়ার/মিল' : 'কাস্টমার'}: ${newParty.name} (${newParty.phone}) তৈরি করা হয়েছে। প্রাথমিক ব্যালেন্স: ৳${(newParty.balancePaisa / 100).toLocaleString('bn-BD')}`
+    );
+
     alert(`${newParty.type === 'vendor' ? 'মিলার / মহাজন' : 'কাস্টমার'} সফলভাবে যুক্ত হয়েছে!`);
   };
 
@@ -853,6 +949,12 @@ export function App() {
 
   // 7. Add Expense
   const handleAddExpense = (newExp: ExpenseRecord) => {
+    // Day Close Guard (Audit Integrity)
+    if (dayClose.isClosed) {
+      alert('সতর্কতা: আজকের ডে-ক্লোজ সম্পন্ন হয়েছে! ডে-ক্লোজের পর নতুন খরচ এন্ট্রি করা যাবে না।');
+      return;
+    }
+
     setExpenses((prev) => [newExp, ...prev]);
 
     // Deduct from cash register
@@ -870,6 +972,13 @@ export function App() {
         note: newExp.note,
       }).catch((err) => console.warn('Expense sync failed:', err));
     }
+
+    logAuditAction(
+      'খরচ এন্ট্রি',
+      'expense',
+      newExp.id,
+      `খরচের খাত: ${newExp.category} • টাকা: ৳${(newExp.amountPaisa / 100).toLocaleString('bn-BD')} (${newExp.note || 'নোট নেই'})`
+    );
   };
 
   // 8. Perform Day Close
@@ -888,6 +997,13 @@ export function App() {
         note,
       }).catch((err) => console.warn('Day close sync failed:', err));
     }
+
+    logAuditAction(
+      'ডে-ক্লোজ ও হিসাব লক',
+      'day_close',
+      'dayclose-today',
+      `আজকের হিসাব ক্লোজ ও লক সম্পন্ন। ড্রয়ার ক্যাশ গণনা: ৳${(countedCashPaisa / 100).toLocaleString('bn-BD')}, অমিল: ৳${((countedCashPaisa - dayClose.expectedSystemCashPaisa) / 100).toLocaleString('bn-BD')} • নোট: ${note || 'নোট নেই'}`
+    );
 
     alert('আলহামদুলিল্লাহ, আজকের ডে-ক্লোজ সম্পন্ন হয়েছে এবং হিসাব লক করা হয়েছে।');
   };
@@ -912,6 +1028,13 @@ export function App() {
         console.warn('Tenant update sync failed:', err);
       }
     }
+
+    logAuditAction(
+      'দোকান প্রোফাইল আপডেট',
+      'settings',
+      updated.id,
+      `দোকানের নাম (${updated.shopNameBn}), ঠিকানা (${updated.address}) বা প্রোপ্রাইটর তথ্য আপডেট করা হয়েছে।`
+    );
   };
 
   // 10. Add Return Handler (Stock Restoration & Party Ledger Adjustment, BUG-POS-03)
@@ -978,6 +1101,13 @@ export function App() {
         console.warn('Return sync failed:', err);
       }
     }
+
+    logAuditAction(
+      isSaleReturn ? 'বিক্রয় ফেরত (ক্রেডিট নোট)' : 'ক্রয় ফেরত (ডেবিট নোট)',
+      'return',
+      ret.id,
+      `নথি #${ret.docNo}: ${ret.partyName} হতে ${returnedKg} কেজি চাল ফেরত (${isSaleReturn ? 'স্টক বৃদ্ধি ও বাকি হ্রাস' : 'স্টক হ্রাস ও দেনা হ্রাস'})। ফেরত মূল্য: ৳${(ret.totalAmountPaisa / 100).toLocaleString('bn-BD')}`
+    );
   };
 
   return (
@@ -1005,6 +1135,26 @@ export function App() {
         onLogout={handleLogout}
         currentUser={currentUser}
       />
+
+      {/* Subscription Expiry Alert Banner */}
+      {tenant.trialDaysLeft <= 7 && (
+        <div className="bg-amber-500 text-slate-950 px-4 py-2 text-xs font-bold flex items-center justify-between border-b border-amber-600 shadow-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-base">⚠️</span>
+            <span>
+              {lang === 'bn'
+                ? `আপনার চালের দোকান SaaS লাইসেন্সের মেয়াদ শেষ হতে আর মাত্র ${tenant.trialDaysLeft} দিন বাকি! নিরবচ্ছিন্ন ক্লাউড সেবা বজায় রাখতে এখনই প্ল্যান রিনিউ বা আপগ্রেড করুন।`
+                : `Your subscription expires in ${tenant.trialDaysLeft} days! Please renew or upgrade your plan to maintain uninterrupted cloud service.`}
+            </span>
+          </div>
+          <button
+            onClick={() => handleSelectTab('settings')}
+            className="px-3 py-1 bg-slate-950 text-white rounded-lg hover:bg-slate-800 transition text-[11px] font-bold shrink-0 ml-2 cursor-pointer"
+          >
+            {lang === 'bn' ? 'প্ল্যান রিনিউ করুন →' : 'Renew Plan →'}
+          </button>
+        </div>
+      )}
 
       <div className="flex-1 flex max-w-7xl w-full mx-auto px-2 sm:px-4 lg:px-6">
         
@@ -1040,6 +1190,7 @@ export function App() {
               lang={lang}
               numFormat={numFormat}
               userRole={userRole}
+              isDayClosed={dayClose.isClosed}
               onCompleteSale={handleCompleteSale}
               onOpenReceipt={(inv) => handleOpenReceipt(inv, false)}
             />

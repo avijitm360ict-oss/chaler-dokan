@@ -215,7 +215,7 @@ export interface AuditLogEntry {
   userName: string;
   userRole: UserRole;
   action: string;
-  entityType: 'sale' | 'purchase' | 'rate' | 'stock' | 'party' | 'day_close' | 'tenant';
+  entityType: 'sale' | 'purchase' | 'rate' | 'stock' | 'party' | 'day_close' | 'tenant' | 'return' | 'expense' | 'user' | 'settings';
   entityId: string;
   details: string;
   oldValue?: string;

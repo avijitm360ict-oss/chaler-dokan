@@ -37,6 +37,21 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
     const data = createPurchaseSchema.parse(req.body);
 
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // 0. Audit Integrity: Guard against purchases after Day Close
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const isDayClosed = await tx.dayClosing.findFirst({
+        where: {
+          tenantId,
+          date: { gte: startOfDay },
+        },
+      });
+      if (isDayClosed) {
+        throw new Error(
+          'আজকের দিনের ডে-ক্লোজ সম্পন্ন হয়েছে। অডিট নিয়মানুযায়ী ক্লোজ করা দিনে নতুন ক্রয় চালান তৈরি করা যাবে না।'
+        );
+      }
+
       // 1. Generate Doc No: PUR-YYYY-xxxxx
       const docNo = await getNextDocNo(tx, tenantId, 'purchase', 'PUR');
 
