@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   RiceProduct,
   CartItem,
@@ -88,6 +88,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
   const [ownerCreditApproved, setOwnerCreditApproved] = useState<boolean>(false);
   const [cashTenderedTaka, setCashTenderedTaka] = useState<number>(0); // e.g. দিলেন ২০০০, ফেরত ১২০
   const [showSplitPayment, setShowSplitPayment] = useState<boolean>(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Filtered Products
   const categories = useMemo(() => {
@@ -433,6 +434,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
       id: `inv-${Date.now()}`,
       docNo: `INV-2026-${String(Math.floor(1000 + Math.random() * 9000))}`,
       date: new Date().toISOString(),
+      clientId: selectedClient ? selectedClient.id : undefined,
       clientName: selectedClient ? selectedClient.name : 'কাউন্টার কাস্টমার (নগদ)',
       clientPhone: selectedClient ? selectedClient.phone : '01700-000000',
       clientType: selectedClient ? (selectedClient.clientType || 'wholesale') : 'walkin',
@@ -460,6 +462,60 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
     onOpenReceipt(newInvoice);
   };
 
+  // Keyboard Shortcuts (BUG-POS-01)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // 1. '/' Focus Search Input
+      if (e.key === '/' && document.activeElement !== searchInputRef.current) {
+        const target = e.target as HTMLElement;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          searchInputRef.current?.focus();
+          searchInputRef.current?.select();
+        }
+      }
+
+      // 2. 'F2' Checkout & Open Payment Modal
+      if (e.key === 'F2') {
+        e.preventDefault();
+        if (cart.length > 0) {
+          openCheckout();
+        } else {
+          alert('কার্টে কোনো চাল নেই। অনুগ্রহ করে প্রথমে চাল যোগ করুন।');
+        }
+      }
+
+      // 3. 'Escape' Close Modals or Clear Cart / Blur Search
+      if (e.key === 'Escape') {
+        if (isCheckoutModalOpen) {
+          setIsCheckoutModalOpen(false);
+        } else if (activeModalProduct) {
+          setActiveModalProduct(null);
+        } else if (isMobileCartOpen) {
+          setIsMobileCartOpen(false);
+        } else if (document.activeElement === searchInputRef.current) {
+          setSearchQuery('');
+          searchInputRef.current?.blur();
+        } else if (cart.length > 0) {
+          if (window.confirm('আপনি কি বর্তমান কার্ট খালি করতে চান?')) {
+            clearCart();
+          }
+        }
+      }
+
+      // 4. 'Enter' When Search is Focused -> Select First Filtered Product
+      if (e.key === 'Enter' && document.activeElement === searchInputRef.current) {
+        if (filteredProducts.length > 0) {
+          e.preventDefault();
+          handleOpenProductSheet(filteredProducts[0]);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [cart, isCheckoutModalOpen, activeModalProduct, isMobileCartOpen, filteredProducts]);
+
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-5.5rem)] pb-16 md:pb-2">
       
@@ -475,12 +531,16 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
             <div className="relative flex-1 min-w-[220px]">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
+                ref={searchInputRef}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t.searchRice}
-                className="w-full pl-9 pr-4 py-2 rounded-xl bg-white border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+                placeholder={`${t.searchRice} (কীবোর্ডে / চাপুন)`}
+                className="w-full pl-9 pr-12 py-2 rounded-xl bg-white border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
               />
+              <kbd className="hidden sm:inline-block absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-400 bg-slate-100 border border-slate-200 rounded">
+                /
+              </kbd>
             </div>
 
             {/* Wholesale vs Retail Price Toggle */}
@@ -899,7 +959,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
         <div className="lg:hidden fixed bottom-14 left-0 right-0 z-30 bg-[#1F7A4D] text-white px-4 py-2.5 shadow-sheet flex items-center justify-between border-t border-[#16603B]">
           <div
             onClick={() => setIsMobileCartOpen(true)}
-            className="cursor-pointer"
+            className="cursor-pointer flex-1"
           >
             <span className="text-[10px] text-emerald-100 block font-bold">
               {cart.length} টি চাল • কার্ট দেখুন ↑
@@ -913,8 +973,109 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
             onClick={openCheckout}
             className="px-5 py-2.5 bg-white text-[#1F7A4D] hover:bg-slate-100 font-black text-xs rounded-xl shadow-md transition touch-target"
           >
-            পেমেন্ট নিন
+            পেমেন্ট নিন (F2)
           </button>
+        </div>
+      )}
+
+      {/* MOBILE CART BOTTOM SHEET DRAWER (BUG-POS-04) */}
+      {isMobileCartOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-[#1A1A17]/60 backdrop-blur-xs flex items-end justify-center">
+          <div className="bg-white rounded-t-3xl w-full max-h-[85vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-200">
+            {/* Header */}
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 rounded-t-3xl">
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-base text-slate-900">
+                  চলতি কার্ট ({cart.length} টি চাল)
+                </span>
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                  {formatWeight(totalKg, numFormat, lang)}
+                </span>
+              </div>
+              <button
+                onClick={() => setIsMobileCartOpen(false)}
+                className="p-1.5 text-slate-500 hover:text-slate-800 rounded-lg text-sm font-bold"
+              >
+                ✕ বন্ধ
+              </button>
+            </div>
+
+            {/* Cart Items List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2.5 divide-y divide-slate-100">
+              {cart.map((item, idx) => (
+                <div key={idx} className="pt-2 flex items-center justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h5 className="font-bold text-xs text-slate-900 truncate">
+                      {item.product.nameBn}
+                    </h5>
+                    <span className="text-[10px] text-slate-500 block">
+                      {item.selectedUnit.nameBn} @ {formatCurrency(item.unitPricePaisa, numFormat)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center border border-slate-300 rounded-lg bg-white">
+                      <button
+                        onClick={() => updateItemQuantity(idx, item.unitQuantity - 1)}
+                        className="p-1 text-slate-500 hover:text-rose-600"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="px-2 font-bold text-xs text-slate-900 font-mono">
+                        {toBengaliDigits(item.unitQuantity)}
+                      </span>
+                      <button
+                        onClick={() => updateItemQuantity(idx, item.unitQuantity + 1)}
+                        className="p-1 text-slate-500 hover:text-emerald-700"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <span className="font-black text-xs text-slate-900 min-w-[70px] text-right tabular-nums">
+                      {formatCurrency(item.lineTotalPaisa, numFormat)}
+                    </span>
+
+                    <button
+                      onClick={() => removeFromCart(idx)}
+                      className="text-slate-400 hover:text-rose-600 p-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Footer Summary & Checkout */}
+            <div className="p-4 border-t border-slate-200 bg-slate-50 space-y-3">
+              <div className="flex items-center justify-between text-base font-black text-slate-900">
+                <span>সর্বমোট পরিশোধযোগ্য:</span>
+                <span className="text-emerald-800">{formatCurrency(grandTotalPaisa, numFormat)}</span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setIsMobileCartOpen(false);
+                    clearCart();
+                  }}
+                  className="px-4 py-3 rounded-xl border border-slate-300 font-bold text-xs text-slate-600"
+                >
+                  ক্লিয়ার
+                </button>
+                <button
+                  onClick={() => {
+                    setIsMobileCartOpen(false);
+                    openCheckout();
+                  }}
+                  className="flex-1 py-3.5 rounded-xl bg-[#1F7A4D] hover:bg-[#16603B] text-white font-black text-sm shadow-md flex items-center justify-center gap-2"
+                >
+                  <span>চেকআউট ও পেমেন্ট (F2)</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

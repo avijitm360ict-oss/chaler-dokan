@@ -362,8 +362,19 @@ export function App() {
       alert(msg);
     };
     window.addEventListener('chal_auth_expired', handleAuthExpired);
-    return () => window.removeEventListener('chal_auth_expired', handleAuthExpired);
-  }, []);
+
+    // Auto-sync offline sales when internet restores (BUG-POS-05)
+    const handleOnline = () => {
+      setIsOffline(false);
+      syncOfflineSales();
+    };
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      window.removeEventListener('chal_auth_expired', handleAuthExpired);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, [pendingOfflineSales]);
 
   // Modals & Drawers
   const [showShortcuts, setShowShortcuts] = useState<boolean>(false);
@@ -444,6 +455,7 @@ export function App() {
     // Prepare Sale Payload
     const salePayload = {
       warehouseId: invoice.warehouseId || 'wh-01',
+      clientId: invoice.clientId,
       clientName: invoice.clientName,
       discountPaisa: invoice.discountPaisa || 0,
       deliveryChargePaisa: invoice.deliveryChargePaisa || 0,
@@ -822,15 +834,49 @@ export function App() {
     }
   };
 
-  // 10. Add Return Handler
+  // 10. Add Return Handler (Stock Restoration & Party Ledger Adjustment, BUG-POS-03)
   const handleAddReturn = async (ret: ReturnRecord) => {
     setReturns((prev) => [ret, ...prev]);
 
+    const isSaleReturn = ret.type === 'sale_return';
+    const returnedKg = ret.items.reduce((sum, it) => sum + (it.totalKg || it.quantity || 0), 0);
+
+    // 1. Stock adjustment
+    setProducts((prev) =>
+      prev.map((prod) => {
+        const item = ret.items.find((it) => it.productId === prod.id);
+        if (item) {
+          const deltaKg = item.totalKg || item.quantity || 0;
+          const newStock = isSaleReturn ? prod.stockKg + deltaKg : Math.max(0, prod.stockKg - deltaKg);
+          return { ...prod, stockKg: newStock };
+        }
+        return prod;
+      })
+    );
+
+    // 2. Party ledger balance adjustment
+    const matchedParty = parties.find((p) => p.name === ret.partyName);
+    if (ret.totalAmountPaisa > 0 && matchedParty) {
+      setParties((prev) =>
+        prev.map((party) => {
+          if (party.id === matchedParty.id) {
+            const newBal = isSaleReturn
+              ? Math.max(0, party.balancePaisa - ret.totalAmountPaisa)
+              : party.balancePaisa - ret.totalAmountPaisa;
+            return { ...party, balancePaisa: newBal };
+          }
+          return party;
+        })
+      );
+    }
+
+    // 3. Cloud Backend Sync
     if (isServerLive && !isOffline) {
       try {
-        if (ret.type === 'sale_return') {
+        if (isSaleReturn) {
           await api.returns.createSaleReturn({
             warehouseId: warehouses[0]?.id || 'wh-01',
+            clientId: matchedParty?.id,
             productId: ret.items[0]?.productId,
             unitId: 'unit-kg',
             qtyUnit: ret.items[0]?.quantity || 0,
@@ -840,6 +886,7 @@ export function App() {
         } else {
           await api.returns.createPurchaseReturn({
             warehouseId: warehouses[0]?.id || 'wh-01',
+            vendorId: matchedParty?.id,
             productId: ret.items[0]?.productId,
             unitId: 'unit-kg',
             qtyUnit: ret.items[0]?.quantity || 0,

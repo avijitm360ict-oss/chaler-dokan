@@ -78,6 +78,7 @@ export interface SaleInvoice {
   id: string;
   docNo: string;
   date: string;
+  clientId?: string;
   clientName: string;
   clientPhone: string;
   clientType: 'retail' | 'wholesale' | 'dealer' | 'walkin';
