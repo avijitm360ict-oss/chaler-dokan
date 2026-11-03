@@ -452,8 +452,9 @@ export function App() {
       expectedSystemCashPaisa: prev.expectedSystemCashPaisa + cashReceivedPaisa
     }));
 
-    // Prepare Sale Payload
+    // Prepare Sale Payload with unique idempotency key to prevent duplicate sales
     const salePayload = {
+      idempotencyKey: invoice.id || `sale-${Date.now()}-${Math.random()}`,
       warehouseId: invoice.warehouseId || 'wh-01',
       clientId: invoice.clientId,
       clientName: invoice.clientName,

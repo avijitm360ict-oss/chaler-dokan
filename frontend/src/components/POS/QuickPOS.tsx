@@ -517,7 +517,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
   }, [cart, isCheckoutModalOpen, activeModalProduct, isMobileCartOpen, filteredProducts]);
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-5.5rem)] pb-16 md:pb-2">
+    <div className="flex flex-col md:flex-row gap-3 lg:gap-4 h-[calc(100vh-5.5rem)] pb-16 md:pb-2">
       
       {/* LEFT: Rice Catalog & Quick Select (60% width) */}
       <div className="flex-1 flex flex-col bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
@@ -731,8 +731,8 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
 
       </div>
 
-      {/* RIGHT: Cart, Customer & Checkout (40% width) */}
-      <div className="w-full lg:w-[420px] flex flex-col bg-white rounded-2xl border border-slate-200/90 shadow-md overflow-hidden">
+      {/* RIGHT: Cart, Customer & Checkout (Tablet & Desktop Dual Pane Cashier Mode) */}
+      <div className="w-full md:w-[360px] lg:w-[420px] shrink-0 flex flex-col bg-white rounded-2xl border border-slate-200/90 shadow-md overflow-hidden">
         
         {/* Customer Selector & Hold Bar */}
         <div className="p-3 border-b border-stroke-default bg-slate-50/70 space-y-2">

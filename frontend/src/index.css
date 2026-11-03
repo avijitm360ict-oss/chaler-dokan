@@ -54,6 +54,21 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Mobile Browser Normalization (Samsung Internet, Chrome Android, Safari) */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Remove 300ms tap delay on mobile devices */
+button, select, input, a {
+  touch-action: manipulation;
+}
+
 /* Touch Targets per Section 8.2 (minimum 44x44, POS 56px) */
 .touch-target {
   min-height: 44px;

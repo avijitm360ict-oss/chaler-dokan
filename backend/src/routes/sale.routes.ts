@@ -23,6 +23,7 @@ const paymentInputSchema = z.object({
 });
 
 const createSaleSchema = z.object({
+  idempotencyKey: z.string().optional(),
   warehouseId: z.string(),
   clientId: z.string().optional(),
   clientName: z.string().optional(),
@@ -40,7 +41,18 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
     const data = createSaleSchema.parse(req.body);
 
     const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // 0. Audit Integrity: Guard against sales after Day Close
+      // 0. Idempotency Check: Prevent duplicate sales during offline sync or network retries (BUG-OFFLINE-01)
+      if (data.idempotencyKey) {
+        const existingSale = await tx.sale.findFirst({
+          where: { tenantId, idempotencyKey: data.idempotencyKey },
+          include: { items: true, client: true },
+        });
+        if (existingSale) {
+          return existingSale;
+        }
+      }
+
+      // 0.1. Audit Integrity: Guard against sales after Day Close
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
       const isDayClosed = await tx.dayClosing.findFirst({
@@ -131,6 +143,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
           warehouseId: data.warehouseId,
           channel: 'pos',
           status: 'confirmed',
+          idempotencyKey: data.idempotencyKey,
           subtotalPaisa: BigInt(subtotalPaisa),
           discountPaisa: BigInt(totalDiscountPaisa),
           deliveryChargePaisa: BigInt(data.deliveryChargePaisa),
