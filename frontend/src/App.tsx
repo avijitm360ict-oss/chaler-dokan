@@ -1125,6 +1125,7 @@ export function App() {
               sales={sales}
               expenses={expenses}
               parties={parties}
+              returns={returns}
               lang={lang}
               numFormat={numFormat}
             />

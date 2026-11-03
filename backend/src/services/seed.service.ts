@@ -278,6 +278,34 @@ export async function seedDatabase() {
       },
     });
 
+    const unitBag25 = await prisma.productUnit.upsert({
+      where: { id: `unit-bag25-${p.id}` },
+      update: {},
+      create: {
+        id: `unit-bag25-${p.id}`,
+        tenantId: tenant.id,
+        productId: createdProd.id,
+        nameBn: '২৫ কেজি বস্তা',
+        nameEn: '25kg Bag',
+        kgPerUnit: 25.0,
+        isBase: false,
+      },
+    });
+
+    const unitMon = await prisma.productUnit.upsert({
+      where: { id: `unit-mon-${p.id}` },
+      update: {},
+      create: {
+        id: `unit-mon-${p.id}`,
+        tenantId: tenant.id,
+        productId: createdProd.id,
+        nameBn: 'মণ (৪০ কেজি)',
+        nameEn: 'Mon (40kg)',
+        kgPerUnit: 40.0,
+        isBase: false,
+      },
+    });
+
     // Prices
     await prisma.productPrice.upsert({
       where: { id: `price-ret-${p.id}` },

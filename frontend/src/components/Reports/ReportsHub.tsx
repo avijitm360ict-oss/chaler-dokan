@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { RiceProduct, Warehouse, SaleInvoice, ExpenseRecord, Party, Language, NumberFormat } from '../../types';
+import { RiceProduct, Warehouse, SaleInvoice, ExpenseRecord, Party, Language, NumberFormat, ReturnRecord } from '../../types';
 import { translations } from '../../i18n/translations';
 import { formatCurrency, formatWeight, formatDateBangla } from '../../utils/formatters';
 import {
@@ -24,6 +24,7 @@ interface ReportsHubProps {
   sales: SaleInvoice[];
   expenses: ExpenseRecord[];
   parties: Party[];
+  returns?: ReturnRecord[];
   lang: Language;
   numFormat: NumberFormat;
 }
@@ -37,6 +38,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({
   sales,
   expenses,
   parties,
+  returns = [],
   lang,
   numFormat
 }) => {
@@ -46,7 +48,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({
   const [dateRange, setDateRange] = useState<DateRange>('this_month');
 
   // Filter sales and expenses by date range
-  const { filteredSales, filteredExpenses } = useMemo(() => {
+  const { filteredSales, filteredExpenses, filteredReturns } = useMemo(() => {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const yesterdayStart = todayStart - 86400000;
@@ -55,7 +57,11 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({
     const thisYearStart = new Date(now.getFullYear(), 0, 1).getTime();
 
     if (dateRange === 'all') {
-      return { filteredSales: sales, filteredExpenses: expenses };
+      return {
+        filteredSales: sales.filter((s) => s.status !== 'voided'),
+        filteredExpenses: expenses,
+        filteredReturns: returns,
+      };
     }
 
     const filterFn = (dateStr: string) => {
@@ -69,15 +75,35 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({
     };
 
     return {
-      filteredSales: sales.filter((s) => filterFn(s.date)),
+      filteredSales: sales.filter((s) => s.status !== 'voided' && filterFn(s.date)),
       filteredExpenses: expenses.filter((e) => filterFn(e.date)),
+      filteredReturns: returns.filter((r) => filterFn(r.date)),
     };
-  }, [sales, expenses, dateRange]);
+  }, [sales, expenses, returns, dateRange]);
 
-  // Profit & Loss metrics (WAC Based)
-  const totalSalesRevenuePaisa = filteredSales.reduce((sum, s) => sum + s.grandTotalPaisa, 0);
-  const totalCogsPaisa = filteredSales.reduce((sum, s) => sum + s.totalCostSnapshotPaisa, 0);
-  const totalGrossProfitPaisa = Math.max(0, totalSalesRevenuePaisa - totalCogsPaisa);
+  // Profit & Loss metrics (WAC & Return Adjusted)
+  const grossSalesRevenuePaisa = filteredSales.reduce((sum, s) => sum + s.grandTotalPaisa, 0);
+  const salesReturnsPaisa = filteredReturns
+    .filter((r) => r.type === 'sale_return')
+    .reduce((sum, r) => sum + r.totalAmountPaisa, 0);
+  const totalSalesRevenuePaisa = Math.max(0, grossSalesRevenuePaisa - salesReturnsPaisa);
+
+  // Cost of Goods Sold adjusted for returns
+  const grossCogsPaisa = filteredSales.reduce((sum, s) => sum + s.totalCostSnapshotPaisa, 0);
+  const returnedCogsPaisa = filteredReturns
+    .filter((r) => r.type === 'sale_return')
+    .reduce((sum, r) => {
+      const returnCost = r.items.reduce((cSum, it) => {
+        const prod = products.find((p) => p.id === it.productId);
+        const wac = prod?.wacPerKgPaisa || 0;
+        return cSum + Math.round((it.totalKg || it.quantity || 0) * wac);
+      }, 0);
+      return sum + returnCost;
+    }, 0);
+  const totalCogsPaisa = Math.max(0, grossCogsPaisa - returnedCogsPaisa);
+
+  // Accurate Gross Profit (uncapped to correctly reveal business losses if selling below cost)
+  const totalGrossProfitPaisa = totalSalesRevenuePaisa - totalCogsPaisa;
   const totalOperatingExpensePaisa = filteredExpenses.reduce((sum, e) => sum + e.amountPaisa, 0);
   const netProfitPaisa = totalGrossProfitPaisa - totalOperatingExpensePaisa;
 

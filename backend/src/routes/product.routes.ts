@@ -190,6 +190,30 @@ router.post('/', async (req: AuthenticatedRequest, res: Response, next) => {
         },
       });
 
+      const bag25Unit = await tx.productUnit.create({
+        data: {
+          tenantId,
+          productId: prod.id,
+          nameBn: '২৫ কেজি বস্তা',
+          nameEn: '25kg Bag',
+          kgPerUnit: 25.0,
+          isBase: false,
+          isDefaultSale: false,
+        },
+      });
+
+      const mon40Unit = await tx.productUnit.create({
+        data: {
+          tenantId,
+          productId: prod.id,
+          nameBn: 'মণ (৪০ কেজি)',
+          nameEn: 'Mon (40kg)',
+          kgPerUnit: 40.0,
+          isBase: false,
+          isDefaultSale: false,
+        },
+      });
+
       // Prices
       await tx.productPrice.create({
         data: {

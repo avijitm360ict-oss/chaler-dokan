@@ -12,8 +12,10 @@ export const formatCurrency = (
   digitFormat: NumberFormat = 'bn',
   showSymbol: boolean = true
 ): string => {
-  const numPaisa = typeof paisa === 'bigint' ? Number(paisa) : paisa;
-  const taka = (numPaisa / 100).toFixed(2);
+  const numPaisa = typeof paisa === 'bigint' ? Number(paisa) : Number(paisa) || 0;
+  const isNegative = numPaisa < 0;
+  const absPaisa = Math.abs(numPaisa);
+  const taka = (absPaisa / 100).toFixed(2);
   const [integerPart, decimalPart] = taka.split('.');
 
   // South Asian / Bangladeshi Number Format (last 3, then groups of 2: 12,34,567.00)
@@ -33,9 +35,10 @@ export const formatCurrency = (
     : `${formattedInteger}.${decimalPart}`;
 
   const finalDigits = digitFormat === 'bn' ? toBengaliDigits(formattedTaka) : formattedTaka;
+  const sign = isNegative ? '-' : '';
   const symbol = showSymbol ? (digitFormat === 'bn' ? '৳ ' : '৳ ') : '';
 
-  return `${symbol}${finalDigits}`;
+  return `${sign}${symbol}${finalDigits}`;
 };
 
 // Convert Taka float to integer Paisa

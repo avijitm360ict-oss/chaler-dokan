@@ -354,8 +354,8 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
   const deliveryChargePaisa = Math.round(deliveryChargeTaka * 100);
   const grandTotalPaisa = Math.max(0, subtotalPaisa - discountPaisa + deliveryChargePaisa);
 
-  // Estimated profit calculation (Section 5.7)
-  const estimatedProfitPaisa = Math.max(0, grandTotalPaisa - totalCostPaisa);
+  // Estimated profit calculation (Section 5.7) — accurately reflects gross profit or loss
+  const estimatedProfitPaisa = grandTotalPaisa - totalCostPaisa;
 
   // Hold current cart
   const handleHoldCart = () => {
@@ -852,19 +852,30 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                     </div>
                   </div>
 
-                  {/* Quantity Stepper */}
+                  {/* Quantity Stepper with fractional support */}
                   <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
                     <button
-                      onClick={() => updateItemQuantity(index, item.unitQuantity - 1)}
+                      onClick={() => {
+                        const step = item.selectedUnit.isBase ? 0.5 : 1;
+                        updateItemQuantity(index, Math.max(0.01, Math.round((item.unitQuantity - step) * 100) / 100));
+                      }}
                       className="w-7 h-7 rounded-lg bg-white hover:bg-slate-200 flex items-center justify-center text-ink-primary font-bold shadow-2xs touch-target"
                     >
                       <Minus className="w-3.5 h-3.5" />
                     </button>
-                    <span className="w-8 text-center text-xs font-black text-ink-primary tabular-nums">
-                      {numFormat === 'bn' ? toBengaliDigits(item.unitQuantity) : item.unitQuantity}
-                    </span>
+                    <input
+                      type="number"
+                      step="any"
+                      min={0.01}
+                      value={item.unitQuantity}
+                      onChange={(e) => updateItemQuantity(index, Number(e.target.value))}
+                      className="w-12 text-center text-xs font-black text-ink-primary bg-white rounded border border-slate-200 py-0.5 tabular-nums focus:outline-emerald-600"
+                    />
                     <button
-                      onClick={() => updateItemQuantity(index, item.unitQuantity + 1)}
+                      onClick={() => {
+                        const step = item.selectedUnit.isBase ? 0.5 : 1;
+                        updateItemQuantity(index, Math.round((item.unitQuantity + step) * 100) / 100);
+                      }}
                       className="w-7 h-7 rounded-lg bg-white hover:bg-slate-200 flex items-center justify-center text-ink-primary font-bold shadow-2xs touch-target"
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -912,10 +923,10 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                 <span className="font-bold text-ink-primary tabular-nums">{formatCurrency(subtotalPaisa, numFormat)}</span>
               </div>
               {userRole !== 'cashier' && (
-                <div className="flex justify-between text-[#1F7A4D] font-medium text-[11px]">
+                <div className={`flex justify-between font-medium text-[11px] ${estimatedProfitPaisa < 0 ? 'text-rose-600' : 'text-[#1F7A4D]'}`}>
                   <span className="flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-[#E0A526]" />
-                    {t.estimatedProfit}:
+                    {estimatedProfitPaisa < 0 ? 'সম্ভাব্য ক্ষতি' : t.estimatedProfit}:
                   </span>
                   <span className="font-black tabular-nums">{formatCurrency(estimatedProfitPaisa, numFormat)}</span>
                 </div>
@@ -1158,37 +1169,44 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
               <div className="flex items-center gap-2 mb-2">
                 <button
                   type="button"
-                  onClick={() => setModalQty(Math.max(1, modalQty - 1))}
-                  className="w-14 h-14 rounded-2xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-xl font-bold text-slate-800 touch-target"
+                  onClick={() => {
+                    const step = modalUnitId === 'u-kg' ? 0.5 : 1;
+                    setModalQty(Math.max(0.01, Math.round((modalQty - step) * 100) / 100));
+                  }}
+                  className="w-14 h-14 rounded-2xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-xl font-bold text-slate-800 touch-target cursor-pointer"
                 >
                   <Minus className="w-6 h-6" />
                 </button>
                 <input
                   type="number"
-                  min={1}
-                  value={modalQty}
-                  onChange={(e) => setModalQty(Math.max(1, Number(e.target.value)))}
+                  step="any"
+                  min={0.01}
+                  value={modalQty || ''}
+                  onChange={(e) => setModalQty(Math.max(0, Number(e.target.value)))}
                   className="flex-1 h-14 text-center text-2xl font-black text-[#1F7A4D] rounded-2xl border-2 border-slate-300 focus:border-[#1F7A4D] tabular-nums"
                 />
                 <button
                   type="button"
-                  onClick={() => setModalQty(modalQty + 1)}
-                  className="w-14 h-14 rounded-2xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-xl font-bold text-slate-800 touch-target"
+                  onClick={() => {
+                    const step = modalUnitId === 'u-kg' ? 0.5 : 1;
+                    setModalQty(Math.round((modalQty + step) * 100) / 100);
+                  }}
+                  className="w-14 h-14 rounded-2xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-xl font-bold text-slate-800 touch-target cursor-pointer"
                 >
                   <Plus className="w-6 h-6" />
                 </button>
               </div>
 
-              {/* Quick Qty Chips (Section 4.3: ১, ৫, ১০, ২৫, ৫০ কেজি) */}
+              {/* Quick Qty Chips with decimal support */}
               <div className="flex flex-wrap gap-1.5">
-                {[1, 5, 10, 25, 50].map((qtyVal) => (
+                {(modalUnitId === 'u-kg' ? [0.5, 1, 2, 5, 10, 25] : [1, 2, 5, 10, 25, 50]).map((qtyVal) => (
                   <button
                     key={qtyVal}
                     type="button"
                     onClick={() => setModalQty(qtyVal)}
-                    className="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-[#E8F4EC] hover:text-[#1F7A4D] text-slate-700 font-bold text-xs rounded-xl transition"
+                    className="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-[#E8F4EC] hover:text-[#1F7A4D] text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
                   >
-                    {qtyVal}
+                    {numFormat === 'bn' ? toBengaliDigits(qtyVal) : qtyVal} {modalUnitId === 'u-kg' ? 'কেজি' : 'টি'}
                   </button>
                 ))}
               </div>
