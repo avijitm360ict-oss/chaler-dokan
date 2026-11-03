@@ -168,7 +168,7 @@ export const DailyRateBoard: React.FC<DailyRateBoardProps> = ({
                         {lang === 'bn' ? p.nameBn : p.nameEn}
                       </div>
                       <div className="text-[11px] text-slate-500">
-                        {p.variety} • {p.grade} • SKU: {p.sku}
+                        {p.variety} • {p.grade} • আইটেম কোড: {p.sku}
                       </div>
                     </td>
 

@@ -312,16 +312,33 @@ export const StockManagement: React.FC<StockManagementProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {products.map((p) => {
-                const isLow = p.stockKg <= p.minStockKg;
-                const valuePaisa = Math.round(p.stockKg * p.wacPerKgPaisa);
+              {products.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-500">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl">
+                        🌾
+                      </div>
+                      <div className="text-sm font-bold text-slate-800">
+                        গোডাউনে কোনো চালের স্টক বা আইটেম নেই
+                      </div>
+                      <p className="text-xs text-slate-500 max-w-xs">
+                        মিল থেকে চাল ক্রয় করলে অথবা নতুন পণ্য যুক্ত করলে এখানে সম্পূর্ণ স্টক প্রদর্শিত হবে।
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                products.map((p) => {
+                  const isLow = p.stockKg <= p.minStockKg;
+                  const valuePaisa = Math.round(p.stockKg * p.wacPerKgPaisa);
 
-                return (
-                  <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="py-3 px-4">
-                      <div className="font-bold text-slate-900 text-sm">{p.nameBn}</div>
-                      <div className="text-[11px] text-slate-500">{p.variety} • {p.grade} • SKU: {p.sku}</div>
-                    </td>
+                  return (
+                    <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3 px-4">
+                        <div className="font-bold text-slate-900 text-sm">{p.nameBn}</div>
+                        <div className="text-[11px] text-slate-500">{p.variety} • {p.grade} • আইটেম কোড: {p.sku}</div>
+                      </td>
                     <td className="py-3 px-3 font-extrabold text-slate-900">
                       {formatWeight(p.stockKg, numFormat, lang)}
                     </td>
@@ -379,7 +396,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
                     </td>
                   </tr>
                 );
-              })}
+              }))}
             </tbody>
           </table>
         </div>
@@ -613,7 +630,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
                   <h3 className="font-extrabold text-slate-900 text-base">
                     চাল ও পণ্যের তথ্য সম্পাদনা
                   </h3>
-                  <p className="text-xs text-slate-500">আইটেম কোড / SKU: {editingProduct.sku}</p>
+                  <p className="text-xs text-slate-500">আইটেম কোড: {editingProduct.sku}</p>
                 </div>
               </div>
               <button

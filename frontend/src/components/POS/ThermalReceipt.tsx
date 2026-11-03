@@ -118,7 +118,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
               title="হোয়াটসঅ্যাপে চালান শেয়ার করুন"
             >
               <Share2 className="w-4 h-4" />
-              <span>WhatsApp</span>
+              <span>হোয়াটসঅ্যাপ</span>
             </button>
 
             {/* Print button */}

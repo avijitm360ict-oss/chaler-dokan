@@ -402,7 +402,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
 
     if (dueAmountPaisa > 0 && selectedClientId === 'walkin') {
       alert(lang === 'bn' 
-        ? 'সতর্কতা: ওয়াক-ইন কাউন্টার কাস্টমারকে বাকি দেওয়া যাবে না। অনুগ্রহ করে কাস্টমার সিলেক্ট করুন অথবা পুরো টাকা পরিশোধ করুন।' 
+        ? 'সতর্কতা: সাধারণ নগদ খদ্দের বা কাউন্টার কাস্টমারকে বাকি দেওয়া যাবে না। বাকি বিক্রির জন্য কাস্টমারের খাতা সিলেক্ট করুন অথবা পুরো টাকা পরিশোধ করুন।' 
         : 'Warning: Cannot give credit to walk-in customer. Please select a registered party or pay full amount.');
       return;
     }
@@ -412,12 +412,12 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
       const projectedBalance = (selectedClient.balancePaisa || 0) + dueAmountPaisa;
       if (projectedBalance > selectedClient.creditLimitPaisa) {
         if (userRole === 'cashier') {
-          alert('ক্রেডিট লিমিট অতিক্রম করেছে! মালিকের অনুমোদন ব্যতীত ক্যাশিয়ার বাকি বিক্রি সম্পন্ন করতে পারবে না।');
+          alert('বাকি বিক্রির সর্বোচ্চ সীমা (ক্রেডিট লিমিট) অতিক্রম করেছে! মালিকের অনুমোদন ব্যতীত ক্যাশিয়ার অতিরিক্ত বাকিতে বিক্রি করতে পারবে না।');
           return;
         }
         if (!ownerCreditApproved) {
           const confirmOverride = window.confirm(
-            `সতর্কতা: কাস্টমারের ক্রেডিট লিমিট অতিক্রম করেছে!\nমোট বাকি হবে: ৳${(projectedBalance / 100).toFixed(0)}\nক্রেডিট লিমিট: ৳${(selectedClient.creditLimitPaisa / 100).toFixed(0)}\n\nআপনি কি মালিক হিসেবে এই বিক্রি অনুমোদন করতে চান?`
+            `সতর্কতা: কাস্টমারের বাকি সীমা (ক্রেডিট লিমিট) অতিক্রম করেছে!\nমোট বাকি হবে: ${formatCurrency(projectedBalance, numFormat)}\nঅনুমোদিত বাকি সীমা: ${formatCurrency(selectedClient.creditLimitPaisa, numFormat)}\n\nআপনি কি মালিক হিসেবে এই বাকি বিক্রি অনুমোদন করতে চান?`
           );
           if (!confirmOverride) return;
         }
@@ -616,10 +616,25 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
           {filteredProducts.length === 0 ? (
             <div className="col-span-full py-16 flex flex-col items-center justify-center text-center text-slate-400">
               <span className="text-4xl mb-3">🌾</span>
-              <h4 className="font-bold text-slate-700 text-sm">দোকানে কোনো চালের স্টক বা আইটেম নেই</h4>
+              <h4 className="font-bold text-slate-700 text-sm">
+                {searchQuery ? `"${searchQuery}" নামে কোনো চাল পাওয়া যায়নি` : 'দোকানে কোনো চালের স্টক বা আইটেম নেই'}
+              </h4>
               <p className="text-xs text-slate-500 mt-1 max-w-sm">
-                নতুন চাল যোগ করতে সাইডবার থেকে <strong>চাল ক্রয়</strong> অথবা <strong>গোডাউন ও স্টক</strong> মেনুতে যান।
+                {searchQuery || selectedCategory !== 'all'
+                  ? 'ফিল্টার বা সার্চ পরিবর্তন করে দেখুন অথবা ফিল্টার ক্লিয়ার করুন।'
+                  : 'নতুন চাল যোগ করতে সাইডবার থেকে চাল ক্রয় অথবা গোডাউন ও স্টক মেনুতে যান।'}
               </p>
+              {(searchQuery || selectedCategory !== 'all') && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedCategory('all');
+                  }}
+                  className="mt-3 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs shadow-xs transition cursor-pointer"
+                >
+                  সার্চ ফিল্টার ক্লিয়ার করুন
+                </button>
+              )}
             </div>
           ) : (
             filteredProducts.map((product) => {

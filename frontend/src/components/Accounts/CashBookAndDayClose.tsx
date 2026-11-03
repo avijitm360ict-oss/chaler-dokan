@@ -214,17 +214,42 @@ export const CashBookAndDayClose: React.FC<CashBookAndDayCloseProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {expenses.map((exp) => (
-                <tr key={exp.id} className="hover:bg-slate-50">
-                  <td className="py-2.5 px-3 text-slate-500">{formatDateBangla(exp.date)}</td>
-                  <td className="py-2.5 px-3 font-bold text-slate-900">{exp.categoryNameBn}</td>
-                  <td className="py-2.5 px-3 text-slate-600">{exp.account}</td>
-                  <td className="py-2.5 px-3 text-slate-500 italic">{exp.note || '-'}</td>
-                  <td className="py-2.5 px-3 text-right font-extrabold text-red-700">
-                    - {formatCurrency(exp.amountPaisa, numFormat)}
+              {expenses.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-10 text-center text-slate-500">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl">
+                        🧾
+                      </div>
+                      <div className="text-sm font-bold text-slate-800">
+                        আজকের কোনো খরচের হিসাব নেই
+                      </div>
+                      <p className="text-xs text-slate-500 max-w-xs">
+                        লেবার, গাড়িভাড়া, দোকানভাড়া বা অন্য কোনো খরচ থাকলে এন্ট্রি করুন।
+                      </p>
+                      <button
+                        onClick={() => setExpenseModalOpen(true)}
+                        className="mt-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        + খরচ এন্ট্রি করুন
+                      </button>
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                expenses.map((exp) => (
+                  <tr key={exp.id} className="hover:bg-slate-50">
+                    <td className="py-2.5 px-3 text-slate-500">{formatDateBangla(exp.date)}</td>
+                    <td className="py-2.5 px-3 font-bold text-slate-900">{exp.categoryNameBn}</td>
+                    <td className="py-2.5 px-3 text-slate-600">{exp.account}</td>
+                    <td className="py-2.5 px-3 text-slate-500 italic">{exp.note || '-'}</td>
+                    <td className="py-2.5 px-3 text-right font-extrabold text-red-700">
+                      - {formatCurrency(exp.amountPaisa, numFormat)}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

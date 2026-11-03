@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { SaleInvoice, PurchaseBill, ReturnRecord, Language, NumberFormat } from '../../types';
 import { translations } from '../../i18n/translations';
 import { formatCurrency, formatWeight, formatDateBangla, toBengaliDigits } from '../../utils/formatters';
-import { RotateCcw, AlertTriangle, CheckCircle2, Search, Printer, ArrowLeftRight, FileText, X } from 'lucide-react';
+import { RotateCcw, AlertTriangle, CheckCircle2, Search, Printer, ArrowLeftRight, FileText, X, Plus } from 'lucide-react';
 
 interface ReturnsManagerProps {
   sales: SaleInvoice[];
@@ -157,9 +157,35 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {returns
-                .filter((r) => r.type === returnType)
-                .map((ret) => (
+              {returns.filter((r) => r.type === returnType).length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="py-12 text-center text-slate-500">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl">
+                        ↩️
+                      </div>
+                      <div className="text-sm font-bold text-slate-800">
+                        {returnType === 'sale_return' ? 'কোনো বিক্রয় ফেরত এন্ট্রি নেই' : 'কোনো ক্রয় ফেরত এন্ট্রি নেই'}
+                      </div>
+                      <p className="text-xs text-slate-500 max-w-xs">
+                        {returnType === 'sale_return'
+                          ? 'কাস্টমার চাল ফেরত দিলে বা বদল করতে চাইলে ক্রেডিট নোট তৈরি করুন।'
+                          : 'সাপ্লায়ারকে চাল ফেরত দিলে বা নষ্ট মাল রিটার্ন করলে ডেবিট নোট তৈরি করুন।'}
+                      </p>
+                      <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="mt-2 px-3.5 py-1.5 bg-[#1F7A4D] hover:bg-[#18633e] text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        {returnType === 'sale_return' ? '+ নতুন বিক্রয় ফেরত (Credit Note)' : '+ নতুন ক্রয় ফেরত (Debit Note)'}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                returns
+                  .filter((r) => r.type === returnType)
+                  .map((ret) => (
                   <tr key={ret.id} className="hover:bg-slate-50 transition">
                     <td className="py-3 px-4 font-mono font-bold text-[#1F7A4D]">{ret.docNo}</td>
                     <td className="py-3 px-4 text-slate-500">{formatDateBangla(ret.date)}</td>
@@ -199,7 +225,7 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
                       </button>
                     </td>
                   </tr>
-                ))}
+                )))}
             </tbody>
           </table>
         </div>

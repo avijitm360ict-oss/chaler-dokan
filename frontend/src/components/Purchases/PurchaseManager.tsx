@@ -132,13 +132,37 @@ export const PurchaseManager: React.FC<PurchaseManagerProps> = ({
                 <th className="py-3 px-3">{lang === 'bn' ? 'তারিখ' : 'Date'}</th>
                 <th className="py-3 px-3">{lang === 'bn' ? 'মিল / আড়তদার' : 'Vendor'}</th>
                 <th className="py-3 px-3">{lang === 'bn' ? 'চালের আইটেম ও ওজন' : 'Rice & Weight'}</th>
-                <th className="py-3 px-3 bg-emerald-50/50">{lang === 'bn' ? 'প্রকৃত কেনা-দর (Landed/Kg)' : 'Landed Cost/Kg'}</th>
+                <th className="py-3 px-3 bg-emerald-50/50">{lang === 'bn' ? 'প্রকৃত কেনা-দর (কেজি)' : 'Landed Cost/Kg'}</th>
                 <th className="py-3 px-3">{lang === 'bn' ? 'সর্বমোট বিল' : 'Grand Total'}</th>
                 <th className="py-3 px-3">{lang === 'bn' ? 'পরিশোধ ও বাকি' : 'Paid & Due'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {purchases.map((bill) => (
+              {purchases.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-500">
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-3xl">
+                        🚛
+                      </div>
+                      <div className="text-base font-bold text-slate-800">
+                        কোনো ক্রয় চালান বা ইনভয়েস পাওয়া যায়নি
+                      </div>
+                      <p className="text-xs text-slate-500 max-w-sm">
+                        সাপ্লায়ার বা মিল থেকে নতুন চাল কেনার ইনভয়েস ও গাড়িভাড়া এন্ট্রি করতে নিচের বাটনে চাপ দিন।
+                      </p>
+                      <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="mt-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs flex items-center gap-2 shadow-sm transition cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4" />
+                        নতুন চাল ক্রয় চালান এন্ট্রি
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                purchases.map((bill) => (
                 <tr key={bill.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-3 px-4 font-bold text-slate-900">
                     {bill.docNo}
@@ -184,7 +208,7 @@ export const PurchaseManager: React.FC<PurchaseManagerProps> = ({
                     )}
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
@@ -202,7 +226,7 @@ export const PurchaseManager: React.FC<PurchaseManagerProps> = ({
                 </div>
                 <div>
                   <h3 className="font-extrabold text-slate-900 text-base">
-                    {lang === 'bn' ? 'নতুন চাল ক্রয় ও Landed Cost এন্ট্রি' : 'Record Inbound Rice Purchase'}
+                    {lang === 'bn' ? 'নতুন চাল ক্রয় ও প্রকৃত কেনা-দর নির্ধারণ' : 'Record Inbound Rice Purchase'}
                   </h3>
                   <span className="text-xs text-slate-500">
                     {lang === 'bn' ? 'গাড়িভাড়া ও লেবার খরচ বন্টন করে সঠিক গড় ক্রয়মূল্য নির্ণয়' : 'Freight & labour cost allocation engine'}
@@ -320,7 +344,7 @@ export const PurchaseManager: React.FC<PurchaseManagerProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 font-bold text-emerald-900 text-sm">
                     <Sparkles className="w-4 h-4 text-emerald-600" />
-                    <span>প্রকৃত কেনা-দাম (Landed Cost Engine)</span>
+                    <span>প্রকৃত কেনা-দাম (গাড়িভাড়া ও লেবার সহ)</span>
                   </div>
                   <div className="text-right">
                     <span className="text-xs text-slate-500">প্রতি কেজির আসল ক্রয়মূল্য:</span>
@@ -332,7 +356,7 @@ export const PurchaseManager: React.FC<PurchaseManagerProps> = ({
 
                 <div className="flex justify-between text-[11px] text-emerald-700 border-t border-emerald-200/60 pt-1.5">
                   <span>পূর্বের গড় খরচ: {formatCurrency(selectedProduct.wacPerKgPaisa, numFormat)}</span>
-                  <span className="font-bold">নতুন Weighted Average Cost (WAC): {formatCurrency(Math.round(newForecastWacTaka * 100), numFormat)}</span>
+                  <span className="font-bold">নতুন গড় কেনা-দাম (WAC): {formatCurrency(Math.round(newForecastWacTaka * 100), numFormat)}</span>
                 </div>
               </div>
 

@@ -90,7 +90,20 @@ export const SalesListView: React.FC<SalesListViewProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredSales.map((s) => (
+              {filteredSales.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <span className="text-4xl">📄</span>
+                      <h4 className="font-bold text-slate-700 text-sm">কোনো বিক্রয় চালান পাওয়া যায়নি</h4>
+                      <p className="text-xs text-slate-500 max-w-sm">
+                        এখনও কোনো বিক্রয় চালান তৈরি করা হয়নি অথবা ফিল্টারের সাথে মিলছে না।
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredSales.map((s) => (
                 <tr key={s.id} className={s.status === 'voided' ? 'bg-red-50/40 opacity-75' : 'hover:bg-slate-50'}>
                   <td className="py-3 px-4 font-bold text-slate-900">
                     {s.docNo}
@@ -166,7 +179,7 @@ export const SalesListView: React.FC<SalesListViewProps> = ({
                     )}
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
