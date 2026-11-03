@@ -377,6 +377,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <input
                     type="tel"
                     required
+                    autoComplete="tel"
                     value={loginPhone}
                     onChange={(e) => setLoginPhone(e.target.value)}
                     placeholder="017xxxxxxxx"
@@ -394,6 +395,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
+                    autoComplete="current-password"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     placeholder="পাসওয়ার্ড লিখুন"
@@ -515,6 +517,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <input
                     type="text"
                     required
+                    autoComplete="organization"
                     value={regShopName}
                     onChange={(e) => setRegShopName(e.target.value)}
                     placeholder="যেমন: মেসার্স আল্লাহর দান চাউল আড়ত"
@@ -532,6 +535,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <input
                     type="text"
                     required
+                    autoComplete="name"
                     value={regOwnerName}
                     onChange={(e) => setRegOwnerName(e.target.value)}
                     placeholder="যেমন: মো: কামরুল হাসান"
@@ -549,6 +553,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <input
                     type="tel"
                     required
+                    autoComplete="tel"
                     value={regPhone}
                     onChange={(e) => setRegPhone(e.target.value)}
                     placeholder="017xxxxxxxx"
@@ -567,6 +572,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     type={showPassword ? 'text' : 'password'}
                     required
                     minLength={6}
+                    autoComplete="new-password"
                     value={regPassword}
                     onChange={(e) => setRegPassword(e.target.value)}
                     placeholder="গোপন পাসওয়ার্ড দিন"
