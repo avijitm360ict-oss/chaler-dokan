@@ -384,7 +384,11 @@ export function App() {
   const [showImportWizard, setShowImportWizard] = useState<boolean>(false);
 
   // Modal receipt viewer
-  const [activeReceipt, setActiveReceipt] = useState<SaleInvoice | null>(null);
+  const [activeReceipt, setActiveReceipt] = useState<{ invoice: SaleInvoice; isReprint?: boolean } | null>(null);
+
+  const handleOpenReceipt = (invoice: SaleInvoice, isReprint: boolean = false) => {
+    setActiveReceipt({ invoice, isReprint });
+  };
 
   const handleSelectTab = (tab: string) => {
     if (tab === 'audit-log') {
@@ -1024,7 +1028,7 @@ export function App() {
               numFormat={numFormat}
               userRole={userRole}
               onSelectTab={handleSelectTab}
-              onOpenReceipt={(inv) => setActiveReceipt(inv)}
+              onOpenReceipt={(inv) => handleOpenReceipt(inv, true)}
             />
           )}
 
@@ -1037,7 +1041,7 @@ export function App() {
               numFormat={numFormat}
               userRole={userRole}
               onCompleteSale={handleCompleteSale}
-              onOpenReceipt={(inv) => setActiveReceipt(inv)}
+              onOpenReceipt={(inv) => handleOpenReceipt(inv, false)}
             />
           )}
 
@@ -1056,7 +1060,7 @@ export function App() {
               lang={lang}
               numFormat={numFormat}
               isDayClosed={dayClose.isClosed}
-              onOpenReceipt={(inv) => setActiveReceipt(inv)}
+              onOpenReceipt={(inv) => handleOpenReceipt(inv, true)}
               onVoidInvoice={handleVoidInvoice}
             />
           )}
@@ -1175,10 +1179,18 @@ export function App() {
       {/* Printable Thermal Receipt & A4 Invoice Modal */}
       {activeReceipt && (
         <ThermalReceipt
-          invoice={activeReceipt}
+          invoice={activeReceipt.invoice}
           tenant={tenant}
           lang={lang}
           numFormat={numFormat}
+          isReprint={activeReceipt.isReprint}
+          partyBalancePaisa={
+            parties.find(
+              (p) =>
+                (activeReceipt.invoice.clientId && p.id === activeReceipt.invoice.clientId) ||
+                p.name === activeReceipt.invoice.clientName
+            )?.balancePaisa
+          }
           onClose={() => setActiveReceipt(null)}
         />
       )}

@@ -91,23 +91,58 @@ button, select, input, a {
 
 /* Print Styles for POS thermal and A4 */
 @media print {
+  @page {
+    margin: 0;
+    size: auto;
+  }
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
   body * {
     visibility: hidden;
   }
   #printable-area, #printable-area * {
     visibility: visible;
+    color: #000000 !important;
+    border-color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   #printable-area {
     position: absolute;
     left: 0;
     top: 0;
-    width: 100% !important;
     margin: 0 !important;
-    padding: 10px !important;
     box-shadow: none !important;
     border: none !important;
-    background: white !important;
-    color: black !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  /* 58mm Thermal Receipt (printable width ~48mm / 384 dots) */
+  #printable-area.format-thermal58 {
+    width: 48mm !important;
+    max-width: 48mm !important;
+    padding: 1.5mm !important;
+    font-size: 9.5px !important;
+    line-height: 1.25 !important;
+  }
+  /* 80mm Thermal Receipt (printable width ~72mm / 576 dots) */
+  #printable-area.format-thermal80 {
+    width: 72mm !important;
+    max-width: 72mm !important;
+    padding: 3mm 2mm !important;
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+  }
+  /* A4 Invoice (printable width ~190mm) */
+  #printable-area.format-a4 {
+    width: 100% !important;
+    max-width: 190mm !important;
+    padding: 8mm !important;
+    font-size: 13px !important;
   }
 }
 
