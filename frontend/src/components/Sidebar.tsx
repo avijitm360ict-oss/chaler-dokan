@@ -95,7 +95,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, lang, 
       <div className="space-y-4">
         
         {/* Fast Action Banner */}
-        <div className="px-3 py-2 rounded-xl bg-linear-to-r from-[#1F7A4D]/10 via-[#1F7A4D]/5 to-[#E0A526]/10 border border-[#1F7A4D]/20 flex items-center justify-between">
+        <div className="px-3 py-2 rounded-xl bg-gradient-to-r from-[#1F7A4D]/10 via-[#1F7A4D]/5 to-[#E0A526]/10 border border-[#1F7A4D]/20 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-[#1F7A4D] animate-pulse" />
             <span className="text-xs font-black text-[#16603B]">

@@ -528,7 +528,16 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
 
         {/* Product Cards Grid */}
         <div className="flex-1 overflow-y-auto p-3.5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-          {filteredProducts.map((product) => {
+          {filteredProducts.length === 0 ? (
+            <div className="col-span-full py-16 flex flex-col items-center justify-center text-center text-slate-400">
+              <span className="text-4xl mb-3">🌾</span>
+              <h4 className="font-bold text-slate-700 text-sm">দোকানে কোনো চালের স্টক বা আইটেম নেই</h4>
+              <p className="text-xs text-slate-500 mt-1 max-w-sm">
+                নতুন চাল যোগ করতে সাইডবার থেকে <strong>চাল ক্রয়</strong> অথবা <strong>গোডাউন ও স্টক</strong> মেনুতে যান।
+              </p>
+            </div>
+          ) : (
+            filteredProducts.map((product) => {
             const isLowStock = product.stockKg <= product.minStockKg;
             const currentPerKgRate = priceType === 'wholesale' ? product.wholesalePricePaisa : product.retailPricePaisa;
             const sackRate = priceType === 'wholesale' ? product.sack50WholesalePricePaisa : product.sack50RetailPricePaisa;
@@ -617,7 +626,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                 </div>
               </div>
             );
-          })}
+          }))}
         </div>
 
       </div>

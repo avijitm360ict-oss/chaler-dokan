@@ -106,7 +106,7 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => onSelectTab('dashboard')}
               className="flex items-center gap-2.5 cursor-pointer group"
             >
-              <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-[#1F7A4D] via-[#16603B] to-[#E0A526] flex items-center justify-center text-white shadow-md shadow-[#1F7A4D]/20 group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 rounded-xl bg-[#1F7A4D] bg-gradient-to-tr from-[#1F7A4D] via-[#16603B] to-[#E0A526] flex items-center justify-center text-white shadow-md shadow-[#1F7A4D]/20 group-hover:scale-105 transition-transform">
                 <span className="text-xl">🌾</span>
               </div>
               <div>

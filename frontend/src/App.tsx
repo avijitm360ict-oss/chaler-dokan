@@ -12,7 +12,8 @@ import {
   TenantInfo,
   UserRole,
   ReturnRecord,
-  AuditLogEntry
+  AuditLogEntry,
+  Warehouse
 } from './types';
 import {
   initialTenant,
@@ -67,16 +68,53 @@ export function App() {
   const [showAuthModal, setShowAuthModal] = useState<boolean>(!currentUser);
 
   // Application Data States
-  const [tenant, setTenant] = useState<TenantInfo>(initialTenant);
-  const [products, setProducts] = useState<RiceProduct[]>(initialProducts);
-  const [warehouses, setWarehouses] = useState(initialWarehouses);
-  const [parties, setParties] = useState<Party[]>(initialParties);
-  const [sales, setSales] = useState<SaleInvoice[]>(initialSales);
-  const [purchases, setPurchases] = useState<PurchaseBill[]>(initialPurchases);
-  const [expenses, setExpenses] = useState<ExpenseRecord[]>(initialExpenses);
-  const [dayClose, setDayClose] = useState<DayCloseRecord>(initialDayClose);
-  const [returns, setReturns] = useState<ReturnRecord[]>(initialReturns);
-  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(initialAuditLogs);
+  const [tenant, setTenant] = useState<TenantInfo>(() => {
+    try {
+      const savedTenant = localStorage.getItem('chal_tenant_info');
+      return savedTenant ? JSON.parse(savedTenant) : initialTenant;
+    } catch {
+      return initialTenant;
+    }
+  });
+
+  const cleanWarehouse: Warehouse[] = [
+    {
+      id: 'wh-default-main',
+      nameBn: 'মেইন গোডাউন',
+      nameEn: 'Main Warehouse',
+      location: 'দোকান গোডাউন',
+      isDefault: true,
+      totalStockKg: 0,
+    },
+  ];
+
+  const cleanDayClose: DayCloseRecord = {
+    id: `close-${new Date().toISOString().split('T')[0]}`,
+    date: new Date().toISOString(),
+    openingCashPaisa: 0,
+    totalSalesCashPaisa: 0,
+    dueCollectedCashPaisa: 0,
+    expensesPaidCashPaisa: 0,
+    vendorPaidCashPaisa: 0,
+    expectedSystemCashPaisa: 0,
+    actualCountedCashPaisa: 0,
+    discrepancyPaisa: 0,
+    closedBy: '',
+    notes: '',
+    isClosed: false,
+  };
+
+  const isInitialDemo = !currentUser || tenant.id === 'tenant-demo-001';
+
+  const [products, setProducts] = useState<RiceProduct[]>(isInitialDemo ? initialProducts : []);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>(isInitialDemo ? initialWarehouses : cleanWarehouse);
+  const [parties, setParties] = useState<Party[]>(isInitialDemo ? initialParties : []);
+  const [sales, setSales] = useState<SaleInvoice[]>(isInitialDemo ? initialSales : []);
+  const [purchases, setPurchases] = useState<PurchaseBill[]>(isInitialDemo ? initialPurchases : []);
+  const [expenses, setExpenses] = useState<ExpenseRecord[]>(isInitialDemo ? initialExpenses : []);
+  const [dayClose, setDayClose] = useState<DayCloseRecord>(isInitialDemo ? initialDayClose : cleanDayClose);
+  const [returns, setReturns] = useState<ReturnRecord[]>(isInitialDemo ? initialReturns : []);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(isInitialDemo ? initialAuditLogs : []);
 
   // User & System Status
   const [userRole, setUserRole] = useState<UserRole>('owner');
@@ -94,16 +132,56 @@ export function App() {
         setUserRole(roleStr as UserRole);
       }
     }
+
+    const activeTenant = newTenant || tenant;
     if (newTenant) {
       setTenant(newTenant);
+      localStorage.setItem('chal_tenant_info', JSON.stringify(newTenant));
+      api.setTenantId(newTenant.id);
     }
+
+    const isDemo = !activeTenant.id || activeTenant.id === 'tenant-demo-001';
+    if (!isDemo) {
+      // Clean slate for newly registered store
+      setProducts([]);
+      setParties([]);
+      setSales([]);
+      setPurchases([]);
+      setExpenses([]);
+      setAuditLogs([]);
+      setDayClose(cleanDayClose);
+      setWarehouses(cleanWarehouse);
+    } else {
+      setProducts(initialProducts);
+      setParties(initialParties);
+      setSales(initialSales);
+      setPurchases(initialPurchases);
+      setExpenses(initialExpenses);
+      setAuditLogs(initialAuditLogs);
+      setDayClose(initialDayClose);
+    }
+
     setShowAuthModal(false);
+    setTimeout(() => {
+      checkAndSyncData();
+    }, 100);
   };
 
   const handleLogout = () => {
     api.setToken(null);
+    api.setTenantId('tenant-demo-001');
     localStorage.removeItem('chal_auth_user');
+    localStorage.removeItem('chal_tenant_info');
     setCurrentUser(null);
+    setUserRole('owner');
+    setTenant(initialTenant);
+    setProducts(initialProducts);
+    setParties(initialParties);
+    setSales(initialSales);
+    setPurchases(initialPurchases);
+    setExpenses(initialExpenses);
+    setDayClose(initialDayClose);
+    setAuditLogs(initialAuditLogs);
     setShowAuthModal(true);
   };
 
@@ -157,87 +235,115 @@ export function App() {
   };
 
   // Background Data Sync with Backend
-  useEffect(() => {
-    let isMounted = true;
-    async function checkAndSync() {
-      try {
-        const live = await api.checkHealth();
-        if (!isMounted) return;
-        setIsServerLive(live);
-        if (live) {
-          const [prodRes, partyRes, whRes, salesRes, purRes, expRes, tenantRes] = await Promise.all([
-            api.products.getAll().catch(() => null),
-            api.parties.getAll().catch(() => null),
-            api.warehouses.getAll().catch(() => null),
-            api.sales.getAll().catch(() => null),
-            api.purchases.getAll().catch(() => null),
-            api.accounts.getExpenses().catch(() => null),
-            api.tenant.getProfile().catch(() => null),
-          ]);
-          if (isMounted) {
-            const productsList = prodRes?.data || (prodRes as any)?.products;
-            if (Array.isArray(productsList) && productsList.length > 0) {
-              setProducts(productsList);
-            }
-            const partiesList = partyRes?.data || (partyRes as any)?.parties;
-            if (Array.isArray(partiesList) && partiesList.length > 0) {
-              setParties(partiesList);
-            }
-            const whList = whRes?.data || (whRes as any)?.warehouses;
-            if (Array.isArray(whList) && whList.length > 0) {
-              setWarehouses(whList);
-            }
-            const salesList = salesRes?.data;
-            if (Array.isArray(salesList) && salesList.length > 0) {
-              setSales(salesList);
-            }
-            const purList = purRes?.data;
-            if (Array.isArray(purList) && purList.length > 0) {
-              setPurchases(purList);
-            }
-            const expList = expRes?.data;
-            if (Array.isArray(expList) && expList.length > 0) {
-              const formattedExp: ExpenseRecord[] = expList.map((e: any) => ({
-                id: e.id,
-                date: e.spentAt || new Date().toISOString(),
-                category: (e.categoryName || 'other') as any,
-                categoryNameBn: e.categoryName || 'খরচ',
-                amountPaisa: e.amountPaisa,
-                account: e.accountName || 'প্রধান ক্যাশ ড্রয়ার',
-                note: e.note || '',
-              }));
-              setExpenses(formattedExp);
-            }
-            const tData = (tenantRes as any)?.tenant || tenantRes?.data;
-            if (tData) {
-              setTenant((prev) => ({
-                ...prev,
-                name: tData.name || prev.name,
-                shopNameBn: tData.settings?.shopNameBn || tData.name || prev.shopNameBn,
-                shopNameEn: tData.settings?.shopNameEn || prev.shopNameEn,
-                ownerName: tData.ownerName || prev.ownerName,
-                proprietor: tData.settings?.proprietor || tData.ownerName || prev.proprietor,
-                phone: tData.phone || prev.phone,
-                address: tData.settings?.address || prev.address,
-              }));
-            }
+  const checkAndSyncData = async () => {
+    try {
+      const live = await api.checkHealth();
+      setIsServerLive(live);
+      if (live) {
+        const activeTenantId = api.getTenantId();
+        const isDemo = !activeTenantId || activeTenantId === 'tenant-demo-001';
 
-            const auditRes: any = await api.audit.getAll().catch(() => null);
-            const auditList = auditRes?.data || auditRes?.logs || auditRes;
-            if (Array.isArray(auditList) && auditList.length > 0) {
-              setAuditLogs(auditList);
-            }
+        const [prodRes, partyRes, whRes, salesRes, purRes, expRes, tenantRes] = await Promise.all([
+          api.products.getAll().catch(() => null),
+          api.parties.getAll().catch(() => null),
+          api.warehouses.getAll().catch(() => null),
+          api.sales.getAll().catch(() => null),
+          api.purchases.getAll().catch(() => null),
+          api.accounts.getExpenses().catch(() => null),
+          api.tenant.getProfile().catch(() => null),
+        ]);
+
+        const productsList = prodRes?.data || (prodRes as any)?.products;
+        if (Array.isArray(productsList)) {
+          if (productsList.length > 0 || !isDemo) {
+            setProducts(productsList);
           }
         }
-      } catch {
-        if (isMounted) setIsServerLive(false);
+        const partiesList = partyRes?.data || (partyRes as any)?.parties;
+        if (Array.isArray(partiesList)) {
+          if (partiesList.length > 0 || !isDemo) {
+            setParties(partiesList);
+          }
+        }
+        const whList = whRes?.data || (whRes as any)?.warehouses;
+        if (Array.isArray(whList)) {
+          if (whList.length > 0) {
+            const formattedWh: Warehouse[] = whList.map((w: any) => ({
+              id: w.id,
+              nameBn: w.nameBn || w.name || 'গোডাউন',
+              nameEn: w.nameEn || w.name || 'Warehouse',
+              location: w.address || w.location || 'দোকান গোডাউন',
+              isDefault: !!w.isDefault,
+              totalStockKg: Number(w.totalStockKg || 0),
+            }));
+            setWarehouses(formattedWh);
+          } else if (!isDemo) {
+            setWarehouses(cleanWarehouse);
+          }
+        }
+        const salesList = salesRes?.data || (salesRes as any)?.sales;
+        if (Array.isArray(salesList)) {
+          if (salesList.length > 0 || !isDemo) {
+            setSales(salesList);
+          }
+        }
+        const purList = purRes?.data || (purRes as any)?.purchases;
+        if (Array.isArray(purList)) {
+          if (purList.length > 0 || !isDemo) {
+            setPurchases(purList);
+          }
+        }
+        const expList = expRes?.data || (expRes as any)?.expenses;
+        if (Array.isArray(expList)) {
+          if (expList.length > 0 || !isDemo) {
+            const formattedExp: ExpenseRecord[] = expList.map((e: any) => ({
+              id: e.id,
+              date: e.spentAt || new Date().toISOString(),
+              category: (e.categoryName || 'other') as any,
+              categoryNameBn: e.categoryName || 'খরচ',
+              amountPaisa: e.amountPaisa,
+              account: e.accountName || 'প্রধান ক্যাশ ড্রয়ার',
+              note: e.note || '',
+            }));
+            setExpenses(formattedExp);
+          }
+        }
+        const tData = (tenantRes as any)?.tenant || tenantRes?.data;
+        if (tData) {
+          setTenant((prev) => {
+            const updated: TenantInfo = {
+              ...prev,
+              id: tData.id || prev.id,
+              name: tData.name || prev.name,
+              shopNameBn: tData.settings?.shopNameBn || tData.name || prev.shopNameBn,
+              shopNameEn: tData.settings?.shopNameEn || prev.shopNameEn,
+              ownerName: tData.ownerName || prev.ownerName,
+              proprietor: tData.settings?.proprietor || tData.ownerName || prev.proprietor,
+              phone: tData.phone || prev.phone,
+              address: tData.settings?.address || prev.address,
+              status: tData.status || prev.status,
+            };
+            localStorage.setItem('chal_tenant_info', JSON.stringify(updated));
+            return updated;
+          });
+        }
+
+        const auditRes: any = await api.audit.getAll().catch(() => null);
+        const auditList = auditRes?.data || auditRes?.logs || auditRes;
+        if (Array.isArray(auditList)) {
+          if (auditList.length > 0 || !isDemo) {
+            setAuditLogs(auditList);
+          }
+        }
       }
+    } catch {
+      setIsServerLive(false);
     }
-    checkAndSync();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  };
+
+  useEffect(() => {
+    checkAndSyncData();
+  }, [currentUser?.id, tenant.id]);
 
   // Modals & Drawers
   const [showShortcuts, setShowShortcuts] = useState<boolean>(false);

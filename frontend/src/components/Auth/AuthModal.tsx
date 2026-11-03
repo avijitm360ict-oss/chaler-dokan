@@ -83,6 +83,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           planName: 'প্রো প্ল্যান (Pro Plan)',
         };
 
+        localStorage.setItem('chal_tenant_info', JSON.stringify(tenantData));
         onLoginSuccess(res.user, tenantData);
         return;
       }
@@ -152,7 +153,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           planName: 'ট্রায়াল প্ল্যান (Trial 30 Days)',
         };
 
+        localStorage.setItem('chal_tenant_info', JSON.stringify(tenantData));
         alert('অভিনন্দন! আপনার চালের আড়তের ডিজিটাল একাউন্ট তৈরি সম্পন্ন হয়েছে।');
+        localStorage.setItem('chal_tenant_info', JSON.stringify(tenantData));
         onLoginSuccess(res.user, tenantData);
         return;
       }
@@ -171,13 +174,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         trialDaysLeft: 30,
         planName: 'ট্রায়াল প্ল্যান (Trial 30 Days)',
       };
+      api.setTenantId(newTenant.id);
+      localStorage.setItem('chal_tenant_info', JSON.stringify(newTenant));
       const newUser = {
         id: `user-${Date.now()}`,
         name: regOwnerName,
         phone: regPhone,
         role: 'owner',
       };
-      alert('অফলাইন মোডে একাউন্ট তৈরি সম্পন্ন হয়েছে!');
+      alert('অফলাইন মোডে নতুন দোকানের একাউন্ট তৈরি সম্পন্ন হয়েছে!');
       onLoginSuccess(newUser, newTenant);
     } finally {
       setIsLoading(false);
@@ -480,10 +485,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 bg-linear-to-r from-[#1F7A4D] to-[#16603B] hover:brightness-105 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer touch-target mt-2"
+                className="w-full py-3.5 bg-[#1F7A4D] hover:bg-[#16603B] bg-gradient-to-r from-[#1F7A4D] to-[#16603B] hover:brightness-105 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer touch-target mt-3"
               >
                 <Sparkles className="w-4 h-4 text-[#FBBF24]" />
-                <span>{isLoading ? 'রেজিস্ট্রেশন হচ্ছে...' : '৩০ দিনের ফ্রি ট্রায়াল শুরু করুন'}</span>
+                <span className="text-white font-bold text-xs">
+                  {isLoading ? 'রেজিস্ট্রেশন হচ্ছে...' : 'নতুন দোকান রেজিস্টার করুন (৩০ দিনের ফ্রি ট্রায়াল)'}
+                </span>
               </button>
             </form>
           )}

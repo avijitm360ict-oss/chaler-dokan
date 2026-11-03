@@ -361,28 +361,40 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           <p className="text-[11px] text-[#5B574E] mb-3">বিক্রির পরিমাণ ও বর্তমান মজুদ</p>
 
           <div className="space-y-2.5">
-            {top5Rice.map((prod, idx) => (
-              <div key={prod.id} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="w-5 h-5 rounded-lg bg-surface-page text-ink-secondary flex items-center justify-center font-bold text-[10px]">
-                    {idx + 1}
-                  </span>
-                  <div className="truncate">
-                    <span className="font-bold text-[#1A1A17] block truncate">{prod.nameBn}</span>
-                    <span className="text-[10px] text-[#5B574E]">{prod.category}</span>
+            {top5Rice.length === 0 ? (
+              <div className="py-6 text-center text-slate-400">
+                <p className="text-xs font-semibold">কোনো চালের আইটেম নেই</p>
+                <button
+                  onClick={() => onSelectTab('purchases')}
+                  className="mt-2 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition"
+                >
+                  + চাল ক্রয় করুন
+                </button>
+              </div>
+            ) : (
+              top5Rice.map((prod, idx) => (
+                <div key={prod.id} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-5 h-5 rounded-lg bg-surface-page text-ink-secondary flex items-center justify-center font-bold text-[10px]">
+                      {idx + 1}
+                    </span>
+                    <div className="truncate">
+                      <span className="font-bold text-[#1A1A17] block truncate">{prod.nameBn}</span>
+                      <span className="text-[10px] text-[#5B574E]">{prod.category}</span>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <span className="font-extrabold text-[#1F7A4D] tabular-nums block">
+                      {formatCurrency(prod.retailPricePaisa, numFormat)}
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      স্টক: {Math.floor(prod.stockKg / 50)} বস্তা
+                    </span>
                   </div>
                 </div>
-
-                <div className="text-right shrink-0">
-                  <span className="font-extrabold text-[#1F7A4D] tabular-nums block">
-                    {formatCurrency(prod.retailPricePaisa, numFormat)}
-                  </span>
-                  <span className="text-[10px] text-slate-400">
-                    স্টক: {Math.floor(prod.stockKg / 50)} বস্তা
-                  </span>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -421,7 +433,20 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {sales.slice(0, 5).map((inv) => (
+              {sales.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-slate-400">
+                    <p className="font-semibold text-xs text-slate-600">আজ কোনো চাল বিক্রি এন্ট্রি করা হয়নি</p>
+                    <button
+                      onClick={() => onSelectTab('pos')}
+                      className="mt-2 text-xs font-bold text-white bg-[#1F7A4D] hover:bg-[#16603B] px-3.5 py-1.5 rounded-xl shadow-xs transition"
+                    >
+                      + দ্রুত চাল বিক্রি শুরু করুন
+                    </button>
+                  </td>
+                </tr>
+              ) : (
+                sales.slice(0, 5).map((inv) => (
                 <tr key={inv.id} className="hover:bg-slate-50 transition-colors">
                   <td className="py-2.5 px-3 font-mono font-bold text-[#1F7A4D]">{inv.docNo}</td>
                   <td className="py-2.5 px-3 text-[#5B574E]">{formatDateBangla(inv.date)}</td>
@@ -454,7 +479,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                     </button>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
