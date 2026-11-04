@@ -37,6 +37,7 @@ import { DailyRateBoard } from './components/MarketRates/DailyRateBoard';
 import { PurchaseManager } from './components/Purchases/PurchaseManager';
 import { StockManagement } from './components/Inventory/StockManagement';
 import { PartyLedgerView } from './components/Parties/PartyLedgerView';
+import { DueCollectionView } from './components/Parties/DueCollectionView';
 import { CashBookAndDayClose } from './components/Accounts/CashBookAndDayClose';
 import { ReportsHub } from './components/Reports/ReportsHub';
 import { ShopSettings } from './components/Settings/ShopSettings';
@@ -1288,13 +1289,22 @@ export function App() {
             />
           )}
 
-          {(activeTab === 'parties' || activeTab === 'due-collection') && (
+          {activeTab === 'parties' && (
             <PartyLedgerView
               parties={parties}
               lang={lang}
               numFormat={numFormat}
               onCreateParty={handleCreateParty}
               onUpdatePartyBalance={handleUpdatePartyBalance}
+            />
+          )}
+
+          {activeTab === 'due-collection' && (
+            <DueCollectionView
+              parties={parties}
+              lang={lang}
+              numFormat={numFormat}
+              onCollectDue={handleUpdatePartyBalance}
             />
           )}
 
