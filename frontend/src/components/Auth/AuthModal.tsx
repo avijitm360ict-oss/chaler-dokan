@@ -505,20 +505,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     ক্যাশিয়ার
                   </button>
                 </div>
-
-
-                {/* Super Admin Direct One-Click Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLoginPhone('01629404625');
-                    setLoginPassword('admin123');
-                  }}
-                  className="mt-2.5 w-full p-2.5 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-800 text-[11px] font-extrabold text-center transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <ShieldAlert className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                  <span>সুপার এডমিন লগইন: 01629404625 / পাসওয়ার্ড: admin123</span>
-                </button>
               </div>
 
               <div className="pt-2 text-center text-xs text-slate-500">
