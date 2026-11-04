@@ -430,7 +430,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   মোবাইল নম্বর
                 </label>
                 <div className="relative">
-                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <Phone className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
                   <input
                     type="tel"
                     required
@@ -448,7 +448,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   পাসওয়ার্ড
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
@@ -461,7 +461,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowPassword((p) => !p)}
-                    className="absolute right-3.5 top-2.5 text-slate-400 hover:text-slate-600"
+                    className="absolute right-3.5 top-2.5 text-slate-500 hover:text-slate-700"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -479,7 +479,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
               {/* Quick Demo Login Shortcuts */}
               <div className="pt-2 border-t border-slate-100">
-                <span className="block text-[11px] font-bold text-slate-400 text-center mb-2">
+                <span className="block text-[11px] font-bold text-slate-600 text-center mb-2">
                   — অথবা এক ক্লিকে ডেমো প্রবেশ করুন —
                 </span>
                 <div className="grid grid-cols-3 gap-2">
@@ -500,7 +500,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleQuickDemoLogin('cashier')}
-                    className="p-2 rounded-xl border border-amber-200 bg-amber-50/70 hover:bg-amber-100 text-amber-800 text-[11px] font-bold text-center transition"
+                    className="p-2 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 text-[11px] font-black text-center transition"
                   >
                     ক্যাশিয়ার
                   </button>

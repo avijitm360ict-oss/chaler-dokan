@@ -189,7 +189,7 @@ export const DueCollectionView: React.FC<DueCollectionViewProps> = ({
                       <div className="text-sm font-bold text-slate-800">
                         {searchTerm ? 'এই নামে কোনো বাকিদার কাস্টমার পাওয়া যায়নি' : 'বর্তমানে কোনো কাস্টমারের বকেয়া বাকি নেই!'}
                       </div>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-slate-600 font-medium">
                         সব কাস্টমারের হিসাব পরিশোধ রয়েছে অথবা নতুন বিক্রি এখনো বাকিতে করা হয়নি।
                       </p>
                     </div>
@@ -207,7 +207,7 @@ export const DueCollectionView: React.FC<DueCollectionViewProps> = ({
                           {client.name}
                         </div>
                         {client.shopName && (
-                          <div className="text-[11px] font-medium text-slate-500">
+                          <div className="text-[11px] font-semibold text-slate-600">
                             দোকান: {client.shopName}
                           </div>
                         )}
@@ -215,10 +215,10 @@ export const DueCollectionView: React.FC<DueCollectionViewProps> = ({
 
                       <td className="py-3.5 px-3 text-slate-600">
                         <div className="flex items-center gap-1 font-semibold text-slate-800">
-                          <Phone className="w-3.5 h-3.5 text-slate-400" />
+                          <Phone className="w-3.5 h-3.5 text-slate-500" />
                           <span>{client.phone}</span>
                         </div>
-                        <div className="text-[10px] text-slate-400 truncate max-w-[200px]">
+                        <div className="text-[10px] text-slate-600 font-medium truncate max-w-[200px]">
                           {client.address || 'বাংলাদেশ'}
                         </div>
                       </td>
@@ -227,7 +227,7 @@ export const DueCollectionView: React.FC<DueCollectionViewProps> = ({
                         <div className="text-base font-black text-emerald-700">
                           {formatCurrency(client.balancePaisa, numFormat)}
                         </div>
-                        <span className="text-[10px] text-slate-400 font-medium">
+                        <span className="text-[10px] text-slate-600 font-semibold">
                           লিমিট: {formatCurrency(client.creditLimitPaisa || 5000000, numFormat)}
                         </span>
                       </td>

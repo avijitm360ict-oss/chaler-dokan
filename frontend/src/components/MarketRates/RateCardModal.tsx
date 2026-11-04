@@ -58,20 +58,20 @@ export const RateCardModal: React.FC<RateCardModalProps> = ({
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-[#FFF4DC] text-[#8A5A00] rounded-xl">
-              <Sparkles className="w-5 h-5 text-[#E0A526]" />
+              <Sparkles className="w-5 h-5 text-amber-700" />
             </div>
             <div>
               <h3 className="font-extrabold text-base text-[#1A1A17]">
                 {lang === 'bn' ? 'আজকের রেট কার্ড (C4 & Z1)' : 'Daily Rice Rate Card'}
               </h3>
-              <p className="text-[11px] text-[#5B574E]">
+              <p className="text-[11px] text-slate-600 font-medium">
                 {lang === 'bn' ? 'হোয়াটসঅ্যাপে কাস্টমারদের পাঠানো বা দোকানে প্রিন্ট টাঙানোর জন্য' : 'Share via WhatsApp or print for shop counter'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg"
+            className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
@@ -92,7 +92,7 @@ export const RateCardModal: React.FC<RateCardModalProps> = ({
                   className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition ${
                     isSelected
                       ? 'bg-[#1F7A4D] text-white'
-                      : 'bg-[#F6F5F1] text-[#5B574E] hover:bg-slate-200'
+                      : 'bg-[#F6F5F1] text-slate-700 font-bold hover:bg-slate-200'
                   }`}
                 >
                   {isSelected && <Check className="w-3 h-3" />}
@@ -117,7 +117,7 @@ export const RateCardModal: React.FC<RateCardModalProps> = ({
               <h2 className="text-xl font-black text-[#1A1A17] tracking-tight">
                 {lang === 'bn' ? tenant.shopNameBn : tenant.shopNameEn}
               </h2>
-              <p className="text-xs text-[#5B574E]">{tenant.address} • ফোন: {tenant.phone}</p>
+              <p className="text-xs text-slate-700 font-medium">{tenant.address} • ফোন: {tenant.phone}</p>
               <div className="inline-block mt-1 px-2.5 py-0.5 bg-[#FFF4DC] border border-[#E0A526]/50 rounded-md text-[11px] font-bold text-[#8A5A00]">
                 তারিখ: {formatDateBangla(new Date().toISOString())}
               </div>
@@ -138,7 +138,7 @@ export const RateCardModal: React.FC<RateCardModalProps> = ({
                   <tr key={p.id} className="hover:bg-amber-50/40 transition">
                     <td className="py-2.5 px-3">
                       <div className="font-bold text-[#1A1A17]">{p.nameBn}</div>
-                      <div className="text-[10px] text-[#5B574E]">{p.grade} • {p.category}</div>
+                      <div className="text-[10px] text-slate-600 font-semibold">{p.grade} • {p.category}</div>
                     </td>
                     <td className="py-2.5 px-3 text-center font-bold text-[#1F7A4D] tabular-nums">
                       {formatCurrency(p.retailPricePaisa, numFormat)}
@@ -155,7 +155,7 @@ export const RateCardModal: React.FC<RateCardModalProps> = ({
             </table>
 
             {/* Card Footer */}
-            <div className="pt-2 border-t border-slate-200 text-center text-[10px] text-[#5B574E] flex items-center justify-between">
+            <div className="pt-2 border-t border-slate-200 text-center text-[10px] text-slate-600 font-medium flex items-center justify-between">
               <span>* বাজারদর যেকোনো সময় পরিবর্তন হতে পারে</span>
               <span className="font-bold text-[#1F7A4D]">স্বত্বাধিকারী: {tenant.proprietor}</span>
             </div>
@@ -164,7 +164,7 @@ export const RateCardModal: React.FC<RateCardModalProps> = ({
 
         {/* Action Buttons */}
         <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2.5">
-          <div className="text-xs text-[#5B574E]">
+          <div className="text-xs text-slate-700 font-semibold">
             {selectedProducts.length} টি চাল নির্বাচিত
           </div>
 

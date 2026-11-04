@@ -337,7 +337,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({
               <h3 className="font-extrabold text-slate-900 text-base">
                 লাভ ও ক্ষতি বিবরণী (Income & Profit Statement)
               </h3>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-600 font-semibold">
                 ফিল্টার: {dateRange === 'today' ? 'আজকের দিন' : dateRange === 'this_month' ? 'চলতি মাস' : dateRange}
               </span>
             </div>
@@ -407,7 +407,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({
               <span className="text-xl font-black text-slate-900 mt-1 block">
                 {formatCurrency(totalSalesRevenuePaisa, numFormat)}
               </span>
-              <span className="text-[10px] text-slate-400">{filteredSales.length} টি বিক্রয় মেমো</span>
+              <span className="text-[10px] text-slate-600 font-semibold">{filteredSales.length} টি বিক্রয় মেমো</span>
             </div>
 
             <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs">
@@ -497,7 +497,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({
               <span className="text-2xl font-black text-slate-900 mt-1 block">
                 {formatWeight(totalStockKg, numFormat, lang)}
               </span>
-              <span className="text-[10px] text-slate-400">
+              <span className="text-[10px] text-slate-600 font-semibold">
                 প্রায় {Math.floor(totalStockKg / 50)} বস্তা (৫০ কেজি)
               </span>
             </div>
@@ -546,7 +546,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({
                       <tr key={p.id} className="hover:bg-slate-50">
                         <td className="py-3 px-4">
                           <span className="font-bold text-slate-900 block">{p.nameBn}</span>
-                          <span className="text-[10px] text-slate-400 font-mono">{p.sku}</span>
+                          <span className="text-[10px] text-slate-600 font-mono font-semibold">{p.sku}</span>
                         </td>
                         <td className="py-3 px-3 text-slate-600">
                           {p.variety} ({p.grade})
@@ -629,7 +629,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({
                       <tr key={p.id} className="hover:bg-slate-50">
                         <td className="py-3 px-4">
                           <span className="font-bold text-slate-900 block">{p.name}</span>
-                          <span className="text-[10px] text-slate-400">{p.shopName || 'ব্যক্তিগত'}</span>
+                          <span className="text-[10px] text-slate-600 font-semibold">{p.shopName || 'ব্যক্তিগত'}</span>
                         </td>
                         <td className="py-3 px-3">
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">

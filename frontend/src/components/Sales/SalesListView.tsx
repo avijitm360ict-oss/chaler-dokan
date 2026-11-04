@@ -107,12 +107,12 @@ export const SalesListView: React.FC<SalesListViewProps> = ({
                 <tr key={s.id} className={s.status === 'voided' ? 'bg-red-50/40 opacity-75' : 'hover:bg-slate-50'}>
                   <td className="py-3 px-4 font-bold text-slate-900">
                     {s.docNo}
-                    <span className="block text-[10px] text-slate-400 font-normal">বাই: {s.createdBy}</span>
+                    <span className="block text-[10px] text-slate-600 font-medium">বাই: {s.createdBy}</span>
                   </td>
-                  <td className="py-3 px-3 text-slate-500">{formatDateBangla(s.date)}</td>
+                  <td className="py-3 px-3 text-slate-700 font-medium">{formatDateBangla(s.date)}</td>
                   <td className="py-3 px-3 font-semibold text-slate-800">
                     {s.clientName}
-                    <span className="block text-[10px] text-slate-400">{s.clientPhone}</span>
+                    <span className="block text-[10px] text-slate-600 font-medium">{s.clientPhone}</span>
                   </td>
                   <td className="py-3 px-3">
                     {s.items.map((it, idx) => (

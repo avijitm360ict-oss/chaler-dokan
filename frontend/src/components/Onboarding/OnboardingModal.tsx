@@ -128,20 +128,20 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-2xl bg-[#1F7A4D] text-white flex items-center justify-center shadow-md">
-              <Sparkles className="w-5 h-5 text-[#E0A526]" />
+              <Sparkles className="w-5 h-5 text-amber-300" />
             </div>
             <div>
               <h2 className="text-lg font-black text-[#1A1A17]">
                 {lang === 'bn' ? 'দোকান সেটআপ গাইড (২০ মিনিট চ্যালেঞ্জ)' : 'Rice Shop Setup Guide (A1-A3)'}
               </h2>
-              <p className="text-xs text-[#5B574E]">
+              <p className="text-xs text-slate-600 font-semibold">
                 {lang === 'bn' ? `ধাপ ${step} / ৪: ${step === 1 ? 'দোকানের তথ্য' : step === 2 ? 'পদ্ধতি বাছাই' : step === 3 ? 'চাল ও স্টক' : 'প্রথম বিক্রি'}` : `Step ${step} of 4`}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl"
+            className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl"
           >
             <X className="w-5 h-5" />
           </button>
@@ -172,7 +172,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               <div>
                 <label className="block text-xs font-bold text-[#1A1A17] mb-1">দোকানের নাম:</label>
                 <div className="relative">
-                  <Store className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Store className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                   <input
                     type="text"
                     value={shopName}
@@ -185,7 +185,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               <div>
                 <label className="block text-xs font-bold text-[#1A1A17] mb-1">মালিকের নাম:</label>
                 <div className="relative">
-                  <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                   <input
                     type="text"
                     value={ownerName}
@@ -198,7 +198,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               <div>
                 <label className="block text-xs font-bold text-[#1A1A17] mb-1">মোবাইল ফোন নম্বর:</label>
                 <div className="relative">
-                  <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                   <input
                     type="text"
                     value={phone}
@@ -211,7 +211,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               <div>
                 <label className="block text-xs font-bold text-[#1A1A17] mb-1">পাসওয়ার্ড:</label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                   <input
                     type="password"
                     value={password}
@@ -259,7 +259,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                   <h4 className="font-extrabold text-sm text-[#1A1A17]">
                     {lang === 'bn' ? 'Excel থেকে আনুন' : 'Import from Excel'}
                   </h4>
-                  <p className="text-xs text-[#5B574E] mt-1.5 leading-relaxed">
+                  <p className="text-xs text-slate-700 font-medium mt-1.5 leading-relaxed">
                     {lang === 'bn'
                       ? 'পুরোনো খাতা বা কম্পিউটার ফাইল থাকলে সহজে এক্সেল শিট আপলোড করে সব চাল ও কাস্টমার এক ক্লিকে তুলুন।'
                       : 'Upload existing spreadsheet with automated error-fixing preview.'}
@@ -281,13 +281,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 }`}
               >
                 <div>
-                  <div className="w-12 h-12 rounded-xl bg-amber-100 text-[#E0A526] flex items-center justify-center mb-3">
+                  <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center mb-3">
                     <PackagePlus className="w-6 h-6" />
                   </div>
                   <h4 className="font-extrabold text-sm text-[#1A1A17]">
                     {lang === 'bn' ? 'হাতে যোগ করুন (জনপ্রিয় চাল)' : 'Quick Pre-suggested Rice'}
                   </h4>
-                  <p className="text-xs text-[#5B574E] mt-1.5 leading-relaxed">
+                  <p className="text-xs text-slate-700 font-medium mt-1.5 leading-relaxed">
                     {lang === 'bn'
                       ? 'মিনিকেট, নাজিরশাইল, বাসমতি, চিনিগুঁড়া চাল আগে থেকেই রেডি করা আছে। শুধু দাম ঠিক করে ৫ মিনিটে চালু করুন।'
                       : 'Preloaded with Bangladesh top 5 rice varieties. Ready in 5 minutes.'}
@@ -304,7 +304,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             <div className="pt-4 flex items-center justify-between">
               <button
                 onClick={() => setStep(1)}
-                className="px-4 py-2 text-xs font-semibold text-[#5B574E] hover:text-[#1A1A17]"
+                className="px-4 py-2 text-xs font-bold text-slate-700 hover:text-[#1A1A17]"
               >
                 পিছনে
               </button>
@@ -326,7 +326,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               <h3 className="text-sm font-bold text-[#1A1A17]">
                 {lang === 'bn' ? 'জনপ্রিয় ৫টি চালের দর ও আজকের গোডাউন স্টক:' : 'Suggested Rice Items & Opening Stock'}
               </h3>
-              <span className="text-[11px] text-[#5B574E]">কেজি দর ও ৫০ কেজি বস্তা সংখ্যা</span>
+              <span className="text-[11px] text-slate-600 font-semibold">কেজি দর ও ৫০ কেজি বস্তা সংখ্যা</span>
             </div>
 
             <div className="space-y-2">
@@ -348,13 +348,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                     </button>
                     <div>
                       <div className="text-xs font-bold text-[#1A1A17]">{item.name}</div>
-                      <div className="text-[10px] text-[#5B574E]">ইউনিট: ৫০ কেজি বস্তা ও খোলা কেজি</div>
+                      <div className="text-[10px] text-slate-600 font-semibold">ইউনিট: ৫০ কেজি বস্তা ও খোলা কেজি</div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <div>
-                      <span className="text-[10px] text-slate-500 block">বিক্রি দর (৳/কেজি)</span>
+                      <span className="text-[10px] text-slate-600 font-semibold block">বিক্রি দর (৳/কেজি)</span>
                       <input
                         type="number"
                         value={item.rate}
@@ -381,7 +381,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             <div className="pt-3 flex items-center justify-between">
               <button
                 onClick={() => setStep(2)}
-                className="px-4 py-2 text-xs font-semibold text-[#5B574E] hover:text-[#1A1A17]"
+                className="px-4 py-2 text-xs font-bold text-slate-700 hover:text-[#1A1A17]"
               >
                 পিছনে
               </button>
@@ -407,18 +407,18 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               {lang === 'bn' ? 'মাশাআল্লাহ! আপনার চালের দোকান প্রস্তুত।' : 'Setup Complete! Ready for First Sale.'}
             </h3>
 
-            <p className="text-xs text-[#5B574E] max-w-md mx-auto leading-relaxed">
+            <p className="text-xs text-slate-700 font-medium max-w-md mx-auto leading-relaxed">
               {lang === 'bn'
                 ? 'আপনার দোকানের প্রাথমিক তথ্য ও জনপ্রিয় চালের স্টক সিস্টেমে লোড হয়েছে। এখন কাউন্টার সেল (POS)-এ গিয়ে আপনার প্রথম মেমো বা ক্যাশ বিক্রি কাটুন।'
                 : 'Initial inventory loaded. Launch POS counter to complete your first 20-second sale.'}
             </p>
 
-            <div className="bg-[#FFF4DC] border border-[#E0A526]/40 rounded-2xl p-4 max-w-md mx-auto text-left text-xs space-y-2">
-              <div className="font-bold text-[#8A5A00] flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4" />
+            <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4 max-w-md mx-auto text-left text-xs space-y-2">
+              <div className="font-extrabold text-amber-900 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-amber-700" />
                 <span>পরের প্রয়োজনীয় কাজসমূহ:</span>
               </div>
-              <ul className="list-disc list-inside text-[#5B574E] space-y-1 text-[11px]">
+              <ul className="list-disc list-inside text-slate-700 font-medium space-y-1 text-[11px]">
                 <li>নিয়মিত কাস্টমার ও পাইকারি ক্রেতাদের বাকি খাতা যোগ করা</li>
                 <li>রাইস মিল ও মহাজনদের দেনা এবং ভেন্ডর তালিকা তৈরি</li>
                 <li>সকালে দোকান খুলেই "আজকের বাজারদর" আপডেট করা</li>

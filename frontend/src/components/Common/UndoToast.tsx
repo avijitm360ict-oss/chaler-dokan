@@ -41,7 +41,7 @@ export const UndoToast: React.FC<UndoToastProps> = ({ toast, onClose, lang }) =>
               toast.undoAction?.();
               onClose();
             }}
-            className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-[#E0A526] hover:text-[#FFF4DC] bg-white/10 hover:bg-white/20 rounded-lg transition"
+            className="flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-amber-400 hover:text-amber-200 bg-white/10 hover:bg-white/20 rounded-lg transition"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>{toast.undoText || (lang === 'bn' ? 'ফিরিয়ে আনুন' : 'Undo')}</span>
@@ -49,7 +49,7 @@ export const UndoToast: React.FC<UndoToastProps> = ({ toast, onClose, lang }) =>
         )}
         <button
           onClick={onClose}
-          className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-white/10"
+          className="p-1 text-slate-300 hover:text-white rounded-lg hover:bg-white/10"
         >
           <X className="w-4 h-4" />
         </button>

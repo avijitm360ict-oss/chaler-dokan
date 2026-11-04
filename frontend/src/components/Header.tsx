@@ -175,7 +175,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="hidden xl:flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#FFF4DC] border border-[#E0A526]/50 text-[#8A5A00] text-xs font-bold hover:bg-[#FEE8B9] transition"
               title="শুরুর গাইড ও প্রাথমিক চালের স্টক লোড"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#E0A526]" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
               <span>{lang === 'bn' ? 'শুরুর গাইড' : 'Setup Guide'}</span>
             </button>
 

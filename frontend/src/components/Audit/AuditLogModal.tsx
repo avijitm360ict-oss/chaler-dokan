@@ -36,18 +36,18 @@ export const AuditLogModal: React.FC<AuditLogModalProps> = ({
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-[#FFF4DC] text-[#8A5A00] rounded-xl">
-              <History className="w-5 h-5 text-[#E0A526]" />
+              <History className="w-5 h-5 text-amber-800" />
             </div>
             <div>
               <h3 className="font-extrabold text-base text-[#1A1A17]">
                 {lang === 'bn' ? 'অডিট লগ ও পরিবর্তন হিস্ট্রি (G3)' : 'Audit Trail & Change Logs'}
               </h3>
-              <p className="text-[11px] text-[#5B574E]">
+              <p className="text-[11px] text-slate-600 font-medium">
                 {lang === 'bn' ? 'দোকানের কে, কখন, কী তথ্য পরিবর্তন করেছেন তার স্থায়ী রেকর্ড' : 'Append-only audit trail of price changes, voided bills and day locks'}
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg">
+          <button onClick={onClose} className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -55,13 +55,13 @@ export const AuditLogModal: React.FC<AuditLogModalProps> = ({
         {/* Search */}
         <div className="py-3">
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="কর্মচারীর নাম বা কাজের বিবরণ দিয়ে খুঁজুন..."
-              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#1F7A4D] bg-white"
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#1F7A4D] bg-white font-medium"
             />
           </div>
         </div>
@@ -79,14 +79,14 @@ export const AuditLogModal: React.FC<AuditLogModalProps> = ({
                     {log.action}
                   </span>
                   <span className="text-xs font-bold text-[#1A1A17]">{log.userName}</span>
-                  <span className="text-[10px] text-slate-400">({log.userRole})</span>
+                  <span className="text-[10px] text-slate-600 font-semibold">({log.userRole})</span>
                 </div>
-                <span className="text-[10px] text-slate-500 font-medium">
+                <span className="text-[10px] text-slate-600 font-semibold">
                   {formatDateBangla(log.timestamp)}
                 </span>
               </div>
 
-              <p className="text-xs text-[#5B574E] leading-relaxed">{log.details}</p>
+              <p className="text-xs text-slate-700 font-medium leading-relaxed">{log.details}</p>
 
               {(log.oldValue || log.newValue) && (
                 <div className="flex items-center gap-3 text-[11px] pt-1 border-t border-slate-200/60">

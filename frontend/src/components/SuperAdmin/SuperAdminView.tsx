@@ -300,7 +300,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ lang, numFormat 
                 PLATFORM OWNER
               </span>
             </div>
-            <p className="text-slate-400 text-xs mt-0.5">
+            <p className="text-slate-300 text-xs mt-0.5 font-medium">
               সকল চালের দোকান (Tenants) পরিচালনা, সাবস্ক্রিপশন প্ল্যান ও অডিট লগ
             </p>
           </div>
@@ -308,11 +308,11 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ lang, numFormat 
 
         <div className="flex items-center gap-4 text-xs font-semibold">
           <div className="text-right">
-            <span className="text-slate-400 block">মোট দোকান (Tenants):</span>
+            <span className="text-slate-300 block font-medium">মোট দোকান (Tenants):</span>
             <span className="text-lg font-black text-white">{tenants.length} টি</span>
           </div>
           <div className="text-right">
-            <span className="text-slate-400 block">সক্রিয় দোকান:</span>
+            <span className="text-slate-300 block font-medium">সক্রিয় দোকান:</span>
             <span className="text-lg font-black text-emerald-400">
               {tenants.filter((t) => t.status === 'active').length} টি
             </span>
@@ -428,7 +428,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ lang, numFormat 
               </div>
               <button
                 onClick={() => setIsCreateModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition"
+                className="p-1 rounded-lg text-slate-200 hover:text-white hover:bg-white/10 transition"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -448,14 +448,14 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ lang, numFormat 
                   দোকান / আড়তের নাম <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <Store className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  <Store className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
                   <input
                     type="text"
                     required
                     value={newShopName}
                     onChange={(e) => setNewShopName(e.target.value)}
                     placeholder="যেমন: মেসার্স বিসমিল্লাহ চাউল আড়ত"
-                    className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-medium"
+                    className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold text-slate-900"
                   />
                 </div>
               </div>
@@ -466,14 +466,14 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ lang, numFormat 
                     মালিক / প্রোপাইটরের নাম <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <Users className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <Users className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
                     <input
                       type="text"
                       required
                       value={newOwnerName}
                       onChange={(e) => setNewOwnerName(e.target.value)}
                       placeholder="যেমন: হাজী মো: রফিকুল ইসলাম"
-                      className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-medium"
+                      className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold text-slate-900"
                     />
                   </div>
                 </div>
@@ -483,14 +483,14 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ lang, numFormat 
                     মোবাইল নম্বর (লগইন আইডি) <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <Phone className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
                     <input
                       type="text"
                       required
                       value={newPhone}
                       onChange={(e) => setNewPhone(e.target.value)}
                       placeholder="যেমন: 01712345678"
-                      className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-medium"
+                      className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold text-slate-900"
                     />
                   </div>
                 </div>
@@ -502,13 +502,13 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ lang, numFormat 
                     প্রাথমিক পাসওয়ার্ড
                   </label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
                     <input
                       type="text"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="ডিফল্ট: 123456"
-                      className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-medium"
+                      className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold text-slate-900"
                     />
                   </div>
                 </div>
@@ -518,13 +518,13 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ lang, numFormat 
                     ঠিকানা / মোকাম
                   </label>
                   <div className="relative">
-                    <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <MapPin className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
                     <input
                       type="text"
                       value={newAddress}
                       onChange={(e) => setNewAddress(e.target.value)}
                       placeholder="যেমন: বাবুবাজার, ঢাকা"
-                      className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-medium"
+                      className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold text-slate-900"
                     />
                   </div>
                 </div>

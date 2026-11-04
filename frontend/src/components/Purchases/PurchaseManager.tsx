@@ -296,18 +296,18 @@ export const PurchaseManager: React.FC<PurchaseManagerProps> = ({
                     <td className="py-3 px-4 font-bold text-slate-900">
                       {bill.docNo}
                       {bill.vendorBillNo && (
-                        <span className="block text-[10px] text-slate-400 font-normal">
+                        <span className="block text-[10px] text-slate-600 font-medium">
                           মিল মেমো: {bill.vendorBillNo}
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-3 text-slate-600">
+                    <td className="py-3 px-3 text-slate-700 font-medium">
                       {formatDateBangla(bill.date)}
                     </td>
                     <td className="py-3 px-3 font-semibold text-slate-800">
                       {bill.vendorName}
                       {bill.vendorPhone && (
-                        <span className="block text-[10px] text-slate-400 font-normal">
+                        <span className="block text-[10px] text-slate-600 font-medium">
                           {bill.vendorPhone}
                         </span>
                       )}

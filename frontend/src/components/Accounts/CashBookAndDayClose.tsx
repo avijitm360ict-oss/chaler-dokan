@@ -152,11 +152,11 @@ export const CashBookAndDayClose: React.FC<CashBookAndDayCloseProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         
         <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500 block">দিনের শুরুর ক্যাশ (Opening)</span>
+          <span className="text-xs font-semibold text-slate-700 block">দিনের শুরুর ক্যাশ (Opening)</span>
           <div className="text-xl font-extrabold text-slate-900 mt-1">
             {formatCurrency(dayClose.openingCashPaisa, numFormat)}
           </div>
-          <span className="text-[10px] text-slate-400 mt-0.5 block">সকালে ড্রয়ারে থাকা ক্যাশ</span>
+          <span className="text-[10px] text-slate-600 font-semibold mt-0.5 block">সকালে ড্রয়ারে থাকা ক্যাশ</span>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-emerald-200/90 shadow-xs bg-emerald-50/20">
@@ -199,7 +199,7 @@ export const CashBookAndDayClose: React.FC<CashBookAndDayCloseProps> = ({
           <h3 className="font-extrabold text-slate-900 text-sm">
             {lang === 'bn' ? 'সাম্প্রতিক খরচের খতিয়ান' : 'Recent Expenses Log'}
           </h3>
-          <span className="text-xs text-slate-400">{expenses.length} টি এন্ট্রি</span>
+          <span className="text-xs font-bold text-slate-600">{expenses.length} টি এন্ট্রি</span>
         </div>
 
         <div className="overflow-x-auto">

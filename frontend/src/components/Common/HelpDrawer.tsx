@@ -54,14 +54,14 @@ export const HelpDrawer: React.FC<HelpDrawerProps> = ({ isOpen, onClose, lang })
               <h3 className="font-extrabold text-base text-[#1A1A17]">
                 {lang === 'bn' ? 'সাহায্য ও সাপোর্ট কেন্দ্র' : 'Help & Live Support'}
               </h3>
-              <p className="text-[11px] text-[#5B574E]">
+              <p className="text-[11px] text-slate-600 font-medium">
                 {lang === 'bn' ? 'চালের দোকান SaaS হেল্পলাইন ২৪/৭' : '24/7 Dedicated Rice Merchant Hotline'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-xl transition"
+            className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-xl transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -80,7 +80,7 @@ export const HelpDrawer: React.FC<HelpDrawerProps> = ({ isOpen, onClose, lang })
                 {lang === 'bn' ? 'সরাসরি হোয়াটসঅ্যাপে কথা বলুন' : 'Instant WhatsApp Help'}
               </h4>
             </div>
-            <p className="text-xs text-[#5B574E] leading-relaxed">
+            <p className="text-xs text-slate-700 font-medium leading-relaxed">
               {lang === 'bn' 
                 ? 'সফটওয়্যারের যেকোনো সমস্যা, নতুন গোডাউন তৈরি বা প্রিন্টার সংযোগে সহায়তার জন্য আমাদের চালের আড়ত বিশেষজ্ঞকে মেসেজ দিন।'
                 : 'Message our technical team directly on WhatsApp for live setup assistance, printer config or data queries.'}
@@ -99,10 +99,10 @@ export const HelpDrawer: React.FC<HelpDrawerProps> = ({ isOpen, onClose, lang })
           {/* Emergency Phone Hotline */}
           <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
             <div className="flex items-center gap-2.5">
-              <Phone className="w-4 h-4 text-[#E0A526]" />
+              <Phone className="w-4 h-4 text-amber-800" />
               <div>
                 <div className="text-xs font-bold text-[#1A1A17]">01629404625</div>
-                <div className="text-[10px] text-[#5B574E]">{lang === 'bn' ? 'সকাল ১০:০০ - সন্ধ্যা ০৬:০০' : '10:00 AM – 06:00 PM'}</div>
+                <div className="text-[10px] text-slate-600 font-semibold">{lang === 'bn' ? 'সকাল ১০:০০ - সন্ধ্যা ০৬:০০' : '10:00 AM – 06:00 PM'}</div>
               </div>
             </div>
             <a
@@ -146,7 +146,7 @@ export const HelpDrawer: React.FC<HelpDrawerProps> = ({ isOpen, onClose, lang })
                   <span className="text-[#1F7A4D] ml-2 text-sm">{activeFaq === idx ? '−' : '+'}</span>
                 </button>
                 {activeFaq === idx && (
-                  <div className="px-3 pb-3 text-xs text-[#5B574E] leading-relaxed border-t border-slate-100 bg-slate-50/50 pt-2">
+                  <div className="px-3 pb-3 text-xs text-slate-700 font-medium leading-relaxed border-t border-slate-100 bg-slate-50/50 pt-2">
                     {lang === 'bn' ? faq.aBn : faq.aEn}
                   </div>
                 )}
@@ -157,7 +157,7 @@ export const HelpDrawer: React.FC<HelpDrawerProps> = ({ isOpen, onClose, lang })
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-200 bg-[#F6F5F1] text-center text-[10px] text-[#5B574E] space-y-1">
+        <div className="p-4 border-t border-slate-200 bg-[#F6F5F1] text-center text-[10px] text-slate-600 font-semibold space-y-1">
           <div>☎️ হটলাইন: 01629404625 | 📧 avijitsh94@gmail.com</div>
           <div className="font-semibold text-slate-700">Copyright © 2026. All Rights Reserved.</div>
           <div className="text-emerald-800 font-bold">Design & Developed by Avijit Saha</div>

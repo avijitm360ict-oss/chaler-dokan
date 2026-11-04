@@ -99,7 +99,7 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
               {lang === 'bn' ? 'চাল ফেরত ও ক্রেডিট নোট (S5 ও P3)' : 'Returns & Credit Notes (S5 & P3)'}
             </h2>
           </div>
-          <p className="text-xs text-[#5B574E] mt-1">
+          <p className="text-xs text-slate-600 font-semibold mt-1">
             {lang === 'bn'
               ? 'বিক্রিত চাল ফেরত (Sales Return) ও মিলে চাল ফেরত (Purchase Return) হিসাব'
               : 'Audit-ready returns with stock restoration & due adjustments'}
@@ -122,7 +122,7 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
           className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition ${
             returnType === 'sale_return'
               ? 'border-[#1F7A4D] text-[#1F7A4D]'
-              : 'border-transparent text-[#5B574E] hover:text-[#1A1A17]'
+              : 'border-transparent text-slate-600 font-bold hover:text-[#1A1A17]'
           }`}
         >
           বিক্রয় ফেরত তালিকা ({numFormat === 'bn' ? toBengaliDigits(returns.filter((r) => r.type === 'sale_return').length) : returns.filter((r) => r.type === 'sale_return').length})
@@ -132,7 +132,7 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
           className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition ${
             returnType === 'purchase_return'
               ? 'border-[#1F7A4D] text-[#1F7A4D]'
-              : 'border-transparent text-[#5B574E] hover:text-[#1A1A17]'
+              : 'border-transparent text-slate-600 font-bold hover:text-[#1A1A17]'
           }`}
         >
           ক্রয় ফেরত তালিকা ({numFormat === 'bn' ? toBengaliDigits(returns.filter((r) => r.type === 'purchase_return').length) : returns.filter((r) => r.type === 'purchase_return').length})

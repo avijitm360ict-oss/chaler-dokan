@@ -238,12 +238,12 @@ export const PartyLedgerView: React.FC<PartyLedgerViewProps> = ({
                       {party.name}
                     </div>
                     {party.shopName && (
-                      <div className="text-xs text-slate-500 font-medium">
+                      <div className="text-xs text-slate-600 font-semibold">
                         {party.shopName}
                       </div>
                     )}
-                    <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
-                      <Phone className="w-3 h-3" />
+                    <div className="text-[11px] text-slate-600 font-semibold flex items-center gap-1 mt-0.5">
+                      <Phone className="w-3 h-3 text-slate-500" />
                       <span>{party.phone}</span>
                     </div>
                   </div>
@@ -283,14 +283,14 @@ export const PartyLedgerView: React.FC<PartyLedgerViewProps> = ({
                       {selectedParty.type === 'vendor' ? 'মিল / মহাজন (সাপ্লায়ার)' : `ক্রেতা (${selectedParty.clientType || 'পাইকারি'})`}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1 flex items-center gap-2">
+                  <p className="text-xs text-slate-700 font-medium mt-1 flex items-center gap-2">
                     <span className="flex items-center gap-1">
-                      <Phone className="w-3.5 h-3.5 text-slate-400" />
+                      <Phone className="w-3.5 h-3.5 text-slate-500" />
                       {selectedParty.phone}
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                      <MapPin className="w-3.5 h-3.5 text-slate-500" />
                       {selectedParty.address}
                     </span>
                   </p>
@@ -407,14 +407,14 @@ export const PartyLedgerView: React.FC<PartyLedgerViewProps> = ({
               </div>
             </div>
 
-            <div className="text-[11px] text-slate-400 flex items-center justify-between border-t pt-3 border-slate-100">
+            <div className="text-[11px] text-slate-600 font-medium flex items-center justify-between border-t pt-3 border-slate-100">
               <span>সঠিক হিসাব সংরক্ষণে আগের বাকি আগে পরিশোধ (FIFO পদ্ধতি) প্রযোজ্য</span>
               <span className="font-semibold text-emerald-700">অডিট সিকিউরড ✓</span>
             </div>
 
           </div>
         ) : (
-          <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-12 flex flex-col items-center justify-center text-center text-slate-400 space-y-2">
+          <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-12 flex flex-col items-center justify-center text-center text-slate-500 space-y-2">
             <span className="text-4xl mb-1">👥</span>
             <div className="font-bold text-slate-700 text-sm">কোনো পার্টি বা খাতা সিলেক্ট করা নেই</div>
             <p className="text-xs text-slate-500 max-w-xs">

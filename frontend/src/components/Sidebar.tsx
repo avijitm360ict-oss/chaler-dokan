@@ -120,7 +120,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, lang, 
 
             return (
               <div key={sIdx} className="space-y-1">
-                <div className="text-[10px] font-black uppercase tracking-wider text-ink-disabled px-2.5">
+                <div className="text-[11px] font-black uppercase tracking-wider text-slate-600 px-2.5">
                   {sec.group}
                 </div>
                 {visibleItems.map((item) => {
@@ -136,18 +136,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, lang, 
                           ? 'bg-[#1F7A4D] text-white shadow-sm shadow-[#1F7A4D]/30'
                           : item.highlight
                           ? 'text-[#1F7A4D] bg-[#E8F4EC] hover:bg-[#D1EAD9]'
-                          : 'text-ink-secondary hover:text-ink-primary hover:bg-slate-100'
+                          : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-bold'
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
                         <Icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${
-                          isActive ? 'text-white' : item.highlight ? 'text-[#1F7A4D]' : 'text-slate-400 group-hover:text-ink-primary'
+                          isActive ? 'text-white' : item.highlight ? 'text-[#1F7A4D]' : 'text-slate-500 group-hover:text-slate-900'
                         }`} />
                         <span>{item.label}</span>
                       </div>
 
                       {item.badge && !isActive && (
-                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-[#FFF4DC] text-[#8A5A00] border border-[#E0A526]/40">
+                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
                           {item.badge}
                         </span>
                       )}
@@ -166,7 +166,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, lang, 
 
       {/* Bottom Status Info */}
       <div className="pt-3 border-t border-stroke-default mt-2">
-        <div className="p-2.5 bg-surface-page rounded-xl text-xs space-y-1 border border-stroke-default text-ink-secondary">
+        <div className="p-2.5 bg-surface-page rounded-xl text-xs space-y-1 border border-stroke-default text-slate-700">
           <div className="flex justify-between font-bold text-ink-primary text-[11px]">
             <span>{lang === 'bn' ? 'গোডাউন সংযোগ' : 'Godowns'}</span>
             <span className="text-[#1F7A4D] flex items-center gap-1 font-black">
@@ -174,7 +174,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, lang, 
               ৩টি সক্রিয়
             </span>
           </div>
-          <div className="text-[10px] text-ink-disabled">
+          <div className="text-[10px] text-slate-600 font-semibold">
             {lang === 'bn' ? 'বেস ইউনিট: কেজি (KG)' : 'Base Unit: Kg'} • WAC রানিং
           </div>
         </div>

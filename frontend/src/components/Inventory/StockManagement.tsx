@@ -223,32 +223,32 @@ export const StockManagement: React.FC<StockManagementProps> = ({
       {/* Top Banner & Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500 block">মোট চালের মজুদ (সকল গোডাউন)</span>
+          <span className="text-xs font-bold text-slate-700 block">মোট চালের মজুদ (সকল গোডাউন)</span>
           <div className="text-2xl font-black text-slate-900 mt-1">
             {formatWeight(totalStockKg, numFormat, lang)}
           </div>
-          <span className="text-[10px] text-slate-400 mt-0.5 block">
+          <span className="text-[10px] text-slate-600 font-semibold mt-0.5 block">
             প্রায় {numFormat === 'bn' ? toBengaliDigits(Math.floor(totalStockKg / 50)) : Math.floor(totalStockKg / 50)} বস্তা চাল স্টকে আছে
           </span>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500 block">মোট স্টক ভ্যালু (গড় কেনা-দামে)</span>
+          <span className="text-xs font-bold text-slate-700 block">মোট স্টক ভ্যালু (গড় কেনা-দামে)</span>
           <div className="text-2xl font-black text-emerald-700 mt-1">
             {formatCurrency(totalValuationPaisa, numFormat)}
           </div>
-          <span className="text-[10px] text-emerald-600 font-medium mt-0.5 block">
+          <span className="text-[10px] text-emerald-700 font-semibold mt-0.5 block">
             WAC অনুযায়ী প্রকৃত ইনভেন্টরি ভ্যালু
           </span>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-xs font-semibold text-slate-500 block">লো-স্টক সতর্কতা</span>
+            <span className="text-xs font-bold text-slate-700 block">লো-স্টক সতর্কতা</span>
             <div className={`text-2xl font-black mt-1 ${lowStockCount > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
               {numFormat === 'bn' ? toBengaliDigits(lowStockCount) : lowStockCount} টি চাল
             </div>
-            <span className="text-[10px] text-slate-400 mt-0.5 block">পুনরায় ক্রয় প্রয়োজন</span>
+            <span className="text-[10px] text-slate-600 font-semibold mt-0.5 block">পুনরায় ক্রয় প্রয়োজন</span>
           </div>
 
           <div className="flex items-center gap-1.5">

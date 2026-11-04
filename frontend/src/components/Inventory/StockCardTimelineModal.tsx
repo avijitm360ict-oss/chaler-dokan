@@ -38,12 +38,12 @@ export const StockCardTimelineModal: React.FC<StockCardTimelineModalProps> = ({
               <h3 className="font-extrabold text-base text-[#1A1A17]">
                 {product.nameBn} — {lang === 'bn' ? 'স্টক কার্ড ও টাইমলাইন (K1)' : 'Stock Card Timeline'}
               </h3>
-              <p className="text-[11px] text-[#5B574E]">
+              <p className="text-[11px] text-slate-600 font-semibold">
                 বর্তমান মজুদ: <strong className="text-[#1F7A4D]">{formatWeight(product.stockKg, numFormat, lang)}</strong>
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg">
+          <button onClick={onClose} className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -79,7 +79,7 @@ export const StockCardTimelineModal: React.FC<StockCardTimelineModalProps> = ({
                         {m.type === 'adjustment' && 'স্টক এডজাস্টমেন্ট (কমতি/বাড়তি)'}
                         {m.type === 'transfer' && 'গোডাউন ট্রান্সফার'}
                       </div>
-                      <div className="text-[11px] text-[#5B574E] mt-0.5">
+                      <div className="text-[11px] text-slate-600 font-semibold mt-0.5">
                         {m.warehouseName} • {formatDateBangla(m.date)}
                       </div>
                       {m.reason && (

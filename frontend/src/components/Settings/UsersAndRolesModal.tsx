@@ -176,7 +176,7 @@ export const UsersAndRolesModal: React.FC<UsersAndRolesModalProps> = ({
               <h3 className="font-extrabold text-base text-[#1A1A17]">
                 {lang === 'bn' ? 'ইউজার ও রোল পারমিশন ম্যানেজমেন্ট' : 'Users & Role Permissions'}
               </h3>
-              <p className="text-[11px] text-[#5B574E]">
+              <p className="text-[11px] text-slate-600 font-semibold">
                 {lang === 'bn'
                   ? 'মালিক, ম্যানেজার ও ক্যাশিয়ারের অ্যাক্সেস এবং ক্ষমতার সীমা নির্ধারণ'
                   : 'Control access and boundaries for counter cashiers and managers'}
@@ -185,7 +185,7 @@ export const UsersAndRolesModal: React.FC<UsersAndRolesModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg cursor-pointer"
+            className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -275,7 +275,7 @@ export const UsersAndRolesModal: React.FC<UsersAndRolesModalProps> = ({
                       <button
                         type="button"
                         onClick={() => setShowNewPassword((v) => !v)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800"
                       >
                         {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>

@@ -52,11 +52,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-base font-bold text-[#1A1A17]">{title}</h3>
-            <p className="text-xs text-[#5B574E] mt-1 leading-relaxed">{message}</p>
+            <p className="text-xs text-slate-700 font-medium mt-1 leading-relaxed">{message}</p>
           </div>
           <button
             onClick={onCancel}
-            className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+            className="text-slate-500 hover:text-slate-800 p-1 rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
@@ -87,7 +87,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-xs font-semibold text-[#5B574E] hover:text-[#1A1A17] bg-slate-100 hover:bg-slate-200 rounded-xl transition touch-target"
+              className="px-4 py-2 text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition touch-target"
             >
               {lang === 'bn' ? 'না, বাদ দিন' : 'Cancel'}
             </button>

@@ -95,14 +95,14 @@ export const DueCollectionModal: React.FC<DueCollectionModalProps> = ({
               <h3 className="font-extrabold text-base text-[#1A1A17]">
                 {lang === 'bn' ? 'বাকি আদায় ও জমা (M1)' : 'Due Collection (M1)'}
               </h3>
-              <p className="text-[11px] text-[#5B574E]">
+              <p className="text-[11px] text-slate-600 font-semibold">
                 {lang === 'bn' ? '৪ ধাপে ২০ সেকেন্ডে বাকি আদায় ও রসিদ তৈরি' : 'Quick 4-step due receipt'}
               </p>
             </div>
           </div>
           <button
             onClick={handleCloseAll}
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg"
+            className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
@@ -119,14 +119,14 @@ export const DueCollectionModal: React.FC<DueCollectionModalProps> = ({
               <h4 className="text-lg font-black text-[#1A1A17]">
                 {formatCurrency(lastReceipt.amountPaisa, numFormat)} জমা হয়েছে!
               </h4>
-              <p className="text-xs text-[#5B574E] mt-0.5">
+              <p className="text-xs text-slate-700 font-medium mt-0.5">
                 কাস্টমার: <strong>{lastReceipt.partyName}</strong> • বাকি কমে হয়েছে:{' '}
                 <strong className="text-[#1D5FA8]">{formatCurrency(lastReceipt.newDuePaisa, numFormat)}</strong>
               </p>
             </div>
 
             <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-left text-xs space-y-1.5">
-              <div className="flex justify-between text-[#5B574E]">
+              <div className="flex justify-between text-slate-700 font-medium">
                 <span>আগের বাকি:</span>
                 <span className="font-bold">{formatCurrency(lastReceipt.oldDuePaisa, numFormat)}</span>
               </div>
@@ -198,17 +198,17 @@ export const DueCollectionModal: React.FC<DueCollectionModalProps> = ({
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-1.5 text-center text-[10px] pt-1 border-t border-[#DDD9CE]">
-                <div className="bg-white/80 p-1.5 rounded-lg">
-                  <div className="text-slate-500">০-৭ দিন</div>
-                  <div className="font-bold text-[#1F7A4D]">৳{toBengaliDigits(agingRecent)}</div>
+                <div className="bg-white/90 p-1.5 rounded-lg border border-slate-200">
+                  <div className="text-slate-700 font-bold">০-৭ দিন</div>
+                  <div className="font-black text-[#1F7A4D]">৳{toBengaliDigits(agingRecent)}</div>
                 </div>
-                <div className="bg-white/80 p-1.5 rounded-lg">
-                  <div className="text-slate-500">৮-৩০ দিন</div>
-                  <div className="font-bold text-[#E0A526]">৳{toBengaliDigits(agingMedium)}</div>
+                <div className="bg-white/90 p-1.5 rounded-lg border border-slate-200">
+                  <div className="text-slate-700 font-bold">৮-৩০ দিন</div>
+                  <div className="font-black text-amber-800">৳{toBengaliDigits(agingMedium)}</div>
                 </div>
-                <div className="bg-white/80 p-1.5 rounded-lg">
-                  <div className="text-slate-500">৩১+ দিন</div>
-                  <div className="font-bold text-[#B3261E]">৳{toBengaliDigits(agingOld)}</div>
+                <div className="bg-white/90 p-1.5 rounded-lg border border-slate-200">
+                  <div className="text-slate-700 font-bold">৩১+ দিন</div>
+                  <div className="font-black text-[#B3261E]">৳{toBengaliDigits(agingOld)}</div>
                 </div>
               </div>
             </div>

@@ -88,7 +88,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           <h2 className="text-xl sm:text-2xl font-black text-[#1A1A17] tracking-tight">
             {lang === 'bn' ? 'আসসালামু আলাইকুম,' : 'Hello,'} {tenant.proprietor}
           </h2>
-          <p className="text-xs text-[#5B574E] font-medium">
+          <p className="text-xs text-slate-600 font-semibold">
             {lang === 'bn' ? `আজকের তারিখ: ${todayDateString}` : new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
@@ -130,7 +130,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 <span className="text-xs font-bold text-[#1A1A17] group-hover:text-[#1F7A4D]">
                   ৭ দিনের বেশি পুরোনো বাকি আদায়
                 </span>
-                <span className="block text-[11px] text-[#5B574E]">
+                <span className="block text-[11px] text-slate-600 font-semibold">
                   ৩ জন পাইকারি ক্রেতার মোট ৳১,৫২,০০০ বকেয়া বাকি আছে
                 </span>
               </div>
@@ -154,7 +154,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 <span className="text-xs font-bold text-[#1A1A17] group-hover:text-[#1F7A4D]">
                   লো-স্টক চাল পুনঃক্রয় তাগাদা
                 </span>
-                <span className="block text-[11px] text-[#5B574E]">
+                <span className="block text-[11px] text-slate-600 font-semibold">
                   {lowStockProducts.length > 0 ? `${lowStockProducts.length}টি জাতের চালের স্টক তলানিতে` : 'মিনিকেট ও নাজিরশাইল চাল পর্যাপ্ত আছে'}
                 </span>
               </div>
@@ -178,7 +178,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 <span className="text-xs font-bold text-[#1A1A17] group-hover:text-[#1F7A4D]">
                   আজকের ক্যাশ ড্রয়ার ব্যালেন্স নিরীক্ষা
                 </span>
-                <span className="block text-[11px] text-[#5B574E]">
+                <span className="block text-[11px] text-slate-600 font-semibold">
                   বর্তমানে ড্রয়ারে প্রত্যাশিত ক্যাশ: {formatCurrency(dayClose.expectedSystemCashPaisa, numFormat)}
                 </span>
               </div>
@@ -202,12 +202,12 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 <span className="text-xs font-bold text-[#1A1A17] group-hover:text-[#1F7A4D]">
                   আজকের বাজারদর আপডেট ও রেট কার্ড তৈরি
                 </span>
-                <span className="block text-[11px] text-[#5B574E]">
+                <span className="block text-[11px] text-slate-600 font-semibold">
                   সকালে বাবুবাজার মোকামের নতুন দর সিস্টেমে উঠান
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-xs font-bold text-[#E0A526]">
+            <div className="flex items-center gap-2 text-xs font-black text-amber-800">
               <span>রেট কার্ড</span>
               <ChevronRight className="w-4 h-4" />
             </div>
@@ -219,14 +219,14 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             className="w-full p-3.5 flex items-center justify-between hover:bg-[#E8F4EC]/40 transition text-left group touch-target"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-slate-100 text-[#5B574E] flex items-center justify-center font-bold text-xs shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-extrabold text-xs shrink-0">
                 ৫
               </div>
               <div>
                 <span className="text-xs font-bold text-[#1A1A17] group-hover:text-[#1F7A4D]">
                   দিনের শেষ: ক্যাশ মেলানো ও ডে ক্লোজ
                 </span>
-                <span className="block text-[11px] text-[#5B574E]">
+                <span className="block text-[11px] text-slate-600 font-semibold">
                   {dayClose.isClosed ? 'আজকের ডে ক্লোজ সম্পন্ন হয়েছে' : 'দোকান বন্ধের সময় শারীরিক ক্যাশ গুনে লক করুন'}
                 </span>
               </div>
@@ -283,14 +283,14 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               formatCurrency(totalPaidTodayPaisa, numFormat)
             )}
           </div>
-          <div className="text-[11px] text-[#5B574E] mt-1">
+          <div className="text-[11px] text-slate-600 font-semibold mt-1">
             নগদ ও ব্যাংক মিলে আদায়
           </div>
         </div>
 
         {/* Card 3: মোট বাকি পাওনা (পাবেন ৳... - সবুজ) */}
         <div className="bg-white p-4 rounded-2xl border border-stroke-default shadow-xs hover:border-[#1F7A4D]/50 transition">
-          <div className="flex items-center justify-between text-ink-secondary">
+          <div className="flex items-center justify-between text-slate-700">
             <span className="text-xs font-bold">{lang === 'bn' ? 'মোট বাকি পাওনা' : 'Receivable Due'}</span>
             <div className="p-2 bg-[#E8F4EC] text-[#1F7A4D] rounded-xl">
               <DollarSign className="w-4 h-4" />
@@ -298,7 +298,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
           <div className="text-xl sm:text-2xl font-black text-[#1F7A4D] mt-2 tabular-nums">
             {userRole === 'cashier' ? (
-              <span className="text-sm text-slate-400 font-bold flex items-center gap-1">
+              <span className="text-sm text-slate-600 font-bold flex items-center gap-1">
                 <Lock className="w-3.5 h-3.5" /> শুধুমাত্র মালিকের জন্য
               </span>
             ) : (
@@ -312,7 +312,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
         {/* Card 4: ক্যাশ ব্যালেন্স */}
         <div className="bg-white p-4 rounded-2xl border border-stroke-default shadow-xs hover:border-[#1F7A4D]/50 transition">
-          <div className="flex items-center justify-between text-ink-secondary">
+          <div className="flex items-center justify-between text-slate-700">
             <span className="text-xs font-bold">{lang === 'bn' ? 'ক্যাশ ব্যালেন্স' : 'Drawer Cash'}</span>
             <div className="p-2 bg-slate-100 text-slate-700 rounded-xl">
               <Wallet className="w-4 h-4" />
@@ -338,7 +338,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               <h3 className="text-xs font-extrabold text-[#1A1A17] uppercase tracking-wide">
                 {lang === 'bn' ? 'গত ৭ দিনের বিক্রির ধারা (বার চার্ট)' : 'Last 7 Days Sales Trend'}
               </h3>
-              <span className="text-[11px] text-[#5B574E]">দৈনিক সর্বমোট বিক্রি ও গতিবিধি</span>
+              <span className="text-[11px] text-slate-600 font-semibold">দৈনিক সর্বমোট বিক্রি ও গতিবিধি</span>
             </div>
             {userRole !== 'cashier' && (
               <span className="text-xs font-bold text-[#1F7A4D]">
@@ -349,9 +349,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
           {userRole === 'cashier' ? (
             <div className="h-40 flex flex-col items-center justify-center bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-4 text-center">
-              <Lock className="w-6 h-6 text-slate-400 mb-2" />
+              <Lock className="w-6 h-6 text-slate-500 mb-2" />
               <div className="font-bold text-slate-700 text-xs">বিক্রয় ও আর্থিক গ্রাফ শুধুমাত্র মালিক এবং ম্যানেজারের জন্য উন্মুক্ত</div>
-              <div className="text-[11px] text-slate-400 mt-1">কাউন্টার ক্যাশিয়ার হিসেবে আপনি সরাসরি পিওএস ও মেমো পরিচালনা করতে পারবেন</div>
+              <div className="text-[11px] text-slate-600 mt-1">কাউন্টার ক্যাশিয়ার হিসেবে আপনি সরাসরি পিওএস ও মেমো পরিচালনা করতে পারবেন</div>
             </div>
           ) : (
             <div className="h-40 flex items-end justify-between gap-2 pt-4 px-1">
@@ -360,7 +360,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 const isToday = idx === last7Days.length - 1;
                 return (
                   <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
-                    <span className="text-[9px] font-bold text-[#5B574E] opacity-0 group-hover:opacity-100 transition tabular-nums">
+                    <span className="text-[9px] font-bold text-slate-700 opacity-0 group-hover:opacity-100 transition tabular-nums">
                       ৳{toBengaliDigits(Math.round(d.amountPaisa / 100000))}L
                     </span>
                     <div
@@ -371,7 +371,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                           : 'bg-[#D1EAD9] group-hover:bg-[#1F7A4D]/70'
                       }`}
                     />
-                    <span className={`text-[11px] font-bold ${isToday ? 'text-[#1F7A4D]' : 'text-[#5B574E]'}`}>
+                    <span className={`text-[11px] font-bold ${isToday ? 'text-[#1F7A4D]' : 'text-slate-600'}`}>
                       {lang === 'bn' ? d.dayBn : d.dayEn}
                     </span>
                   </div>
@@ -386,11 +386,11 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           <h3 className="text-xs font-extrabold text-[#1A1A17] uppercase tracking-wide mb-1">
             {lang === 'bn' ? 'সবচেয়ে বেশি চলা ৫ চাল' : 'Top 5 Rice Varieties'}
           </h3>
-          <p className="text-[11px] text-[#5B574E] mb-3">বিক্রির পরিমাণ ও বর্তমান মজুদ</p>
+          <p className="text-[11px] text-slate-600 font-semibold mb-3">বিক্রির পরিমাণ ও বর্তমান মজুদ</p>
 
           <div className="space-y-2.5">
             {top5Rice.length === 0 ? (
-              <div className="py-6 text-center text-slate-400">
+              <div className="py-6 text-center text-slate-500">
                 <p className="text-xs font-semibold">কোনো চালের আইটেম নেই</p>
                 <button
                   onClick={() => onSelectTab('purchases')}
@@ -403,12 +403,12 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               top5Rice.map((prod, idx) => (
                 <div key={prod.id} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="w-5 h-5 rounded-lg bg-surface-page text-ink-secondary flex items-center justify-center font-bold text-[10px]">
+                    <span className="w-5 h-5 rounded-lg bg-surface-page text-slate-700 flex items-center justify-center font-bold text-[10px]">
                       {idx + 1}
                     </span>
                     <div className="truncate">
                       <span className="font-bold text-[#1A1A17] block truncate">{prod.nameBn}</span>
-                      <span className="text-[10px] text-[#5B574E]">{prod.category}</span>
+                      <span className="text-[10px] text-slate-600 font-semibold">{prod.category}</span>
                     </div>
                   </div>
 
@@ -416,7 +416,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                     <span className="font-extrabold text-[#1F7A4D] tabular-nums block">
                       {formatCurrency(prod.retailPricePaisa, numFormat)}
                     </span>
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-[10px] text-slate-600 font-bold">
                       স্টক: {Math.floor(prod.stockKg / 50)} বস্তা
                     </span>
                   </div>
@@ -435,7 +435,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <h3 className="font-extrabold text-[#1A1A17] text-sm">
               {lang === 'bn' ? 'সর্বশেষ ৫টি বিক্রি ও ইনভয়েস' : 'Recent 5 Sales'}
             </h3>
-            <span className="text-[11px] text-[#5B574E]">কাউন্টার ও পাইকারি বিক্রির হিসাব</span>
+            <span className="text-[11px] text-slate-600 font-semibold">কাউন্টার ও পাইকারি বিক্রির হিসাব</span>
           </div>
 
           <button
@@ -463,8 +463,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <tbody className="divide-y divide-slate-100">
               {sales.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-400">
-                    <p className="font-semibold text-xs text-slate-600">আজ কোনো চাল বিক্রি এন্ট্রি করা হয়নি</p>
+                  <td colSpan={7} className="py-8 text-center text-slate-500">
+                    <p className="font-bold text-xs text-slate-700">আজ কোনো চাল বিক্রি এন্ট্রি করা হয়নি</p>
                     <button
                       onClick={() => onSelectTab('pos')}
                       className="mt-2 text-xs font-bold text-white bg-[#1F7A4D] hover:bg-[#16603B] px-3.5 py-1.5 rounded-xl shadow-xs transition"
@@ -477,7 +477,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 sales.slice(0, 5).map((inv) => (
                 <tr key={inv.id} className="hover:bg-slate-50 transition-colors">
                   <td className="py-2.5 px-3 font-mono font-bold text-[#1F7A4D]">{inv.docNo}</td>
-                  <td className="py-2.5 px-3 text-[#5B574E]">{formatDateBangla(inv.date)}</td>
+                  <td className="py-2.5 px-3 text-slate-700 font-medium">{formatDateBangla(inv.date)}</td>
                   <td className="py-2.5 px-3 font-bold text-[#1A1A17]">{inv.clientName}</td>
                   <td className="py-2.5 px-3">
                     <span className="font-semibold text-[#1A1A17]">

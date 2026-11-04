@@ -117,7 +117,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
               <button
                 onClick={() => setPrintFormat('thermal58')}
                 className={`px-2.5 py-1 rounded-md transition ${
-                  printFormat === 'thermal58' ? 'bg-emerald-500 text-white font-bold' : 'text-slate-400 hover:text-white'
+                  printFormat === 'thermal58' ? 'bg-emerald-500 text-white font-bold' : 'text-slate-300 hover:text-white font-medium'
                 }`}
               >
                 ৫৮ মিমি
@@ -125,7 +125,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
               <button
                 onClick={() => setPrintFormat('thermal80')}
                 className={`px-2.5 py-1 rounded-md transition ${
-                  printFormat === 'thermal80' ? 'bg-emerald-500 text-white font-bold' : 'text-slate-400 hover:text-white'
+                  printFormat === 'thermal80' ? 'bg-emerald-500 text-white font-bold' : 'text-slate-300 hover:text-white font-medium'
                 }`}
               >
                 ৮০ মিমি
@@ -133,7 +133,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
               <button
                 onClick={() => setPrintFormat('a4')}
                 className={`px-2.5 py-1 rounded-md transition ${
-                  printFormat === 'a4' ? 'bg-emerald-500 text-white font-bold' : 'text-slate-400 hover:text-white'
+                  printFormat === 'a4' ? 'bg-emerald-500 text-white font-bold' : 'text-slate-300 hover:text-white font-medium'
                 }`}
               >
                 A4 ইনভয়েস
@@ -181,7 +181,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
 
             <button
               onClick={onClose}
-              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+              className="p-1 rounded-lg text-slate-200 hover:text-white hover:bg-slate-800"
               title="বন্ধ করুন"
             >
               <X className="w-5 h-5" />

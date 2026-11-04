@@ -171,12 +171,12 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
               <h3 className="font-extrabold text-base text-[#1A1A17]">
                 {lang === 'bn' ? 'Excel / CSV ইমপোর্ট উইজার্ড (I1)' : 'Excel / CSV Import Wizard (I1)'}
               </h3>
-              <p className="text-[11px] text-[#5B574E]">
+              <p className="text-[11px] text-slate-600 font-semibold">
                 {lang === 'bn' ? 'ভুল সারি ঠিক করার সুবিধাসহ দ্রুত ডেটা তোলার সিস্টেম' : 'Step-by-step import with inline error correction'}
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg">
+          <button onClick={onClose} className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -196,7 +196,7 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
                   ? 'bg-[#1F7A4D] text-white shadow-xs'
                   : step > s.stepNum
                   ? 'bg-[#E8F4EC] text-[#1F7A4D]'
-                  : 'bg-slate-100 text-slate-400'
+                  : 'bg-slate-100 text-slate-600 font-semibold'
               }`}
             >
               {s.label}
@@ -447,7 +447,7 @@ export const ImportWizardModal: React.FC<ImportWizardModalProps> = ({
               {importedCount}টি চাল সফলভাবে ডাটাবেজে তোলা হয়েছে!
             </h3>
 
-            <p className="text-xs text-[#5B574E] max-w-sm mx-auto leading-relaxed">
+            <p className="text-xs text-slate-700 font-medium max-w-sm mx-auto leading-relaxed">
               আইটেমগুলো অবিলম্বে কাউন্টার POS এবং আজকের বাজারদর বোর্ডে দৃশ্যমান হবে।
             </p>
 

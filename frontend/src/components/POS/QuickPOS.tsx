@@ -556,7 +556,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
             
             {/* Search Input */}
             <div className="relative flex-1 min-w-[220px]">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
               <input
                 ref={searchInputRef}
                 type="text"
@@ -565,7 +565,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                 placeholder={`${t.searchRice} (কীবোর্ডে / চাপুন)`}
                 className="w-full pl-9 pr-12 py-2 rounded-xl bg-white border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
               />
-              <kbd className="hidden sm:inline-block absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-400 bg-slate-100 border border-slate-200 rounded">
+              <kbd className="hidden sm:inline-block absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-600 bg-slate-100 border border-slate-300 rounded">
                 /
               </kbd>
             </div>
@@ -696,13 +696,13 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                   {/* Rates */}
                   <div className="mt-2 flex items-baseline justify-between bg-slate-50/80 p-2 rounded-xl border border-slate-100">
                     <div>
-                      <span className="text-[10px] text-slate-400 block">{t.ratePerKg}</span>
+                      <span className="text-[10px] text-slate-600 font-semibold block">{t.ratePerKg}</span>
                       <span className="text-sm font-extrabold text-emerald-700">
                         {formatCurrency(currentPerKgRate, numFormat)}
                       </span>
                     </div>
                     <div className="text-right">
-                      <span className="text-[10px] text-slate-400 block">{t.unitSack50}</span>
+                      <span className="text-[10px] text-slate-600 font-semibold block">{t.unitSack50}</span>
                       <span className="text-xs font-bold text-slate-700">
                         {formatCurrency(sackRate, numFormat)}
                       </span>
@@ -779,7 +779,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                     onClick={() => handleResumeCart(h.id)}
                     className="text-[10px] bg-[#FFF4DC] hover:bg-[#FEE8B9] text-[#8A5A00] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 transition"
                   >
-                    <PlayCircle className="w-3 h-3 text-[#E0A526]" />
+                    <PlayCircle className="w-3 h-3 text-amber-700" />
                     {h.time}
                   </button>
                 ))}
@@ -952,7 +952,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
               {userRole !== 'cashier' && (
                 <div className={`flex justify-between font-medium text-[11px] ${estimatedProfitPaisa < 0 ? 'text-rose-600' : 'text-[#1F7A4D]'}`}>
                   <span className="flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-[#E0A526]" />
+                    <Sparkles className="w-3 h-3 text-amber-700" />
                     {estimatedProfitPaisa < 0 ? 'সম্ভাব্য ক্ষতি' : t.estimatedProfit}:
                   </span>
                   <span className="font-black tabular-nums">{formatCurrency(estimatedProfitPaisa, numFormat)}</span>
@@ -1142,13 +1142,13 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                 <h3 className="font-extrabold text-base text-[#1A1A17]">
                   {activeModalProduct.nameBn}
                 </h3>
-                <span className="text-[11px] text-[#5B574E]">
+                <span className="text-[11px] text-slate-600 font-semibold">
                   মজুদ: {formatWeight(activeModalProduct.stockKg, numFormat, lang)} • {activeModalProduct.grade}
                 </span>
               </div>
               <button
                 onClick={() => setActiveModalProduct(null)}
-                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg"
+                className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg"
               >
                 ✕
               </button>
@@ -1243,7 +1243,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-bold text-[#1A1A17]">ইউনিট দর (টাকা):</label>
-                <span className="text-[10px] text-slate-400">প্রয়োজনে দর বদলাতে পারেন</span>
+                <span className="text-[10px] text-slate-600 font-semibold">প্রয়োজনে দর বদলাতে পারেন</span>
               </div>
               <input
                 type="number"
@@ -1303,14 +1303,14 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                   <h3 className="font-extrabold text-[#1A1A17] text-base">
                     {lang === 'bn' ? 'পেমেন্ট ও ইনভয়েস কনফার্ম (S1)' : 'Payment & Checkout'}
                   </h3>
-                  <span className="text-xs text-[#5B574E]">
+                  <span className="text-xs text-slate-700 font-semibold">
                     {selectedClient ? selectedClient.name : 'কাউন্টার ক্যাশ কাস্টমার'}
                   </span>
                 </div>
               </div>
               <button
                 onClick={() => setIsCheckoutModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg"
+                className="text-slate-500 hover:text-slate-800 p-1 rounded-lg"
               >
                 ✕
               </button>

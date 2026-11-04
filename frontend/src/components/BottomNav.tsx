@@ -69,13 +69,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onSelectTab, la
                   ? 'text-[#1F7A4D] font-extrabold'
                   : isActive
                   ? 'text-[#1F7A4D] font-extrabold'
-                  : 'text-ink-secondary'
+                  : 'text-slate-700 font-bold'
               }`}
             >
               <div className={`p-1 rounded-xl ${tab.special ? 'bg-[#E8F4EC]' : ''}`}>
                 <Icon className="w-5 h-5" />
               </div>
-              <span className="text-[10px] mt-0.5 leading-none">{tab.label}</span>
+              <span className="text-[11px] font-bold mt-0.5 leading-none">{tab.label}</span>
             </button>
           );
         })}
@@ -89,11 +89,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onSelectTab, la
               key={tab.id}
               onClick={() => onSelectTab(tab.id)}
               className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-colors touch-target ${
-                isActive ? 'text-[#1F7A4D] font-extrabold' : 'text-ink-secondary'
+                isActive ? 'text-[#1F7A4D] font-extrabold' : 'text-slate-700 font-bold'
               }`}
             >
               <Icon className="w-5 h-5" />
-              <span className="text-[10px] mt-0.5 leading-none">{tab.label}</span>
+              <span className="text-[11px] font-bold mt-0.5 leading-none">{tab.label}</span>
             </button>
           );
         })}
@@ -101,12 +101,12 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onSelectTab, la
         {/* More Tab */}
         <button
           onClick={() => setShowMoreModal(true)}
-          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-ink-secondary hover:text-ink-primary touch-target ${
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-slate-700 hover:text-slate-900 font-bold touch-target ${
             moreItems.some((item) => item.id === activeTab) ? 'text-[#1F7A4D] font-extrabold' : ''
           }`}
         >
           <MoreHorizontal className="w-5 h-5" />
-          <span className="text-[10px] mt-0.5 leading-none">{lang === 'bn' ? 'আরও' : 'More'}</span>
+          <span className="text-[11px] font-bold mt-0.5 leading-none">{lang === 'bn' ? 'আরও' : 'More'}</span>
         </button>
       </div>
 

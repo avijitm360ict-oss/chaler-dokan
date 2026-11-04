@@ -37,14 +37,14 @@ export const KeyboardShortcutModal: React.FC<KeyboardShortcutModalProps> = ({
               <h3 className="font-extrabold text-base text-[#1A1A17]">
                 {lang === 'bn' ? 'কীবোর্ড শর্টকাট তালিকা' : 'Keyboard Shortcuts'}
               </h3>
-              <p className="text-[11px] text-[#5B574E]">
+              <p className="text-[11px] text-slate-600 font-semibold">
                 {lang === 'bn' ? 'মাউস ছাড়া দ্রুত চাল বিক্রির হট-কী' : 'Lightning-fast counter shortcuts'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg"
+            className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>

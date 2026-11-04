@@ -32,8 +32,8 @@ export default {
         },
         ink: {
           primary: '#0F172A',   // Deep Slate 900 - High Contrast
-          secondary: '#475569', // Crisp Slate 600 - Highly Legible
-          disabled: '#94A3B8',  // Slate 400
+          secondary: '#334155', // Deep Slate 700 - Highly Legible
+          disabled: '#64748B',  // Slate 500 - Crisp contrast (passes WCAG AA)
         },
         surface: {
           page: '#F8FAFC',    // Crisp Slate 50 Page Background
