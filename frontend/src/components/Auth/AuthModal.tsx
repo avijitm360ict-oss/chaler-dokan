@@ -42,10 +42,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [failedLoginAttempts, setFailedLoginAttempts] = useState(0);
   const [lockoutTime, setLockoutTime] = useState<number | null>(null);
 
-  // Registration OTP Challenge (BUG-01)
-  const [showOtpStep, setShowOtpStep] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
-
   // Login Form
   const [loginPhone, setLoginPhone] = useState('01711000000');
   const [loginPassword, setLoginPassword] = useState('123456');
@@ -156,9 +152,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleStartRegister = (e: React.FormEvent) => {
+  // Direct Instant Registration (No OTP, Zero SMS Cost)
+  const handleRegisterDirect = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+
+    if (!regShopName.trim()) {
+      setErrorMessage('চালের দোকানের নাম লিখুন');
+      return;
+    }
+
+    if (!regOwnerName.trim()) {
+      setErrorMessage('মালিকের নাম লিখুন');
+      return;
+    }
 
     if (!isValidBdPhone(regPhone)) {
       setErrorMessage('সঠিক ১১ ডিজিটের বাংলাদেশি মোবাইল নম্বর দিন (যেমন: 01712345678)');
@@ -170,30 +177,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
-    // Move to OTP Challenge step (BUG-01)
-    setShowOtpStep(true);
-    setOtpCode('123456'); // Pre-fill test OTP for seamless testing
-  };
-
-  const handleVerifyOtpAndRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage(null);
-
-    // Verify 6-digit OTP
-    if (otpCode.trim() !== '123456' && otpCode.trim().length !== 6) {
-      setErrorMessage('ভুল ওটিপি কোড! অনুগ্রহ করে সঠিক ৬ ডিজিটের কোড দিন (পরীক্ষামূলক ওটিপি: 123456)');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
       const res: any = await api.auth.register({
-        shopName: regShopName,
-        ownerName: regOwnerName,
+        shopName: regShopName.trim(),
+        ownerName: regOwnerName.trim(),
         phone: regPhone.trim().replace(/[\s-]/g, ''),
         password: regPassword,
-        address: regAddress,
+        address: regAddress.trim() || 'বাংলাদেশ',
       });
 
       if (res.token) {
@@ -210,28 +202,33 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           ownerName: res.tenant.ownerName,
           proprietor: res.tenant.ownerName,
           phone: res.tenant.phone,
-          address: regAddress || 'বাংলাদেশ',
+          address: regAddress.trim() || 'বাংলাদেশ',
           status: 'trial',
           trialDaysLeft: 30,
           planName: 'ট্রায়াল প্ল্যান (Trial 30 Days)',
         };
 
         localStorage.setItem('chal_tenant_info', JSON.stringify(tenantData));
-        alert('অভিনন্দন! মোবাইল নম্বর সফলভাবে যাচাই হয়েছে এবং আপনার চালের আড়তের ডিজিটাল একাউন্ট তৈরি সম্পন্ন হয়েছে।');
+        alert('আলহামদুলিল্লাহ! আপনার চালের আড়তের ডিজিটাল একাউন্ট সফলভাবে তৈরি হয়েছে। ৩০ দিনের ফ্রি ট্রায়াল সক্রিয় করা হয়েছে।');
         onLoginSuccess(res.user, tenantData);
         return;
       }
     } catch (err: any) {
-      // Local fallback if offline
+      if (err.message?.includes('আগেই একাউন্ট') || err.message?.includes('Phone in use')) {
+        setErrorMessage('এই মোবাইল নম্বর দিয়ে আগেই একাউন্ট খোলা হয়েছে। অনুগ্রহ করে লগইন করুন।');
+        return;
+      }
+
+      // Local offline fallback
       const newTenant: TenantInfo = {
         id: `tenant-${Date.now()}`,
-        name: regShopName,
-        shopNameBn: regShopName,
-        shopNameEn: regShopName,
-        ownerName: regOwnerName,
-        proprietor: regOwnerName,
-        phone: regPhone,
-        address: regAddress || 'বাংলাদেশ',
+        name: regShopName.trim(),
+        shopNameBn: regShopName.trim(),
+        shopNameEn: regShopName.trim(),
+        ownerName: regOwnerName.trim(),
+        proprietor: regOwnerName.trim(),
+        phone: regPhone.trim(),
+        address: regAddress.trim() || 'বাংলাদেশ',
         status: 'trial',
         trialDaysLeft: 30,
         planName: 'ট্রায়াল প্ল্যান (Trial 30 Days)',
@@ -240,11 +237,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       localStorage.setItem('chal_tenant_info', JSON.stringify(newTenant));
       const newUser = {
         id: `user-${Date.now()}`,
-        name: regOwnerName,
-        phone: regPhone,
+        name: regOwnerName.trim(),
+        phone: regPhone.trim(),
         role: 'owner',
       };
-      alert('অফলাইন মোডে নতুন দোকানের একাউন্ট তৈরি সম্পন্ন হয়েছে!');
+      alert('নতুন দোকানের একাউন্ট তৈরি সম্পন্ন হয়েছে! ৩০ দিনের ফ্রি ট্রায়াল সক্রিয় করা হয়েছে।');
       onLoginSuccess(newUser, newTenant);
     } finally {
       setIsLoading(false);
@@ -451,67 +448,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
               </div>
             </form>
-          ) : showOtpStep ? (
-            /* 2B. OTP VERIFICATION STEP (BUG-01) */
-            <form onSubmit={handleVerifyOtpAndRegister} className="space-y-4 py-2">
-              <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 text-center space-y-1.5">
-                <div className="text-xs font-bold text-emerald-950 flex items-center justify-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>মোবাইল নম্বর ভেরিফিকেশন (OTP)</span>
-                </div>
-                <div className="text-[11px] text-emerald-800 font-medium">
-                  <span className="font-mono font-bold">{regPhone}</span> নম্বরের জন্য ওটিপি তৈরি হয়েছে
-                </div>
-                <div className="p-2.5 bg-white/95 rounded-xl border border-emerald-300 text-left space-y-1 shadow-2xs">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-800">💡 ওটিপি কোড:</span>
-                    <span className="font-mono font-black text-emerald-700 text-sm px-2 py-0.5 bg-emerald-100 rounded-lg tracking-widest border border-emerald-300">
-                      123456
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-slate-500 leading-normal">
-                    সিস্টেমে লাইভ পেইড SMS গেটওয়ে কানেক্ট না থাকা পর্যন্ত এই টেস্ট কোডটি ব্যবহার করে একাউন্ট খোলা নিশ্চিত করুন।
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1 text-center">
-                  ৬ ডিজিটের ওটিপি লিখুন *
-                </label>
-                <input
-                  type="text"
-                  maxLength={6}
-                  required
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value)}
-                  placeholder="123456"
-                  className="w-full text-center tracking-widest text-lg font-black py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:bg-white focus:border-[#1F7A4D] focus:ring-2 focus:ring-[#1F7A4D]/20 outline-hidden font-mono"
-                  autoFocus
-                />
-              </div>
-
-              <div className="flex gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setShowOtpStep(false)}
-                  className="w-1/3 py-3 border border-slate-300 rounded-xl font-bold text-slate-600 text-xs hover:bg-slate-100 cursor-pointer"
-                >
-                  পিছনে
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex-1 py-3 bg-[#1F7A4D] hover:bg-[#16603B] text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Sparkles className="w-4 h-4 text-[#FBBF24]" />
-                  <span>{isLoading ? 'যাচাই হচ্ছে...' : 'ওটিপি যাচাই ও দোকান চালু'}</span>
-                </button>
-              </div>
-            </form>
           ) : (
-            /* 2A. REGISTER FORM */
-            <form onSubmit={handleStartRegister} className="space-y-3">
+            /* 2. DIRECT INSTANT REGISTRATION FORM (NO OTP REQUIRED) */
+            <form onSubmit={handleRegisterDirect} className="space-y-3">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   চালের দোকানের নাম *
@@ -611,12 +550,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3.5 bg-[#1F7A4D] hover:bg-[#16603B] bg-gradient-to-r from-[#1F7A4D] to-[#16603B] hover:brightness-105 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer touch-target mt-3"
+                className="w-full py-3.5 bg-[#1F7A4D] hover:bg-[#16603B] bg-gradient-to-r from-[#1F7A4D] to-[#16603B] hover:brightness-105 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer touch-target mt-4"
               >
                 <Sparkles className="w-4 h-4 text-[#FBBF24]" />
                 <span className="text-white font-bold text-xs">
-                  {isLoading ? 'যাচাই করা হচ্ছে...' : 'পরবর্তী ধাপ: মোবাইল নম্বর যাচাই (ওটিপি)'}
+                  {isLoading ? 'একাউন্ট তৈরি হচ্ছে...' : 'সরাসরি একাউন্ট তৈরি ও দোকান চালু করুন'}
                 </span>
+                <ArrowRight className="w-4 h-4" />
               </button>
             </form>
           )}
