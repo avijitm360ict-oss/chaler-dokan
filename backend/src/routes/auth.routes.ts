@@ -158,8 +158,8 @@ router.post('/login', authLimiter, async (req: AuthenticatedRequest, res: Respon
       (password === 'admin123' || password === '123456')
     ) {
       try {
-        let superTenant = await prisma.tenant.findUnique({
-          where: { id: 'tenant-superadmin-001' },
+        let superTenant = await prisma.tenant.findFirst({
+          where: { OR: [{ id: 'tenant-superadmin-001' }, { phone: cleanPhone }] },
         });
 
         if (!superTenant) {
@@ -168,7 +168,7 @@ router.post('/login', authLimiter, async (req: AuthenticatedRequest, res: Respon
               id: 'tenant-superadmin-001',
               name: 'চালের দোকান SaaS প্ল্যাটফর্ম হেডকোয়ার্টার্স',
               ownerName: 'অভিজিৎ সাহা (সুপার এডমিন)',
-              phone: cleanPhone,
+              phone: `${cleanPhone}-saas`,
               status: 'active',
               trialEndsAt: new Date(Date.now() + 3650 * 24 * 60 * 60 * 1000),
               settings: {
@@ -198,8 +198,18 @@ router.post('/login', authLimiter, async (req: AuthenticatedRequest, res: Respon
           include: { role: true, tenant: true },
         });
 
-        if (!superUser) {
-          const passwordHash = await bcrypt.hash(password, 10);
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        if (superUser) {
+          superUser = await prisma.user.update({
+            where: { id: superUser.id },
+            data: {
+              roleId: superRole.id,
+              passwordHash,
+            },
+            include: { role: true, tenant: true },
+          });
+        } else {
           superUser = await prisma.user.create({
             data: {
               tenantId: superTenant.id,

@@ -26,7 +26,10 @@ export const tenantMiddleware = async (
   const isSuperAdmin =
     req.userRole?.toLowerCase() === 'super admin' || req.userRole?.toLowerCase() === 'superadmin';
 
-  if (headerTenant && isSuperAdmin) {
+  // Do not treat platform-level tenant management operations as store-level impersonation
+  const isTenantManagement = req.baseUrl?.includes('/tenant') || req.originalUrl?.includes('/api/v1/tenant');
+
+  if (headerTenant && isSuperAdmin && headerTenant !== req.tenantId && !isTenantManagement) {
     // 1. Verify target tenant existence in database
     const targetTenant = await prisma.tenant.findUnique({
       where: { id: headerTenant },

@@ -185,20 +185,30 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ lang, numFormat 
     setIsSubmitting(true);
     let res: any = null;
 
-    // 1. Try authenticated createShop API
-    try {
-      res = await api.tenant.createShop({
-        shopName: newShopName.trim(),
-        ownerName: newOwnerName.trim() || 'প্রোপাইটর',
-        phone: cleanPhone,
-        password: newPassword.trim() || '123456',
-        address: newAddress.trim() || 'বাংলাদেশ',
-        planName: newPlan,
-        trialDays: Number(newTrialDays) || 14,
-      });
-    } catch (createErr: any) {
-      console.warn('createShop API check:', createErr);
-      // 2. Direct database registration fallback (does not require token)
+    // 1. If token is present, try authenticated createShop API
+    if (api.hasToken()) {
+      try {
+        res = await api.tenant.createShop({
+          shopName: newShopName.trim(),
+          ownerName: newOwnerName.trim() || 'প্রোপাইটর',
+          phone: cleanPhone,
+          password: newPassword.trim() || '123456',
+          address: newAddress.trim() || 'বাংলাদেশ',
+          planName: newPlan,
+          trialDays: Number(newTrialDays) || 14,
+        });
+      } catch (createErr: any) {
+        console.warn('createShop API check:', createErr);
+        if (createErr?.message?.includes('আগেই একাউন্ট খোলা হয়েছে')) {
+          setCreateError('এই মোবাইল নম্বর দিয়ে আগেই একাউন্ট খোলা হয়েছে! অন্য মোবাইল নম্বর দিন।');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+    }
+
+    // 2. Direct cloud database registration fallback (does not require existing token)
+    if (!res) {
       try {
         res = await api.auth.register({
           shopName: newShopName.trim(),

@@ -368,11 +368,13 @@ export function App() {
   // Session expiry listener (BUG-17)
   useEffect(() => {
     const handleAuthExpired = (e: any) => {
-      // Don't alert visitors who are not logged in yet
-      if (!currentUser) return;
-      const msg = e.detail?.message || 'আপনার সেশনের মেয়াদ শেষ হয়েছে, অনুগ্রহ করে পুনরায় লগইন করুন';
+      // Don't alert visitors who are not logged in yet or in demo mode
+      if (!currentUser || !api.hasToken()) return;
+      const msg = e.detail?.message;
       handleLogout();
-      alert(msg);
+      if (msg && !msg.includes('টোকেন পাওয়া যায়নি')) {
+        alert(msg);
+      }
     };
     window.addEventListener('chal_auth_expired', handleAuthExpired);
 
