@@ -126,7 +126,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       // Super Admin fallback when backend is offline/unreachable
       const cleanPhone = loginPhone.trim().replace(/[\s-]/g, '');
       if (
-        (cleanPhone === '01629404625' || cleanPhone === '01700000000') &&
+        cleanPhone === '01629404625' &&
         (loginPassword === 'admin123' || loginPassword === '123456')
       ) {
         const superTenant: TenantInfo = {

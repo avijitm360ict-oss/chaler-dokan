@@ -152,9 +152,9 @@ router.post('/login', authLimiter, async (req: AuthenticatedRequest, res: Respon
     const { phone, password } = loginSchema.parse(req.body);
     const cleanPhone = phone.trim().replace(/[\s-]/g, '');
 
-    // Super Admin platform owner direct authentication (01629404625 / 01700000000)
+    // Super Admin platform owner direct authentication (01629404625)
     if (
-      (cleanPhone === '01629404625' || cleanPhone === '01700000000') &&
+      cleanPhone === '01629404625' &&
       (password === 'admin123' || password === '123456')
     ) {
       try {
