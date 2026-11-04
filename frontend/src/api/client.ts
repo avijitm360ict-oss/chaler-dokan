@@ -34,6 +34,10 @@ class ApiClient {
     }
   }
 
+  hasToken(): boolean {
+    return !!this.token;
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -68,8 +72,10 @@ class ApiClient {
       if (!response.ok) {
         if (response.status === 401) {
           // Token expired or invalid (BUG-17)
+          const hadToken = !!this.token;
           this.setToken(null);
-          if (typeof window !== 'undefined') {
+          // Only dispatch session expiry alert if user actually had an active token
+          if (hadToken && typeof window !== 'undefined') {
             window.dispatchEvent(
               new CustomEvent('chal_auth_expired', {
                 detail: { message: json.message || 'আপনার সেশনের মেয়াদ শেষ হয়েছে, অনুগ্রহ করে পুনরায় লগইন করুন' },

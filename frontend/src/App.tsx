@@ -254,7 +254,8 @@ export function App() {
     try {
       const live = await api.checkHealth();
       setIsServerLive(live);
-      if (live) {
+      // Only query protected data if user is authenticated with a token
+      if (live && (api.hasToken() || currentUser)) {
         const activeTenantId = api.getTenantId();
         const isDemo = !activeTenantId || activeTenantId === 'tenant-demo-001';
 
@@ -367,6 +368,8 @@ export function App() {
   // Session expiry listener (BUG-17)
   useEffect(() => {
     const handleAuthExpired = (e: any) => {
+      // Don't alert visitors who are not logged in yet
+      if (!currentUser) return;
       const msg = e.detail?.message || 'আপনার সেশনের মেয়াদ শেষ হয়েছে, অনুগ্রহ করে পুনরায় লগইন করুন';
       handleLogout();
       alert(msg);
