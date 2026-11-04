@@ -1,4 +1,5 @@
 import { Router, Response } from 'express';
+import bcrypt from 'bcryptjs';
 import rateLimit from 'express-rate-limit';
 import prisma from '../lib/prisma';
 import { AuthenticatedRequest } from '../middleware/tenant';
@@ -472,6 +473,129 @@ router.put('/:id/extend-trial', requireRole(['Super Admin']), async (req: Authen
       success: true,
       message: `ট্রায়াল মেয়াদ আরও ${days} দিন বৃদ্ধি করা হয়েছে`,
       tenant: updated,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/v1/tenant/create-shop - SuperAdmin explicitly provision new tenant & owner (SuperAdmin-Only Gate)
+router.post('/create-shop', requireRole(['Super Admin']), async (req: AuthenticatedRequest, res: Response, next) => {
+  try {
+    const {
+      shopName,
+      ownerName,
+      phone,
+      password = '123456',
+      address = 'বাংলাদেশ',
+      trialDays = 30,
+      planName = 'প্রো প্ল্যান (Pro Plan)',
+    } = req.body;
+
+    if (!shopName || !ownerName || !phone) {
+      return res.status(400).json({
+        error: 'Missing fields',
+        message: 'দোকানের নাম, মালিকের নাম এবং মোবাইল নম্বর আবশ্যক',
+      });
+    }
+
+    const cleanPhone = String(phone).trim().replace(/[\s-]/g, '');
+
+    const existingUser = await prisma.user.findFirst({
+      where: { phone: cleanPhone },
+    });
+    if (existingUser) {
+      return res.status(400).json({
+        error: 'Phone in use',
+        message: 'এই মোবাইল নম্বর দিয়ে আগেই একাউন্ট খোলা হয়েছে',
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(String(password), 10);
+    const trialEndsAt = new Date(Date.now() + Number(trialDays) * 24 * 60 * 60 * 1000);
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create Tenant
+      const tenant = await tx.tenant.create({
+        data: {
+          name: shopName,
+          ownerName: ownerName,
+          phone: cleanPhone,
+          status: 'active',
+          trialEndsAt,
+          settings: {
+            address: address || 'বাংলাদেশ',
+            proprietor: ownerName,
+            planName,
+          },
+        },
+      });
+
+      // 2. Create Owner Role
+      const role = await tx.role.create({
+        data: {
+          tenantId: tenant.id,
+          name: 'Owner',
+          permissions: {
+            sales: ['view', 'create', 'void'],
+            purchases: ['view', 'create'],
+            inventory: ['view', 'adjust', 'transfer'],
+            parties: ['view', 'create', 'collect'],
+            reports: ['view', 'export'],
+            settings: ['view', 'update'],
+          },
+        },
+      });
+
+      // 3. Create Default Warehouse
+      await tx.warehouse.create({
+        data: {
+          tenantId: tenant.id,
+          name: 'প্রধান গোডাউন',
+          address: address || 'দোকান সংলগ্ন',
+          isDefault: true,
+        },
+      });
+
+      // 4. Create Default Cash Drawer Account
+      await tx.account.create({
+        data: {
+          tenantId: tenant.id,
+          name: 'প্রধান ক্যাশ ড্রয়ার',
+          type: 'cash',
+          openingBalance: BigInt(0),
+          currentBalance: BigInt(0),
+        },
+      });
+
+      // 5. Create Owner User
+      const user = await tx.user.create({
+        data: {
+          tenantId: tenant.id,
+          roleId: role.id,
+          name: ownerName,
+          phone: cleanPhone,
+          passwordHash,
+          status: 'active',
+        },
+      });
+
+      return { tenant, user };
+    });
+
+    res.status(201).json({
+      success: true,
+      message: `নতুন চালের দোকান "${shopName}" সফলভাবে তৈরি হয়েছে!`,
+      tenant: result.tenant,
+      user: {
+        id: result.user.id,
+        name: result.user.name,
+        phone: result.user.phone,
+      },
+      credentials: {
+        phone: cleanPhone,
+        password: String(password),
+      },
     });
   } catch (err) {
     next(err);

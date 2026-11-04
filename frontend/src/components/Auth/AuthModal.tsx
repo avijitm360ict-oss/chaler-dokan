@@ -13,6 +13,7 @@ import {
   Sparkles,
   ShieldCheck,
   AlertCircle,
+  MessageCircle,
   X
 } from 'lucide-react';
 
@@ -349,7 +350,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   : 'text-white/80 hover:text-white'
               }`}
             >
-              নতুন দোকান রেজিস্টার
+              লাইসেন্স রিকোয়েস্ট
             </button>
           </div>
         </div>
@@ -447,118 +448,97 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </button>
                 </div>
               </div>
+
+              <div className="pt-2 text-center text-xs text-slate-500">
+                আপনার চালের দোকান এখনো যুক্ত নেই?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('register');
+                    setErrorMessage(null);
+                  }}
+                  className="font-bold text-emerald-700 hover:underline cursor-pointer"
+                >
+                  লাইসেন্স নিন →
+                </button>
+              </div>
             </form>
           ) : (
-            /* 2. DIRECT INSTANT REGISTRATION FORM (NO OTP REQUIRED) */
-            <form onSubmit={handleRegisterDirect} className="space-y-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  চালের দোকানের নাম *
-                </label>
-                <div className="relative">
-                  <Store className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                  <input
-                    type="text"
-                    required
-                    autoComplete="organization"
-                    value={regShopName}
-                    onChange={(e) => setRegShopName(e.target.value)}
-                    placeholder="যেমন: মেসার্স আল্লাহর দান চাউল আড়ত"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#1F7A4D] focus:ring-2 focus:ring-[#1F7A4D]/20 outline-hidden transition"
-                  />
+            /* 2. ADMIN-CONTROLLED ACCESS & LICENSE REQUEST CARD */
+            <div className="space-y-4 py-1 animate-in fade-in">
+              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 text-center space-y-2">
+                <div className="inline-flex p-2.5 bg-emerald-100 rounded-2xl text-emerald-800 shadow-xs">
+                  <ShieldCheck className="w-6 h-6 text-emerald-700" />
                 </div>
+                <div className="text-sm font-black text-slate-900">
+                  সংরক্ষিত ব্যবসায়িক ERP প্ল্যাটফর্ম
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  নিরাপত্তা ও ব্যবসায়িক ডাটা সুরক্ষার স্বার্থে <strong>চালের দোকান SaaS</strong>-এ উন্মুক্ত পাবলিক সাইন-আপ বন্ধ রয়েছে। নতুন দোকান তৈরি ও পূর্ণাঙ্গ লাইসেন্স শুধুমাত্র <strong>প্ল্যাটফর্ম ওনার (সুপার এডমিন)</strong> কর্তৃক অনুমোদিত হয়।
+                </p>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  মালিকের নাম *
-                </label>
-                <div className="relative">
-                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                  <input
-                    type="text"
-                    required
-                    autoComplete="name"
-                    value={regOwnerName}
-                    onChange={(e) => setRegOwnerName(e.target.value)}
-                    placeholder="যেমন: মো: কামরুল হাসান"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#1F7A4D] focus:ring-2 focus:ring-[#1F7A4D]/20 outline-hidden transition"
-                  />
+              {/* Direct Call & WhatsApp Action Cards */}
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+                  নতুন দোকানের লাইসেন্স ও ডেমো নিতে যোগাযোগ:
                 </div>
+
+                <a
+                  href="tel:01629404625"
+                  className="flex items-center justify-between p-3.5 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-2xl transition group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-xs">
+                      <Phone className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-900">সরাসরি ফোন কল</div>
+                      <div className="text-xs font-mono font-bold text-emerald-700">01629404625</div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold text-emerald-700 group-hover:translate-x-1 transition">
+                    কল করুন →
+                  </span>
+                </a>
+
+                <a
+                  href="https://wa.me/8801629404625?text=আসসালামু%20আলাইকুম,%20চালের%20দোকান%20SaaS-এর%20নতুন%20লাইসেন্স%20ও%20ডেমো%20সম্পর্কে%20জানতে%20চাই।"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-between p-3.5 bg-slate-50 hover:bg-[#25D366]/10 border border-slate-200 hover:border-[#25D366]/40 rounded-2xl transition group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-[#25D366] text-white rounded-xl shadow-xs">
+                      <MessageCircle className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-900">হোয়াটসঅ্যাপ চ্যাট</div>
+                      <div className="text-[11px] text-slate-500">তাৎক্ষণিক ডেমো ও সেটআপ সহায়তা</div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold text-emerald-700 group-hover:translate-x-1 transition">
+                    মেসেজ দিন →
+                  </span>
+                </a>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  মোবাইল নম্বর *
-                </label>
-                <div className="relative">
-                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                  <input
-                    type="tel"
-                    required
-                    autoComplete="tel"
-                    value={regPhone}
-                    onChange={(e) => setRegPhone(e.target.value)}
-                    placeholder="017xxxxxxxx"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#1F7A4D] focus:ring-2 focus:ring-[#1F7A4D]/20 outline-hidden transition"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর) *
-                </label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    minLength={6}
-                    autoComplete="new-password"
-                    value={regPassword}
-                    onChange={(e) => setRegPassword(e.target.value)}
-                    placeholder="গোপন পাসওয়ার্ড দিন"
-                    className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#1F7A4D] focus:ring-2 focus:ring-[#1F7A4D]/20 outline-hidden transition"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((p) => !p)}
-                    className="absolute right-3.5 top-2.5 text-slate-400 hover:text-slate-600"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  দোকানের ঠিকানা (বাজার/আড়ত)
-                </label>
-                <div className="relative">
-                  <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                  <input
-                    type="text"
-                    value={regAddress}
-                    onChange={(e) => setRegAddress(e.target.value)}
-                    placeholder="যেমন: বাবুবাজার চাউল মার্কেট, ঢাকা"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:bg-white focus:border-[#1F7A4D] focus:ring-2 focus:ring-[#1F7A4D]/20 outline-hidden transition"
-                  />
-                </div>
+              {/* What client gets */}
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-600 space-y-1">
+                <div className="font-bold text-slate-800">লাইসেন্সের সাথে যা যা পাবেন:</div>
+                <div>✓ ৩০ দিনের ঝুঁকিহীন ফ্রি ট্রায়াল ও অনবোর্ডিং</div>
+                <div>✓ আড়তের থার্মাল প্রিন্টার সেটআপ ও কর্মচারী প্রশিক্ষণ</div>
+                <div>✓ আজীবন ক্লাউড ডাটাবেজ ব্যাকআপ ও টেকনিক্যাল সাপোর্ট</div>
               </div>
 
               <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-3.5 bg-[#1F7A4D] hover:bg-[#16603B] bg-gradient-to-r from-[#1F7A4D] to-[#16603B] hover:brightness-105 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer touch-target mt-4"
+                type="button"
+                onClick={() => setMode('login')}
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer"
               >
-                <Sparkles className="w-4 h-4 text-[#FBBF24]" />
-                <span className="text-white font-bold text-xs">
-                  {isLoading ? 'একাউন্ট তৈরি হচ্ছে...' : 'সরাসরি একাউন্ট তৈরি ও দোকান চালু করুন'}
-                </span>
-                <ArrowRight className="w-4 h-4" />
+                ← লগইনে ফিরে যান
               </button>
-            </form>
+            </div>
           )}
 
           <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-center gap-1.5 text-[11px] text-slate-500 font-medium text-center">

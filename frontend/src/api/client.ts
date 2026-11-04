@@ -380,6 +380,19 @@ class ApiClient {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+    createShop: (data: {
+      shopName: string;
+      ownerName: string;
+      phone: string;
+      password?: string;
+      address?: string;
+      trialDays?: number;
+      planName?: string;
+    }) =>
+      this.request<any>('/tenant/create-shop', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
   };
 }
 
