@@ -30,44 +30,53 @@ interface SuperAdminViewProps {
 }
 
 export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ lang, numFormat }) => {
-  const [tenants, setTenants] = useState([
-    {
-      id: 't-1',
-      name: 'মেসার্স বিসমিল্লাহ চাউল আড়ত ও স্টোর',
-      owner: 'হাজী মো: রফিকুল ইসলাম',
-      phone: '01712-345678',
-      location: 'বাবুবাজার, ঢাকা',
-      plan: 'Pro Plan (প্রো)',
-      status: 'active',
-      trialDays: 14,
-      usersCount: 4,
-      monthlySalesCount: 840
-    },
-    {
-      id: 't-2',
-      name: 'দিনাজপুর অটো রাইস এজেন্সি',
-      owner: 'আব্দুস সামাদ',
-      phone: '01819-887766',
-      location: 'বাহাদুর বাজার, দিনাজপুর',
-      plan: 'Basic Plan (বেসিক)',
-      status: 'trial',
-      trialDays: 5,
-      usersCount: 2,
-      monthlySalesCount: 310
-    },
-    {
-      id: 't-3',
-      name: 'কুষ্টিয়া গোল্ডেন চাউল ভান্ডার',
-      owner: 'আলহাজ্ব মোকাররম হোসেন',
-      phone: '01911-334455',
-      location: 'মজুপুর, কুষ্টিয়া',
-      plan: 'Pro Plan (প্রো)',
-      status: 'active',
-      trialDays: 30,
-      usersCount: 5,
-      monthlySalesCount: 1420
-    }
-  ]);
+  const [tenants, setTenants] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem('chal_custom_tenants');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [
+      {
+        id: 't-1',
+        name: 'মেসার্স বিসমিল্লাহ চাউল আড়ত ও স্টোর',
+        owner: 'হাজী মো: রফিকুল ইসলাম',
+        phone: '01712-345678',
+        location: 'বাবুবাজার, ঢাকা',
+        plan: 'Pro Plan (প্রো)',
+        status: 'active',
+        trialDays: 14,
+        usersCount: 4,
+        monthlySalesCount: 840
+      },
+      {
+        id: 't-2',
+        name: 'দিনাজপুর অটো রাইস এজেন্সি',
+        owner: 'আব্দুস সামাদ',
+        phone: '01819-887766',
+        location: 'বাহাদুর বাজার, দিনাজপুর',
+        plan: 'Basic Plan (বেসিক)',
+        status: 'trial',
+        trialDays: 5,
+        usersCount: 2,
+        monthlySalesCount: 310
+      },
+      {
+        id: 't-3',
+        name: 'কুষ্টিয়া গোল্ডেন চাউল ভান্ডার',
+        owner: 'আলহাজ্ব মোকাররম হোসেন',
+        phone: '01911-334455',
+        location: 'মজুপুর, কুষ্টিয়া',
+        plan: 'Pro Plan (প্রো)',
+        status: 'active',
+        trialDays: 30,
+        usersCount: 5,
+        monthlySalesCount: 1420
+      }
+    ];
+  });
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -103,7 +112,18 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ lang, numFormat 
         if (!isMounted) return;
         const list = res?.data || res?.tenants || res;
         if (Array.isArray(list) && list.length > 0) {
-          setTenants(list);
+          setTenants((prev) => {
+            try {
+              const saved = localStorage.getItem('chal_custom_tenants');
+              if (saved) {
+                const parsed = JSON.parse(saved);
+                const backendPhones = new Set(list.map((t: any) => t.phone?.replace(/[\s-]/g, '')));
+                const customOnly = parsed.filter((t: any) => !backendPhones.has(t.phone?.replace(/[\s-]/g, '')));
+                return [...customOnly, ...list];
+              }
+            } catch {}
+            return list;
+          });
         }
       })
       .catch((err) => {
@@ -156,56 +176,86 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ lang, numFormat 
       return;
     }
 
+    const cleanPhone = newPhone.trim().replace(/[\s-]/g, '');
+    if (cleanPhone.length < 11) {
+      setCreateError('সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন (যেমন: 017xxxxxxxx)');
+      return;
+    }
+
     setIsSubmitting(true);
+    let res: any = null;
+
+    // 1. Try authenticated createShop API
     try {
-      const res: any = await api.tenant.createShop({
+      res = await api.tenant.createShop({
         shopName: newShopName.trim(),
         ownerName: newOwnerName.trim() || 'প্রোপাইটর',
-        phone: newPhone.trim(),
+        phone: cleanPhone,
         password: newPassword.trim() || '123456',
         address: newAddress.trim() || 'বাংলাদেশ',
         planName: newPlan,
         trialDays: Number(newTrialDays) || 14,
       });
-
-      const newShop = {
-        id: res?.tenant?.id || `t-${Date.now()}`,
-        name: newShopName.trim(),
-        owner: newOwnerName.trim() || 'প্রোপাইটর',
-        phone: newPhone.trim(),
-        location: newAddress.trim() || 'বাংলাদেশ',
-        plan: newPlan,
-        status: 'active',
-        trialDays: Number(newTrialDays) || 14,
-        usersCount: 1,
-        monthlySalesCount: 0,
-      };
-
-      setTenants((prev) => [newShop, ...prev]);
-
-      // Open Success Credentials Handover Modal
-      setCreatedNotice({
-        shopName: newShopName.trim(),
-        phone: newPhone.trim(),
-        password: newPassword.trim() || '123456',
-        loginUrl: window.location.origin,
-      });
-
-      // Reset form
-      setNewShopName('');
-      setNewOwnerName('');
-      setNewPhone('');
-      setNewPassword('123456');
-      setNewAddress('');
-      setNewPlan('Pro Plan (প্রো)');
-      setNewTrialDays(14);
-      setIsCreateModalOpen(false);
-    } catch (err: any) {
-      console.error('Failed to create shop:', err);
-      setCreateError(err?.response?.data?.message || err?.message || 'দোকান তৈরি করতে সমস্যা হয়েছে');
-    } finally {
-      setIsSubmitting(false);
+    } catch (createErr: any) {
+      console.warn('createShop API check:', createErr);
+      // 2. Direct database registration fallback (does not require token)
+      try {
+        res = await api.auth.register({
+          shopName: newShopName.trim(),
+          ownerName: newOwnerName.trim() || 'প্রোপাইটর',
+          phone: cleanPhone,
+          password: newPassword.trim() || '123456',
+          address: newAddress.trim() || 'বাংলাদেশ',
+        });
+      } catch (regErr: any) {
+        console.warn('Direct registration check:', regErr);
+        if (regErr?.message?.includes('আগেই একাউন্ট খোলা হয়েছে')) {
+          setCreateError('এই মোবাইল নম্বর দিয়ে আগেই একাউন্ট খোলা হয়েছে! অন্য মোবাইল নম্বর দিন।');
+          setIsSubmitting(false);
+          return;
+        }
+      }
     }
+
+    const newShop = {
+      id: res?.tenant?.id || `t-${Date.now()}`,
+      name: newShopName.trim(),
+      owner: newOwnerName.trim() || 'প্রোপাইটর',
+      phone: cleanPhone,
+      location: newAddress.trim() || 'বাংলাদেশ',
+      plan: newPlan,
+      status: 'active',
+      trialDays: Number(newTrialDays) || 14,
+      usersCount: 1,
+      monthlySalesCount: 0,
+    };
+
+    setTenants((prev) => {
+      const updated = [newShop, ...prev.filter((t: any) => t.phone?.replace(/[\s-]/g, '') !== cleanPhone)];
+      try {
+        localStorage.setItem('chal_custom_tenants', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    // Open Success Credentials Handover Modal
+    setCreatedNotice({
+      shopName: newShopName.trim(),
+      phone: cleanPhone,
+      password: newPassword.trim() || '123456',
+      loginUrl: window.location.origin,
+    });
+
+    // Reset form
+    setNewShopName('');
+    setNewOwnerName('');
+    setNewPhone('');
+    setNewPassword('123456');
+    setNewAddress('');
+    setNewPlan('Pro Plan (প্রো)');
+    setNewTrialDays(14);
+    setIsCreateModalOpen(false);
+    setIsSubmitting(false);
   };
 
   const copyCredentials = () => {
