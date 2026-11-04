@@ -127,9 +127,12 @@ export function App() {
     setCurrentUser(user);
     localStorage.setItem('chal_auth_user', JSON.stringify(user));
     if (user.role) {
-      const roleStr = user.role.toLowerCase();
+      const roleStr = user.role.toLowerCase().replace(/[\s-_]/g, '');
       if (['owner', 'manager', 'cashier', 'superadmin'].includes(roleStr)) {
         setUserRole(roleStr as UserRole);
+        if (roleStr === 'superadmin') {
+          setActiveTab('super-admin');
+        }
       }
     }
 
@@ -138,6 +141,13 @@ export function App() {
       setTenant(newTenant);
       localStorage.setItem('chal_tenant_info', JSON.stringify(newTenant));
       api.setTenantId(newTenant.id);
+    }
+
+    const roleClean = (user?.role || '').toLowerCase().replace(/[\s-_]/g, '');
+    if (roleClean === 'superadmin' || activeTenant?.id === 'tenant-superadmin-001') {
+      setActiveTab('super-admin');
+      setShowAuthModal(false);
+      return;
     }
 
     const isDemo = !activeTenant.id || activeTenant.id === 'tenant-demo-001';
