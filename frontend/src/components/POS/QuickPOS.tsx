@@ -125,12 +125,12 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
 
   // Copy Previous Order (Section 4.3-a: "আগের অর্ডার কপি" ক্লায়েন্ট বাছলে কার্টের ওপরে দেখা যায়)
   const handleCopyPreviousOrder = () => {
-    if (!selectedClient) return;
-    // Suggest standard wholesale bundle for this client (e.g. 5 bags of Miniket + 3 bags of Najirshail)
+    if (!selectedClient || !products || products.length === 0) return;
     const p1 = products[0];
-    const p2 = products[1];
-    const unit1 = p1.availableUnits.find((u) => u.id === 'u-sack-50') || p1.availableUnits[0];
-    const unit2 = p2.availableUnits.find((u) => u.id === 'u-sack-50') || p2.availableUnits[0];
+    const p2 = products[1] || products[0];
+    const unit1 = p1.availableUnits?.find((u) => u.id === 'u-sack-50') || p1.availableUnits?.[0];
+    const unit2 = p2.availableUnits?.find((u) => u.id === 'u-sack-50') || p2.availableUnits?.[0];
+    if (!unit1 || !unit2) return;
 
     const copiedItems: CartItem[] = [
       {

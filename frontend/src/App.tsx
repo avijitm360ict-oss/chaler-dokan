@@ -683,9 +683,18 @@ export function App() {
 
     // Increase stock & update WAC
     bill.items.forEach((item) => {
-      setProducts((prev) =>
-        prev.map((prod) => {
-          if (prod.id === item.product.id) {
+      setProducts((prev) => {
+        const exists = prev.some((prod) => prod.id === item.product.id || prod.nameBn === item.product.nameBn);
+        if (!exists) {
+          const newProd: RiceProduct = {
+            ...item.product,
+            stockKg: item.totalKg,
+            wacPerKgPaisa: item.landedCostPerKgPaisa,
+          };
+          return [newProd, ...prev];
+        }
+        return prev.map((prod) => {
+          if (prod.id === item.product.id || prod.nameBn === item.product.nameBn) {
             const oldStock = prod.stockKg;
             const newAddedStock = item.totalKg;
             const totalStock = oldStock + newAddedStock;
@@ -702,25 +711,37 @@ export function App() {
             };
           }
           return prod;
-        })
-      );
+        });
+      });
     });
 
-    // Update vendor due
-    if (bill.dueAmountPaisa > 0) {
-      setParties((prev) =>
-        prev.map((party) => {
-          if (party.name === bill.vendorName) {
-            return {
-              ...party,
-              balancePaisa: party.balancePaisa + bill.dueAmountPaisa,
-              totalPurchasedPaisa: (party.totalPurchasedPaisa || 0) + bill.grandTotalPaisa
-            };
-          }
-          return party;
-        })
-      );
-    }
+    // Update vendor due and purchase record
+    setParties((prev) => {
+      const exists = prev.some((p) => p.name === bill.vendorName);
+      if (!exists) {
+        const newParty: Party = {
+          id: `party-vendor-${Date.now()}`,
+          name: bill.vendorName,
+          phone: bill.vendorPhone || '01700000000',
+          address: 'মোকাম',
+          type: 'vendor',
+          balancePaisa: bill.dueAmountPaisa,
+          totalPurchasedPaisa: bill.grandTotalPaisa,
+          creditLimitPaisa: 50000000,
+        };
+        return [newParty, ...prev];
+      }
+      return prev.map((party) => {
+        if (party.name === bill.vendorName) {
+          return {
+            ...party,
+            balancePaisa: party.balancePaisa + bill.dueAmountPaisa,
+            totalPurchasedPaisa: (party.totalPurchasedPaisa || 0) + bill.grandTotalPaisa
+          };
+        }
+        return party;
+      });
+    });
 
     // Deduct paid purchase cash from drawer if any
     if (bill.paidAmountPaisa > 0) {

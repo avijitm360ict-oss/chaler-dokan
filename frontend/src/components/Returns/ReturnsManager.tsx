@@ -277,8 +277,8 @@ export const ReturnsManager: React.FC<ReturnsManagerProps> = ({
                   <span className="text-slate-500">চাল:</span>
                   <span className="font-bold">
                     {isSaleReturn
-                      ? (selectedSale?.items[0]?.product.nameBn || 'মিনিকেট চাল')
-                      : (selectedPurchase?.items[0]?.product.nameBn || 'মিনিকেট চাল')}
+                      ? (selectedSale?.items[0]?.product?.nameBn || 'মিনিকেট চাল')
+                      : (selectedPurchase?.items[0]?.product?.nameBn || 'মিনিকেট চাল')}
                   </span>
                 </div>
                 <div className="flex justify-between text-xs">
