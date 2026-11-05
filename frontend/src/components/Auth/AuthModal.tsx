@@ -479,28 +479,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
               {/* Quick Demo Login Shortcuts */}
               <div className="pt-2 border-t border-slate-100">
-                <span className="block text-[11px] font-bold text-slate-600 text-center mb-2">
+                <span className="block text-xs font-bold text-slate-500 text-center mb-2.5">
                   — অথবা এক ক্লিকে ডেমো প্রবেশ করুন —
                 </span>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => handleQuickDemoLogin('owner')}
-                    className="p-2 rounded-xl border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100 text-[#1F7A4D] text-[11px] font-bold text-center transition"
+                    className="py-2.5 px-2 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-black text-center transition cursor-pointer shadow-xs"
                   >
                     মালিক
                   </button>
                   <button
                     type="button"
                     onClick={() => handleQuickDemoLogin('manager')}
-                    className="p-2 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 text-[11px] font-bold text-center transition"
+                    className="py-2.5 px-2 rounded-xl border border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-800 text-xs font-black text-center transition cursor-pointer shadow-xs"
                   >
                     ম্যানেজার
                   </button>
                   <button
                     type="button"
                     onClick={() => handleQuickDemoLogin('cashier')}
-                    className="p-2 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 text-[11px] font-black text-center transition"
+                    className="py-2.5 px-2 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-black text-center transition cursor-pointer shadow-xs"
                   >
                     ক্যাশিয়ার
                   </button>
@@ -572,7 +572,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </div>
                     <div>
                       <div className="text-xs font-bold text-slate-900">হোয়াটসঅ্যাপ চ্যাট</div>
-                      <div className="text-[11px] text-slate-500">তাৎক্ষণিক ডেমো ও সেটআপ সহায়তা</div>
+                      <div className="text-xs text-slate-500">তাৎক্ষণিক ডেমো ও সেটআপ সহায়তা</div>
                     </div>
                   </div>
                   <span className="text-xs font-bold text-emerald-700 group-hover:translate-x-1 transition">
@@ -582,7 +582,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
 
               {/* What client gets */}
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-600 space-y-1">
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-1">
                 <div className="font-bold text-slate-800">লাইসেন্সের সাথে যা যা পাবেন:</div>
                 <div>✓ ৩০ দিনের ঝুঁকিহীন ফ্রি ট্রায়াল ও অনবোর্ডিং</div>
                 <div>✓ আড়তের থার্মাল প্রিন্টার সেটআপ ও কর্মচারী প্রশিক্ষণ</div>
@@ -599,7 +599,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           )}
 
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-center gap-1.5 text-[11px] text-slate-500 font-medium text-center">
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-center gap-1.5 text-xs text-slate-500 font-semibold text-center">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
             <span>১০০% ক্লাউড এনক্রিপ্টেড ও সুরক্ষিত ডাটাবেজ</span>
           </div>

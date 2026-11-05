@@ -134,8 +134,8 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => onSelectTab('pos')}
               className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-xs touch-target ${
                 activeTab === 'pos'
-                  ? 'bg-[#1F7A4D] text-white ring-2 ring-[#1F7A4D] ring-offset-1'
-                  : 'bg-[#1F7A4D] hover:bg-[#16603B] text-white hover:shadow-md'
+                  ? 'bg-emerald-700 text-white ring-2 ring-emerald-600 ring-offset-1'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white hover:shadow-md'
               }`}
             >
               <span className="text-sm">⚡</span>
@@ -146,13 +146,13 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onToggleOffline}
               title={isOffline ? 'অনলাইনে ফিরুন' : 'অফলাইন মোড পরীক্ষা করুন'}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition ${
+              className={`hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition ${
                 isOffline
-                  ? 'bg-[#FFF4DC] border-[#E0A526] text-[#8A5A00] animate-pulse'
+                  ? 'bg-amber-50 border-amber-300 text-amber-900 animate-pulse'
                   : 'bg-white border-stroke-default text-ink-secondary hover:bg-slate-50'
               }`}
             >
-              {isOffline ? <WifiOff className="w-3.5 h-3.5" /> : <Wifi className="w-3.5 h-3.5 text-[#1F7A4D]" />}
+              {isOffline ? <WifiOff className="w-3.5 h-3.5 text-amber-800" /> : <Wifi className="w-3.5 h-3.5 text-emerald-600" />}
               <span className="hidden lg:inline">{isOffline ? 'অফলাইন মোড' : 'অনলাইন'}</span>
             </button>
 
@@ -162,20 +162,20 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={onTriggerSync}
                 disabled={isSyncing}
                 title="অপেক্ষমাণ অফলাইন বিক্রয় ক্লাউডে সিঙ্ক করুন"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-xs transition animate-bounce cursor-pointer"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs transition animate-bounce cursor-pointer"
               >
                 <RotateCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-                <span>{pendingSyncCount}টি সিঙ্ক অপেক্ষমাণ</span>
+                <span>{pendingSyncCount}টি সিঙ্ক</span>
               </button>
             )}
 
             {/* Setup / Onboarding Button */}
             <button
               onClick={onOpenOnboarding}
-              className="hidden xl:flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#FFF4DC] border border-[#E0A526]/50 text-[#8A5A00] text-xs font-bold hover:bg-[#FEE8B9] transition"
+              className="hidden xl:flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs font-bold hover:bg-amber-100 transition"
               title="শুরুর গাইড ও প্রাথমিক চালের স্টক লোড"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-700" />
               <span>{lang === 'bn' ? 'শুরুর গাইড' : 'Setup Guide'}</span>
             </button>
 
@@ -183,37 +183,37 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onOpenShortcuts}
               title="কীবোর্ড শর্টকাট তালিকা (?)"
-              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-xl border border-stroke-default text-ink-secondary hover:text-ink-primary hover:bg-slate-100 transition"
+              className="hidden lg:flex items-center justify-center w-8 h-8 rounded-xl border border-stroke-default text-ink-secondary hover:text-ink-primary hover:bg-slate-100 transition"
             >
               <Keyboard className="w-4 h-4" />
             </button>
 
-            {/* Help Button (especially in POS where floating button is hidden per Section 4.1) */}
+            {/* Help Button (WhatsApp) */}
             <button
               onClick={onOpenHelp}
               title="সাহায্য চাই (WhatsApp)"
-              className="flex items-center justify-center w-8 h-8 rounded-xl border border-stroke-default text-ink-secondary hover:text-ink-primary hover:bg-slate-100 transition"
+              className="hidden sm:flex items-center justify-center w-8 h-8 rounded-xl border border-stroke-default text-ink-secondary hover:text-ink-primary hover:bg-slate-100 transition"
             >
-              <HelpCircle className="w-4 h-4 text-[#1F7A4D]" />
+              <HelpCircle className="w-4 h-4 text-emerald-600" />
             </button>
 
             {/* Number Format Toggle (১২৩৪ বনাম 1234) */}
             <button
               onClick={onToggleNumFormat}
               title={numFormat === 'bn' ? 'English digits (1234)' : 'বাংলা অঙ্ক (১২৩৪)'}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-stroke-default text-ink-secondary hover:bg-slate-100 text-xs font-semibold transition"
+              className="hidden md:flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-stroke-default text-ink-secondary hover:bg-slate-100 text-xs font-semibold transition"
             >
               <Hash className="w-3.5 h-3.5 text-slate-500" />
               <span>{numFormat === 'bn' ? '১২৩' : '123'}</span>
             </button>
 
-            {/* Language Toggle (বাং | EN) per Section 2.10 */}
+            {/* Language Toggle (বাং | EN) */}
             <button
               onClick={onToggleLang}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-ink-primary text-xs font-bold border border-slate-300 transition"
+              className="hidden md:flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-ink-primary text-xs font-bold border border-slate-300 transition"
               title="ভাষা পরিবর্তন করুন"
             >
-              <Languages className="w-3.5 h-3.5 text-[#1F7A4D]" />
+              <Languages className="w-3.5 h-3.5 text-emerald-600" />
               <span>{lang === 'bn' ? 'EN' : 'বাং'}</span>
             </button>
 
@@ -221,13 +221,13 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="relative">
               <button
                 onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-                className="flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1 rounded-xl bg-slate-100 hover:bg-slate-200 border border-stroke-default transition"
+                className="flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1 rounded-xl bg-slate-100 hover:bg-slate-200 border border-stroke-default transition cursor-pointer"
               >
-                <div className="w-7 h-7 rounded-full bg-[#E8F4EC] border border-[#1F7A4D]/30 flex items-center justify-center text-[#1F7A4D] font-bold text-xs">
+                <div className="w-7 h-7 rounded-full bg-emerald-50 border border-emerald-300 flex items-center justify-center text-emerald-800 font-black text-xs">
                   {userRole === 'owner' ? 'মা' : userRole === 'manager' ? 'ম্যা' : userRole === 'cashier' ? 'ক্যা' : 'এড'}
                 </div>
                 <div className="text-left hidden lg:block">
-                  <div className="text-[11px] font-extrabold text-ink-primary leading-tight">
+                  <div className="text-xs font-extrabold text-ink-primary leading-tight">
                     {lang === 'bn' ? roleNames[userRole].bn : roleNames[userRole].en}
                   </div>
                 </div>
@@ -235,8 +235,8 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
 
               {roleDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-sheet border border-stroke-default p-2 z-50 animate-in fade-in zoom-in-95 duration-100">
-                  <div className="text-[10px] font-bold text-ink-secondary px-2.5 py-1 uppercase tracking-wider">
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-sheet border border-stroke-default p-2 z-50 animate-in fade-in zoom-in-95 duration-100">
+                  <div className="text-xs font-bold text-slate-500 px-2.5 py-1 uppercase tracking-wider">
                     {lang === 'bn' ? 'ব্যবহারকারী রোল পরিবর্তন' : 'Switch Role View'}
                   </div>
                   {(['owner', 'manager', 'cashier', 'superadmin'] as UserRole[]).map((r) => (
@@ -249,14 +249,36 @@ export const Header: React.FC<HeaderProps> = ({
                       }}
                       className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition flex items-center justify-between ${
                         userRole === r
-                          ? 'bg-[#E8F4EC] text-[#1F7A4D]'
+                          ? 'bg-emerald-50 text-emerald-800'
                           : 'text-ink-primary hover:bg-slate-100'
                       }`}
                     >
                       <span>{lang === 'bn' ? roleNames[r].bn : roleNames[r].en}</span>
-                      {userRole === r && <span className="w-2 h-2 rounded-full bg-[#1F7A4D]" />}
+                      {userRole === r && <span className="w-2 h-2 rounded-full bg-emerald-600" />}
                     </button>
                   ))}
+
+                  {/* Mobile & Tablet Quick Actions inside menu */}
+                  <div className="md:hidden pt-2 mt-2 border-t border-slate-100 space-y-1">
+                    <div className="flex items-center justify-between px-2 py-1 text-xs font-bold text-slate-600">
+                      <span>ভাষা পরিবর্তন:</span>
+                      <button
+                        onClick={onToggleLang}
+                        className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs"
+                      >
+                        {lang === 'bn' ? 'English (EN)' : 'বাংলা (বাং)'}
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between px-2 py-1 text-xs font-bold text-slate-600">
+                      <span>সংখ্যা শৈলী:</span>
+                      <button
+                        onClick={onToggleNumFormat}
+                        className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs"
+                      >
+                        {numFormat === 'bn' ? 'English (123)' : 'বাংলা (১২৩)'}
+                      </button>
+                    </div>
+                  </div>
 
                   {/* Log Out Option */}
                   {onLogout && (
@@ -282,10 +304,10 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </header>
 
-      {/* Yellow Offline Banner per Section 4.1 & 7.1 */}
+      {/* Amber Offline Banner with High Contrast */}
       {isOffline && (
-        <div className="bg-[#FFF4DC] border-b border-[#E0A526] px-4 py-2 text-xs font-bold text-[#8A5A00] flex items-center justify-center gap-2 shadow-xs transition">
-          <WifiOff className="w-4 h-4 text-[#8A5A00]" />
+        <div className="bg-amber-50 border-b border-amber-300 px-4 py-2 text-xs font-bold text-amber-900 flex items-center justify-center gap-2 shadow-xs transition">
+          <WifiOff className="w-4 h-4 text-amber-800" />
           <span>{lang === 'bn' ? t.offlineBanner : 'Offline Mode: No Internet. Sales saved safely in drafts.'}</span>
         </div>
       )}

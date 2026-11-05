@@ -149,7 +149,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, lang, 
                       </div>
 
                       {item.badge && !isActive && (
-                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
+                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
                           {item.badge}
                         </span>
                       )}
@@ -168,15 +168,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, lang, 
 
       {/* Bottom Status Info */}
       <div className="pt-3 border-t border-stroke-default mt-2">
-        <div className="p-2.5 bg-surface-page rounded-xl text-xs space-y-1 border border-stroke-default text-slate-700">
-          <div className="flex justify-between font-bold text-ink-primary text-[11px]">
+        <div className="p-2.5 bg-surface-page rounded-xl text-xs space-y-1.5 border border-stroke-default text-slate-700">
+          <div className="flex justify-between font-bold text-ink-primary text-xs">
             <span>{lang === 'bn' ? 'গোডাউন সংযোগ' : 'Godowns'}</span>
-            <span className="text-[#1F7A4D] flex items-center gap-1 font-black">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#1F7A4D] animate-ping" />
+            <span className="text-emerald-700 flex items-center gap-1 font-black">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-ping" />
               {warehousesCount ? `${toBengaliDigits(warehousesCount)}টি সক্রিয়` : '১টি সক্রিয়'}
             </span>
           </div>
-          <div className="text-[10px] text-slate-600 font-semibold">
+          <div className="text-xs text-slate-600 font-semibold">
             {lang === 'bn' ? 'বেস ইউনিট: কেজি (KG)' : 'Base Unit: Kg'} • WAC রানিং
           </div>
         </div>
