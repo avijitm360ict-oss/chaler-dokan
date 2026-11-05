@@ -22,13 +22,15 @@ import {
   PlayCircle,
   AlertTriangle,
   User,
+  UserPlus,
   CreditCard,
   Banknote,
   Smartphone,
   Building2,
   CheckCircle2,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  X
 } from 'lucide-react';
 
 interface QuickPOSProps {
@@ -41,6 +43,8 @@ interface QuickPOSProps {
   isDayClosed?: boolean;
   onCompleteSale: (invoice: SaleInvoice) => void;
   onOpenReceipt: (invoice: SaleInvoice) => void;
+  onAddParty?: (party: Party) => void;
+  onNavigateTab?: (tab: string) => void;
 }
 
 export const QuickPOS: React.FC<QuickPOSProps> = ({
@@ -52,7 +56,9 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
   userRole = 'owner',
   isDayClosed = false,
   onCompleteSale,
-  onOpenReceipt
+  onOpenReceipt,
+  onAddParty,
+  onNavigateTab
 }) => {
   const t = translations[lang];
 
@@ -69,6 +75,15 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
   
   // Mobile Cart Sheet state
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
+
+  // Quick Customer Creation Modal State
+  const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState('');
+  const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerShop, setNewCustomerShop] = useState('');
+  const [newCustomerAddress, setNewCustomerAddress] = useState('');
+  const [newCustomerOpeningBalance, setNewCustomerOpeningBalance] = useState<number>(0);
+  const [newCustomerCreditLimit, setNewCustomerCreditLimit] = useState<number>(50000);
 
   // Active Product Modal State (Section 4.3: পণ্যে ট্যাপ করলে ছোট শিট)
   const [activeModalProduct, setActiveModalProduct] = useState<RiceProduct | null>(null);
@@ -91,6 +106,40 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
   const [cashTenderedTaka, setCashTenderedTaka] = useState<number>(0); // e.g. দিলেন ২০০০, ফেরত ১২০
   const [showSplitPayment, setShowSplitPayment] = useState<boolean>(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Quick Add Customer Handler
+  const handleCreateCustomerQuick = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustomerName.trim()) return;
+
+    const newParty: Party = {
+      id: `party-client-${Date.now()}`,
+      name: newCustomerName.trim(),
+      shopName: newCustomerShop.trim() || undefined,
+      phone: newCustomerPhone.trim() || '01700000000',
+      address: newCustomerAddress.trim() || 'স্থানীয়',
+      type: 'client',
+      clientType: 'retail',
+      balancePaisa: Math.round(newCustomerOpeningBalance * 100),
+      balanceType: 'receivable',
+      creditLimitPaisa: Math.round(newCustomerCreditLimit * 100),
+    };
+
+    if (onAddParty) {
+      onAddParty(newParty);
+    }
+    // Select this customer right away
+    setSelectedClientId(newParty.id);
+
+    // Reset form
+    setNewCustomerName('');
+    setNewCustomerPhone('');
+    setNewCustomerShop('');
+    setNewCustomerAddress('');
+    setNewCustomerOpeningBalance(0);
+    setNewCustomerCreditLimit(50000);
+    setIsAddCustomerModalOpen(false);
+  };
 
   // Filtered Products
   const categories = useMemo(() => {
@@ -649,9 +698,9 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
               <p className="text-xs text-slate-500 mt-1 max-w-sm">
                 {searchQuery || selectedCategory !== 'all'
                   ? 'ফিল্টার বা সার্চ পরিবর্তন করে দেখুন অথবা ফিল্টার ক্লিয়ার করুন।'
-                  : 'নতুন চাল যোগ করতে সাইডবার থেকে চাল ক্রয় অথবা গোডাউন ও স্টক মেনুতে যান।'}
+                  : 'চাল বিক্রি শুরু করতে প্রথমে মোকাম থেকে চাল ক্রয় অথবা প্রাথমিক স্টক এন্ট্রি করুন।'}
               </p>
-              {(searchQuery || selectedCategory !== 'all') && (
+              {(searchQuery || selectedCategory !== 'all') ? (
                 <button
                   onClick={() => {
                     setSearchQuery('');
@@ -660,6 +709,15 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
                   className="mt-3 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs shadow-xs transition cursor-pointer"
                 >
                   সার্চ ফিল্টার ক্লিয়ার করুন
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onNavigateTab ? onNavigateTab('purchases') : undefined}
+                  className="mt-3 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl font-bold text-xs shadow-sm flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>+ নতুন চাল ক্রয় বা স্টক যোগ করুন</span>
                 </button>
               )}
             </div>
@@ -787,18 +845,29 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
             )}
           </div>
 
-          <select
-            value={selectedClientId}
-            onChange={(e) => handleSelectClient(e.target.value)}
-            className="w-full py-2 px-3 rounded-xl bg-white border border-stroke-strong text-xs font-bold text-ink-primary focus:outline-none focus:ring-2 focus:ring-[#1F7A4D]"
-          >
-            <option value="walkin">🛒 {t.walkInCustomer}</option>
-            {parties.filter((p) => p.type === 'client' || p.type === 'both').map((party) => (
-              <option key={party.id} value={party.id}>
-                {party.name} {party.shopName ? `(${party.shopName})` : ''} — বাকি: {formatCurrency(party.balancePaisa, numFormat)}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-1.5">
+            <select
+              value={selectedClientId}
+              onChange={(e) => handleSelectClient(e.target.value)}
+              className="flex-1 min-w-0 py-2 px-3 rounded-xl bg-white border border-stroke-strong text-xs font-bold text-ink-primary focus:outline-none focus:ring-2 focus:ring-[#1F7A4D]"
+            >
+              <option value="walkin">🛒 {t.walkInCustomer}</option>
+              {parties.filter((p) => p.type === 'client' || p.type === 'both').map((party) => (
+                <option key={party.id} value={party.id}>
+                  {party.name} {party.shopName ? `(${party.shopName})` : ''} — বাকি: {formatCurrency(party.balancePaisa, numFormat)}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setIsAddCustomerModalOpen(true)}
+              className="py-2 px-2.5 bg-emerald-50 hover:bg-emerald-100 text-[#1F7A4D] border border-emerald-300 rounded-xl text-xs font-black flex items-center gap-1 shrink-0 transition cursor-pointer"
+              title="নতুন কাস্টমার যোগ করুন"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>+ নতুন</span>
+            </button>
+          </div>
 
           {/* Client Balance Badge & Copy Previous Order Button (Section 4.3-a) */}
           {selectedClient && (
@@ -1570,6 +1639,140 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* QUICK ADD CUSTOMER MODAL */}
+      {isAddCustomerModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3">
+          <div className="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-emerald-100 text-[#1F7A4D] rounded-xl">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 text-sm">
+                    {lang === 'bn' ? 'নতুন কাস্টমার যোগ করুন' : 'Add New Customer'}
+                  </h3>
+                  <span className="text-[11px] text-slate-500">
+                    {lang === 'bn' ? 'কাউন্টার থেকে তাৎক্ষণিক কাস্টমার খাতা তৈরি' : 'Create customer on the fly'}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddCustomerModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCustomerQuick} className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  কাস্টমারের নাম <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="যেমন: হাজী মো. রফিকুল ইসলাম"
+                  value={newCustomerName}
+                  onChange={(e) => setNewCustomerName(e.target.value)}
+                  className="w-full py-2 px-3 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  autoFocus
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    মোবাইল নম্বর
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="017xxxxxxxx"
+                    value={newCustomerPhone}
+                    onChange={(e) => setNewCustomerPhone(e.target.value)}
+                    className="w-full py-2 px-3 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    দোকান / ব্যবসা
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="যেমন: রফিক স্টোর"
+                    value={newCustomerShop}
+                    onChange={(e) => setNewCustomerShop(e.target.value)}
+                    className="w-full py-2 px-3 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  ঠিকানা / এলাকা
+                </label>
+                <input
+                  type="text"
+                  placeholder="যেমন: চকবাজার, ঢাকা"
+                  value={newCustomerAddress}
+                  onChange={(e) => setNewCustomerAddress(e.target.value)}
+                  className="w-full py-2 px-3 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    প্রারম্ভিক বাকি (৳)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={newCustomerOpeningBalance || ''}
+                    onChange={(e) => setNewCustomerOpeningBalance(Number(e.target.value) || 0)}
+                    className="w-full py-2 px-3 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    বাকি লিমিট (৳)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="50000"
+                    value={newCustomerCreditLimit || ''}
+                    onChange={(e) => setNewCustomerCreditLimit(Number(e.target.value) || 0)}
+                    className="w-full py-2 px-3 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAddCustomerModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 transition cursor-pointer"
+                >
+                  বাতিল
+                </button>
+                <button
+                  type="submit"
+                  disabled={!newCustomerName.trim()}
+                  className="flex-1 py-2.5 rounded-xl bg-[#1F7A4D] hover:bg-[#16603B] disabled:bg-slate-300 text-white font-bold text-xs shadow-sm transition flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>সেভ ও সিলেক্ট করুন</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -119,6 +119,7 @@ export interface PurchaseBill {
   id: string;
   docNo: string;
   date: string;
+  vendorId?: string;
   vendorName: string;
   vendorPhone: string;
   warehouseId: string;

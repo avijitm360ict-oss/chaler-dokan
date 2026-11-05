@@ -755,25 +755,56 @@ export function App() {
 
     // Backend purchase sync
     if (isServerLive && !isOffline) {
-      const vendor = parties.find((p) => p.name === bill.vendorName);
-      if (vendor) {
-        api.purchases.create({
-          vendorId: vendor.id,
-          warehouseId: bill.warehouseId || warehouses[0]?.id || 'wh-01',
-          vendorBillNo: bill.vendorBillNo,
-          paidTotalPaisa: bill.paidAmountPaisa,
-          items: bill.items.map((it) => ({
-            productId: it.product.id,
-            unitId: it.unit.id,
-            qtyUnit: it.unitQuantity,
-            unitPricePaisa: it.rawPricePerKgPaisa,
-          })),
-          expenses: [
-            ...(bill.truckFarePaisa > 0 ? [{ expenseType: 'transport', amountPaisa: bill.truckFarePaisa, allocationMethod: 'weight' }] : []),
-            ...(bill.labourFarePaisa > 0 ? [{ expenseType: 'labour', amountPaisa: bill.labourFarePaisa, allocationMethod: 'weight' }] : []),
-          ],
-        }).catch((err) => console.warn('Purchase sync failed:', err));
-      }
+      (async () => {
+        try {
+          let vendorId = bill.vendorId;
+          const matchedVendor = parties.find((p) => p.name === bill.vendorName || p.id === bill.vendorId);
+          if (matchedVendor && !matchedVendor.id.startsWith('party-vendor-') && !matchedVendor.id.startsWith('vendor-fallback')) {
+            vendorId = matchedVendor.id;
+          } else {
+            // Vendor is new or fallback - auto create party on backend first
+            try {
+              const createdRes = await api.parties.create({
+                name: bill.vendorName,
+                partyType: 'supplier',
+                phone: bill.vendorPhone || '01700000000',
+                address: 'মোকাম',
+                openingBalancePaisa: 0,
+                balanceType: 'payable',
+              });
+              const newId = (createdRes as any)?.data?.id || (createdRes as any)?.party?.id;
+              if (newId) {
+                vendorId = newId;
+              }
+            } catch (partyErr) {
+              console.warn('Vendor party auto-create failed:', partyErr);
+            }
+          }
+
+          const defaultWarehouseId = warehouses[0]?.id || 'wh-01';
+          const whId = bill.warehouseId && bill.warehouseId !== 'wh-01' ? bill.warehouseId : defaultWarehouseId;
+
+          await api.purchases.create({
+            vendorId: vendorId || 'vendor-01',
+            warehouseId: whId,
+            vendorBillNo: bill.vendorBillNo,
+            paidTotalPaisa: bill.paidAmountPaisa,
+            items: bill.items.map((it) => ({
+              productId: it.product.id,
+              unitId: it.unit?.id || it.product.availableUnits?.[0]?.id || 'u-sack-50',
+              qtyUnit: it.unitQuantity,
+              unitPricePaisa: it.rawPricePerKgPaisa,
+            })),
+            expenses: [
+              ...(bill.truckFarePaisa > 0 ? [{ expenseType: 'transport', amountPaisa: bill.truckFarePaisa, allocationMethod: 'weight' }] : []),
+              ...(bill.labourFarePaisa > 0 ? [{ expenseType: 'labour', amountPaisa: bill.labourFarePaisa, allocationMethod: 'weight' }] : []),
+            ],
+          });
+          checkAndSyncData();
+        } catch (err) {
+          console.warn('Purchase sync failed:', err);
+        }
+      })();
     }
 
     logAuditAction(
@@ -1209,6 +1240,7 @@ export function App() {
             <DashboardOverview
               products={products}
               sales={sales}
+              parties={parties}
               dayClose={dayClose}
               tenant={tenant}
               lang={lang}
@@ -1230,6 +1262,8 @@ export function App() {
               isDayClosed={dayClose.isClosed}
               onCompleteSale={handleCompleteSale}
               onOpenReceipt={(inv) => handleOpenReceipt(inv, false)}
+              onAddParty={handleCreateParty}
+              onNavigateTab={handleSelectTab}
             />
           )}
 

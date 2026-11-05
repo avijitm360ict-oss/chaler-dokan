@@ -6,7 +6,8 @@ import {
   TenantInfo,
   Language,
   NumberFormat,
-  UserRole
+  UserRole,
+  Party
 } from '../../types';
 import { translations } from '../../i18n/translations';
 import { formatCurrency, formatWeight, formatDateBangla, toBengaliDigits } from '../../utils/formatters';
@@ -31,6 +32,7 @@ import {
 interface DashboardOverviewProps {
   products: RiceProduct[];
   sales: SaleInvoice[];
+  parties?: Party[];
   dayClose: DayCloseRecord;
   tenant: TenantInfo;
   lang: Language;
@@ -44,6 +46,7 @@ interface DashboardOverviewProps {
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   products,
   sales,
+  parties = [],
   dayClose,
   tenant,
   lang,
@@ -62,17 +65,35 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   const totalKgSoldToday = sales.reduce((sum, s) => sum + s.totalKg, 0);
   const lowStockProducts = products.filter((p) => p.stockKg <= p.minStockKg);
 
-  // 7-Day sales bar chart mock data
-  const last7Days = [
-    { dayBn: 'শনি', dayEn: 'Sat', amountPaisa: 4800000 },
-    { dayBn: 'রবি', dayEn: 'Sun', amountPaisa: 6200000 },
-    { dayBn: 'সোম', dayEn: 'Mon', amountPaisa: 5400000 },
-    { dayBn: 'মঙ্গল', dayEn: 'Tue', amountPaisa: 7100000 },
-    { dayBn: 'বুধ', dayEn: 'Wed', amountPaisa: 4500000 },
-    { dayBn: 'বৃহঃ', dayEn: 'Thu', amountPaisa: 8900000 },
-    { dayBn: 'শুক্র', dayEn: 'Fri', amountPaisa: totalSalesTodayPaisa || 5650000 },
-  ];
-  const maxDayAmount = Math.max(...last7Days.map((d) => d.amountPaisa));
+  // Dynamic Due Customers calculation from Parties
+  const dueCustomers = parties.filter((p) => (p.type === 'client' || p.type === 'both') && p.balancePaisa > 0);
+  const totalDueFromCustomersPaisa = dueCustomers.reduce((sum, p) => sum + p.balancePaisa, 0);
+
+  // Dynamic 7-Day sales bar chart data calculated from sales invoices
+  const bnDayNames = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহঃ', 'শুক্র', 'শনি'];
+  const enDayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const last7Days = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const dateKey = d.toISOString().split('T')[0];
+    const dayOfWeek = d.getDay();
+
+    const amountPaisa = sales
+      .filter((s) => s.date && s.date.startsWith(dateKey))
+      .reduce((sum, s) => sum + (s.grandTotalPaisa || 0), 0);
+
+    return {
+      dayBn: bnDayNames[dayOfWeek],
+      dayEn: enDayNames[dayOfWeek],
+      amountPaisa,
+      dateKey,
+    };
+  });
+
+  const rawMaxDay = Math.max(...last7Days.map((d) => d.amountPaisa));
+  const maxDayAmount = rawMaxDay > 0 ? rawMaxDay : 100000;
+  const hasAnySalesIn7Days = rawMaxDay > 0;
 
   // Top 5 rice varieties
   const top5Rice = products.slice(0, 5);
@@ -128,15 +149,17 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               </div>
               <div>
                 <span className="text-xs font-bold text-[#1A1A17] group-hover:text-[#1F7A4D]">
-                  ৭ দিনের বেশি পুরোনো বাকি আদায়
+                  {dueCustomers.length > 0 ? 'বকেয়া খাতা ও বাকি আদায়' : 'বকেয়া খাতার হালনাগাদ'}
                 </span>
                 <span className="block text-[11px] text-slate-600 font-semibold">
-                  ৩ জন পাইকারি ক্রেতার মোট ৳১,৫২,০০০ বকেয়া বাকি আছে
+                  {dueCustomers.length > 0
+                    ? `${toBengaliDigits(dueCustomers.length)} জন ক্রেতার মোট ${formatCurrency(totalDueFromCustomersPaisa, numFormat)} বকেয়া বাকি আছে`
+                    : 'বর্তমানে কোনো বকেয়া বাকি নেই, সব হিসাব পরিশোধিত'}
                 </span>
               </div>
             </div>
             <div className="flex items-center gap-2 text-xs font-bold text-[#1F7A4D]">
-              <span>আদায় করুন</span>
+              <span>{dueCustomers.length > 0 ? 'আদায় করুন' : 'খাতা দেখুন'}</span>
               <ChevronRight className="w-4 h-4" />
             </div>
           </button>
@@ -203,7 +226,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                   আজকের বাজারদর আপডেট ও রেট কার্ড তৈরি
                 </span>
                 <span className="block text-[11px] text-slate-600 font-semibold">
-                  সকালে বাবুবাজার মোকামের নতুন দর সিস্টেমে উঠান
+                  {tenant.address ? `আজকের মোকামের পাইকারি ও খুচরা দর হালনাগাদ করুন (${tenant.address})` : 'আজকের মোকামের পাইকারি ও খুচরা দর সিস্টেমে হালনাগাদ করুন'}
                 </span>
               </div>
             </div>
@@ -340,7 +363,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               </h3>
               <span className="text-[11px] text-slate-600 font-semibold">দৈনিক সর্বমোট বিক্রি ও গতিবিধি</span>
             </div>
-            {userRole !== 'cashier' && (
+            {userRole !== 'cashier' && hasAnySalesIn7Days && (
               <span className="text-xs font-bold text-[#1F7A4D]">
                 সর্বোচ্চ: {formatCurrency(maxDayAmount, numFormat)}
               </span>
@@ -353,22 +376,34 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               <div className="font-bold text-slate-700 text-xs">বিক্রয় ও আর্থিক গ্রাফ শুধুমাত্র মালিক এবং ম্যানেজারের জন্য উন্মুক্ত</div>
               <div className="text-[11px] text-slate-600 mt-1">কাউন্টার ক্যাশিয়ার হিসেবে আপনি সরাসরি পিওএস ও মেমো পরিচালনা করতে পারবেন</div>
             </div>
+          ) : !hasAnySalesIn7Days ? (
+            <div className="h-40 flex flex-col items-center justify-center bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-4 text-center">
+              <span className="text-2xl mb-1">📊</span>
+              <div className="font-bold text-slate-700 text-xs">বিগত ৭ দিনে কোনো বিক্রয় রেকর্ড হয়নি</div>
+              <div className="text-[11px] text-slate-500 mt-0.5">কাউন্টার থেকে চাল বিক্রি শুরু করলে এখানে লাইভ দৈনিক বিক্রয় গ্রাফ তৈরি হবে</div>
+              <button
+                onClick={() => onSelectTab('pos')}
+                className="mt-2.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer"
+              >
+                + পিওএস থেকে বিক্রি শুরু করুন
+              </button>
+            </div>
           ) : (
             <div className="h-40 flex items-end justify-between gap-2 pt-4 px-1">
               {last7Days.map((d, idx) => {
-                const heightPct = Math.max(15, Math.round((d.amountPaisa / maxDayAmount) * 100));
+                const heightPct = d.amountPaisa > 0 ? Math.max(15, Math.round((d.amountPaisa / maxDayAmount) * 100)) : 8;
                 const isToday = idx === last7Days.length - 1;
                 return (
                   <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
                     <span className="text-[9px] font-bold text-slate-700 opacity-0 group-hover:opacity-100 transition tabular-nums">
-                      ৳{toBengaliDigits(Math.round(d.amountPaisa / 100000))}L
+                      {d.amountPaisa > 0 ? formatCurrency(d.amountPaisa, numFormat) : '৳০'}
                     </span>
                     <div
                       style={{ height: `${heightPct}%` }}
                       className={`w-full rounded-t-xl transition-all duration-300 ${
                         isToday
                           ? 'bg-[#1F7A4D] shadow-sm shadow-[#1F7A4D]/30'
-                          : 'bg-[#D1EAD9] group-hover:bg-[#1F7A4D]/70'
+                          : d.amountPaisa > 0 ? 'bg-[#D1EAD9] group-hover:bg-[#1F7A4D]/70' : 'bg-slate-200'
                       }`}
                     />
                     <span className={`text-[11px] font-bold ${isToday ? 'text-[#1F7A4D]' : 'text-slate-600'}`}>
