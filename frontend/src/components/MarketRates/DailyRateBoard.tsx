@@ -88,7 +88,7 @@ export const DailyRateBoard: React.FC<DailyRateBoardProps> = ({
     <div className="space-y-4 pb-20 md:pb-6">
       
       {/* Top Banner */}
-      <div className="bg-linear-to-r from-emerald-600 via-teal-700 to-amber-600 rounded-2xl p-4 sm:p-6 text-white shadow-md flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-emerald-700 via-emerald-800 to-amber-700 rounded-2xl p-4 sm:p-6 text-white shadow-md flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <span className="p-2 bg-white/20 rounded-xl backdrop-blur-xs">

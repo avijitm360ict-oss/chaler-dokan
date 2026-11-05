@@ -381,7 +381,7 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({
               </span>
             </div>
 
-            <div className="p-4 bg-linear-to-r from-emerald-600 to-teal-700 rounded-2xl text-white flex items-center justify-between shadow-md">
+            <div className="p-4 bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl text-white flex items-center justify-between shadow-md">
               <div>
                 <span className="text-xs uppercase tracking-wider font-bold text-emerald-100 block">
                   প্রকৃত নিট মুনাফা (Net Profit)

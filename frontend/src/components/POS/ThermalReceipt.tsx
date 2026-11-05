@@ -108,44 +108,55 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto animate-in zoom-in-95">
         
         {/* Top Modal Controls (Hidden in Print) */}
-        <div className="print:hidden p-3.5 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-2 border-b border-slate-800">
-          <div className="flex items-center gap-2">
-            <span className="text-emerald-400 font-bold text-xs sm:text-sm">রসিদ সাইজ:</span>
-            
-            {/* Format Selector: 58mm, 80mm, A4 */}
-            <div className="flex bg-slate-800 rounded-lg p-0.5 text-xs font-semibold">
-              <button
-                onClick={() => setPrintFormat('thermal58')}
-                className={`px-2.5 py-1 rounded-md transition ${
-                  printFormat === 'thermal58' ? 'bg-emerald-500 text-white font-bold' : 'text-slate-300 hover:text-white font-medium'
-                }`}
-              >
-                ৫৮ মিমি
-              </button>
-              <button
-                onClick={() => setPrintFormat('thermal80')}
-                className={`px-2.5 py-1 rounded-md transition ${
-                  printFormat === 'thermal80' ? 'bg-emerald-500 text-white font-bold' : 'text-slate-300 hover:text-white font-medium'
-                }`}
-              >
-                ৮০ মিমি
-              </button>
-              <button
-                onClick={() => setPrintFormat('a4')}
-                className={`px-2.5 py-1 rounded-md transition ${
-                  printFormat === 'a4' ? 'bg-emerald-500 text-white font-bold' : 'text-slate-300 hover:text-white font-medium'
-                }`}
-              >
-                A4 ইনভয়েস
-              </button>
+        <div className="print:hidden p-3 sm:p-3.5 bg-slate-900 text-white flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 border-b border-slate-800">
+          <div className="flex items-center justify-between sm:justify-start gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-emerald-400 font-bold text-xs sm:text-sm">রসিদ সাইজ:</span>
+              
+              {/* Format Selector: 58mm, 80mm, A4 */}
+              <div className="flex bg-slate-800 rounded-lg p-0.5 text-xs font-semibold">
+                <button
+                  onClick={() => setPrintFormat('thermal58')}
+                  className={`px-2 py-1 rounded-md transition ${
+                    printFormat === 'thermal58' ? 'bg-emerald-500 text-white font-bold' : 'text-slate-300 hover:text-white font-medium'
+                  }`}
+                >
+                  ৫৮ মিমি
+                </button>
+                <button
+                  onClick={() => setPrintFormat('thermal80')}
+                  className={`px-2 py-1 rounded-md transition ${
+                    printFormat === 'thermal80' ? 'bg-emerald-500 text-white font-bold' : 'text-slate-300 hover:text-white font-medium'
+                  }`}
+                >
+                  ৮০ মিমি
+                </button>
+                <button
+                  onClick={() => setPrintFormat('a4')}
+                  className={`px-2 py-1 rounded-md transition ${
+                    printFormat === 'a4' ? 'bg-emerald-500 text-white font-bold' : 'text-slate-300 hover:text-white font-medium'
+                  }`}
+                >
+                  A4
+                </button>
+              </div>
             </div>
+
+            {/* Mobile close button on top row */}
+            <button
+              onClick={onClose}
+              className="sm:hidden p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800"
+              title="বন্ধ করুন"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2 overflow-x-auto">
             {/* Language switch */}
             <button
               onClick={() => setReceiptLang(isBn ? 'en' : 'bn')}
-              className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 text-emerald-400"
+              className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 text-emerald-400 shrink-0"
             >
               {isBn ? 'English' : 'বাংলা'}
             </button>
@@ -153,7 +164,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
             {/* Copy Memo Text Fallback */}
             <button
               onClick={handleCopyText}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition"
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition shrink-0"
               title="রসিদের টেক্সট কপি করুন"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -163,7 +174,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
             {/* WhatsApp Share Button */}
             <button
               onClick={handleShareWhatsApp}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-white text-xs font-bold rounded-lg shadow-sm transition"
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-white text-xs font-bold rounded-lg shadow-sm transition shrink-0"
               title="হোয়াটসঅ্যাপে চালান শেয়ার করুন"
             >
               <Share2 className="w-4 h-4" />
@@ -173,7 +184,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
             {/* Print button */}
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-lg shadow-sm transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-lg shadow-sm transition shrink-0"
             >
               <Printer className="w-4 h-4" />
               <span>প্রিন্ট করুন</span>
@@ -181,7 +192,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
 
             <button
               onClick={onClose}
-              className="p-1 rounded-lg text-slate-200 hover:text-white hover:bg-slate-800"
+              className="hidden sm:inline-flex p-1 rounded-lg text-slate-200 hover:text-white hover:bg-slate-800 shrink-0"
               title="বন্ধ করুন"
             >
               <X className="w-5 h-5" />
@@ -190,7 +201,7 @@ export const ThermalReceipt: React.FC<ThermalReceiptProps> = ({
         </div>
 
         {/* PRINTABLE RECEIPT CONTENT */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-6 bg-slate-100/60 flex justify-center">
+        <div className="flex-1 overflow-auto p-3 sm:p-6 bg-slate-100/60 flex justify-center items-start">
           
           <div
             id="printable-area"

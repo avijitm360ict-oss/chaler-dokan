@@ -817,7 +817,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
       </div>
 
       {/* RIGHT: Cart, Customer & Checkout (Tablet & Desktop Dual Pane Cashier Mode) */}
-      <div className="w-full md:w-[360px] lg:w-[420px] shrink-0 flex flex-col bg-white rounded-2xl border border-slate-200/90 shadow-md overflow-hidden">
+      <div className="hidden md:flex w-full md:w-[360px] lg:w-[420px] shrink-0 flex-col bg-white rounded-2xl border border-slate-200/90 shadow-md overflow-hidden">
         
         {/* Customer Selector & Hold Bar */}
         <div className="p-3 border-b border-stroke-default bg-slate-50/70 space-y-2">
@@ -1078,13 +1078,13 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
 
       {/* MOBILE STICKY SALES BAR per Section 4.3 */}
       {cart.length > 0 && (
-        <div className="lg:hidden fixed bottom-14 left-0 right-0 z-30 bg-[#1F7A4D] text-white px-4 py-2.5 shadow-sheet flex items-center justify-between border-t border-[#16603B]">
+        <div className="md:hidden fixed bottom-14 left-0 right-0 z-30 bg-emerald-700 text-white px-4 py-2.5 shadow-sheet flex items-center justify-between border-t border-emerald-800">
           <div
             onClick={() => setIsMobileCartOpen(true)}
             className="cursor-pointer flex-1"
           >
-            <span className="text-[10px] text-emerald-100 block font-bold">
-              {cart.length} টি চাল • কার্ট দেখুন ↑
+            <span className="text-xs text-emerald-100 block font-bold">
+              {cart.length} টি চাল • কার্ট ও কাস্টমার দেখুন ↑
             </span>
             <span className="text-lg font-black tabular-nums">
               {formatCurrency(grandTotalPaisa, numFormat)}
@@ -1093,7 +1093,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
 
           <button
             onClick={openCheckout}
-            className="px-5 py-2.5 bg-white text-[#1F7A4D] hover:bg-slate-100 font-black text-xs rounded-xl shadow-md transition touch-target"
+            className="px-5 py-2.5 bg-white text-emerald-800 hover:bg-slate-100 font-black text-xs rounded-xl shadow-md transition touch-target cursor-pointer"
           >
             পেমেন্ট নিন (F2)
           </button>
@@ -1102,7 +1102,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
 
       {/* MOBILE CART BOTTOM SHEET DRAWER (BUG-POS-04) */}
       {isMobileCartOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-[#1A1A17]/60 backdrop-blur-xs flex items-end justify-center">
+        <div className="md:hidden fixed inset-0 z-50 bg-[#1A1A17]/60 backdrop-blur-xs flex items-end justify-center">
           <div className="bg-white rounded-t-3xl w-full max-h-[85vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-200">
             {/* Header */}
             <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 rounded-t-3xl">
@@ -1116,10 +1116,42 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
               </div>
               <button
                 onClick={() => setIsMobileCartOpen(false)}
-                className="p-1.5 text-slate-500 hover:text-slate-800 rounded-lg text-sm font-bold"
+                className="p-1.5 text-slate-500 hover:text-slate-800 rounded-lg text-sm font-bold cursor-pointer"
               >
                 ✕ বন্ধ
               </button>
+            </div>
+
+            {/* Mobile Customer Selector Bar */}
+            <div className="p-3 bg-slate-50/80 border-b border-slate-200 space-y-1">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                <span>কাস্টমার নির্বাচন:</span>
+                {selectedClient && (
+                  <span className="text-blue-700 font-bold">পূর্বের বাকি: {formatCurrency(selectedClient.balancePaisa, numFormat)}</span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={selectedClientId}
+                  onChange={(e) => handleSelectClient(e.target.value)}
+                  className="flex-1 min-w-0 py-2 px-3 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="walkin">🛒 সাধারণ খদ্দের (ক্যাশ)</option>
+                  {parties.filter((p) => p.type === 'client' || p.type === 'both').map((party) => (
+                    <option key={party.id} value={party.id}>
+                      {party.name} {party.shopName ? `(${party.shopName})` : ''} — বাকি: {formatCurrency(party.balancePaisa, numFormat)}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setIsAddCustomerModalOpen(true)}
+                  className="py-2 px-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-black flex items-center gap-1 shrink-0"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>+ নতুন</span>
+                </button>
+              </div>
             </div>
 
             {/* Cart Items List */}

@@ -19,7 +19,8 @@ import {
   ShieldAlert,
   History,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  X
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -28,6 +29,8 @@ interface SidebarProps {
   lang: Language;
   userRole?: UserRole;
   warehousesCount?: number;
+  isOpenMobile?: boolean;
+  onCloseMobile?: () => void;
 }
 
 interface NavItem {
@@ -45,7 +48,15 @@ interface NavSection {
   items: NavItem[];
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, lang, userRole = 'owner', warehousesCount = 1 }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  activeTab,
+  onSelectTab,
+  lang,
+  userRole = 'owner',
+  warehousesCount = 1,
+  isOpenMobile = false,
+  onCloseMobile
+}) => {
   const t = translations[lang];
 
   // Grouped Navigation Items matching Design Brief Section 4.1
@@ -92,96 +103,140 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, lang, 
     }
   ];
 
+  const renderNavList = (isMobile = false) => (
+    <nav className="space-y-3.5">
+      {navSections.map((sec, sIdx) => {
+        const visibleItems = sec.items.filter((item) => {
+          if (item.adminOnly && userRole !== 'superadmin') return false;
+          if (userRole === 'cashier' && item.minRole) return false;
+          if (userRole === 'manager' && item.minRole === 'owner') return false;
+          return true;
+        });
+
+        if (visibleItems.length === 0) return null;
+
+        return (
+          <div key={sIdx} className="space-y-1">
+            <div className="text-xs font-black uppercase tracking-wider text-slate-500 px-2.5">
+              {sec.group}
+            </div>
+            {visibleItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    onSelectTab(item.id);
+                    if (isMobile && onCloseMobile) onCloseMobile();
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all group ${
+                    isActive
+                      ? 'bg-emerald-700 text-white shadow-sm shadow-emerald-700/30'
+                      : item.highlight
+                      ? 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100'
+                      : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-bold'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${
+                      isActive ? 'text-white' : item.highlight ? 'text-emerald-700' : 'text-slate-500 group-hover:text-slate-900'
+                    }`} />
+                    <span>{item.label}</span>
+                  </div>
+
+                  {item.badge && !isActive && (
+                    <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
+                      {item.badge}
+                    </span>
+                  )}
+
+                  {isActive && (
+                    <ChevronRight className="w-3.5 h-3.5 text-white/80" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        );
+      })}
+    </nav>
+  );
+
   return (
-    <aside className="w-60 bg-white border-r border-stroke-default h-[calc(100vh-4rem)] sticky top-16 hidden md:flex flex-col justify-between p-3 shadow-xs overflow-y-auto">
-      <div className="space-y-4">
-        
-        {/* Fast Action Banner */}
-        <div className="px-3 py-2 rounded-xl bg-gradient-to-r from-[#1F7A4D]/10 via-[#1F7A4D]/5 to-[#E0A526]/10 border border-[#1F7A4D]/20 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#1F7A4D] animate-pulse" />
-            <span className="text-xs font-black text-[#16603B]">
-              {lang === 'bn' ? 'চালের দোকান SaaS' : 'Rice Shop SaaS'}
-            </span>
+    <>
+      {/* Desktop Sidebar */}
+      <aside className="w-60 bg-white border-r border-stroke-default h-[calc(100vh-4rem)] sticky top-16 hidden md:flex flex-col justify-between p-3 shadow-xs overflow-y-auto">
+        <div className="space-y-4">
+          <div className="px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-50 via-teal-50 to-amber-50 border border-emerald-200 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-emerald-700 animate-pulse" />
+              <span className="text-xs font-black text-emerald-900">
+                {lang === 'bn' ? 'চালের দোকান SaaS' : 'Rice Shop SaaS'}
+              </span>
+            </div>
+            <span className="text-[10px] bg-emerald-700 text-white font-extrabold px-1.5 py-0.5 rounded-md">v1.0</span>
           </div>
-          <span className="text-[10px] bg-[#1F7A4D] text-white font-extrabold px-1.5 py-0.5 rounded-md">v1.0</span>
+
+          {renderNavList(false)}
         </div>
 
-        {/* Navigation Groups */}
-        <nav className="space-y-3.5">
-          {navSections.map((sec, sIdx) => {
-            // Filter items based on userRole
-            const visibleItems = sec.items.filter((item) => {
-              if (item.adminOnly && userRole !== 'superadmin') return false;
-              if (userRole === 'cashier' && item.minRole) return false;
-              if (userRole === 'manager' && item.minRole === 'owner') return false;
-              return true;
-            });
+        {/* Bottom Status Info */}
+        <div className="pt-3 border-t border-stroke-default mt-2">
+          <div className="p-2.5 bg-surface-page rounded-xl text-xs space-y-1.5 border border-stroke-default text-slate-700">
+            <div className="flex justify-between font-bold text-ink-primary text-xs">
+              <span>{lang === 'bn' ? 'গোডাউন সংযোগ' : 'Godowns'}</span>
+              <span className="text-emerald-700 flex items-center gap-1 font-black">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-ping" />
+                {warehousesCount ? `${toBengaliDigits(warehousesCount)}টি সক্রিয়` : '১টি সক্রিয়'}
+              </span>
+            </div>
+            <div className="text-xs text-slate-600 font-semibold">
+              {lang === 'bn' ? 'বেস ইউনিট: কেজি (KG)' : 'Base Unit: Kg'} • WAC রানিং
+            </div>
+          </div>
+        </div>
+      </aside>
 
-            if (visibleItems.length === 0) return null;
-
-            return (
-              <div key={sIdx} className="space-y-1">
-                <div className="text-[11px] font-black uppercase tracking-wider text-slate-600 px-2.5">
-                  {sec.group}
+      {/* Mobile Slide-Over Drawer Sidebar */}
+      {isOpenMobile && (
+        <div className="md:hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex">
+          <div className="w-72 max-w-[85vw] bg-white h-full shadow-2xl flex flex-col justify-between p-3.5 overflow-y-auto animate-in slide-in-from-left duration-200">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-700 text-white flex items-center justify-center font-bold shadow-xs">
+                    🌾
+                  </div>
+                  <span className="font-extrabold text-sm text-slate-900">চালের দোকান মেনু</span>
                 </div>
-                {visibleItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = activeTab === item.id;
-
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => onSelectTab(item.id)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all group ${
-                        isActive
-                          ? 'bg-[#1F7A4D] text-white shadow-sm shadow-[#1F7A4D]/30'
-                          : item.highlight
-                          ? 'text-[#1F7A4D] bg-[#E8F4EC] hover:bg-[#D1EAD9]'
-                          : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-bold'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Icon className={`w-4 h-4 transition-transform group-hover:scale-110 ${
-                          isActive ? 'text-white' : item.highlight ? 'text-[#1F7A4D]' : 'text-slate-500 group-hover:text-slate-900'
-                        }`} />
-                        <span>{item.label}</span>
-                      </div>
-
-                      {item.badge && !isActive && (
-                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300">
-                          {item.badge}
-                        </span>
-                      )}
-
-                      {isActive && (
-                        <ChevronRight className="w-3.5 h-3.5 text-white/80" />
-                      )}
-                    </button>
-                  );
-                })}
+                <button
+                  type="button"
+                  onClick={onCloseMobile}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-            );
-          })}
-        </nav>
-      </div>
 
-      {/* Bottom Status Info */}
-      <div className="pt-3 border-t border-stroke-default mt-2">
-        <div className="p-2.5 bg-surface-page rounded-xl text-xs space-y-1.5 border border-stroke-default text-slate-700">
-          <div className="flex justify-between font-bold text-ink-primary text-xs">
-            <span>{lang === 'bn' ? 'গোডাউন সংযোগ' : 'Godowns'}</span>
-            <span className="text-emerald-700 flex items-center gap-1 font-black">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-ping" />
-              {warehousesCount ? `${toBengaliDigits(warehousesCount)}টি সক্রিয়` : '১টি সক্রিয়'}
-            </span>
+              {renderNavList(true)}
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 mt-4">
+              <div className="p-2.5 bg-slate-50 rounded-xl text-xs space-y-1 text-slate-600">
+                <div className="flex justify-between font-bold text-slate-900">
+                  <span>গোডাউন:</span>
+                  <span className="text-emerald-700">{warehousesCount ? `${toBengaliDigits(warehousesCount)}টি সক্রিয়` : '১টি সক্রিয়'}</span>
+                </div>
+                <div className="text-xs text-slate-500">বেস ইউনিট: কেজি • WAC হিসাব সক্রিয়</div>
+              </div>
+            </div>
           </div>
-          <div className="text-xs text-slate-600 font-semibold">
-            {lang === 'bn' ? 'বেস ইউনিট: কেজি (KG)' : 'Base Unit: Kg'} • WAC রানিং
-          </div>
+          <div className="flex-1 cursor-pointer" onClick={onCloseMobile} />
         </div>
-      </div>
-    </aside>
+      )}
+    </>
   );
 };
 

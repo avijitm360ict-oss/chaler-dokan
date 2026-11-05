@@ -398,6 +398,7 @@ export function App() {
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
   const [showAuditLog, setShowAuditLog] = useState<boolean>(false);
   const [showImportWizard, setShowImportWizard] = useState<boolean>(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
   // Modal receipt viewer
   const [activeReceipt, setActiveReceipt] = useState<{ invoice: SaleInvoice; isReprint?: boolean } | null>(null);
@@ -1188,6 +1189,7 @@ export function App() {
         onToggleLang={toggleLanguage}
         numFormat={numFormat}
         onToggleNumFormat={toggleNumFormat}
+        onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
         activeTab={activeTab}
         onSelectTab={handleSelectTab}
         userRole={userRole}
@@ -1226,13 +1228,15 @@ export function App() {
 
       <div className="flex-1 flex max-w-7xl w-full mx-auto px-2 sm:px-4 lg:px-6">
         
-        {/* Desktop Sidebar */}
+        {/* Desktop Sidebar & Mobile Slide-Over Drawer */}
         <Sidebar
           activeTab={activeTab}
           onSelectTab={handleSelectTab}
           lang={lang}
           userRole={userRole}
           warehousesCount={warehouses.length}
+          isOpenMobile={isMobileMenuOpen}
+          onCloseMobile={() => setIsMobileMenuOpen(false)}
         />
 
         {/* Main Content Area */}

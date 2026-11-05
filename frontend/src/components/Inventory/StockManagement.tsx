@@ -404,8 +404,8 @@ export const StockManagement: React.FC<StockManagementProps> = ({
 
       {/* STOCK ADJUSTMENT MODAL */}
       {adjustmentModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3">
-          <div className="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl animate-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl animate-in zoom-in-95 max-h-[92vh] overflow-y-auto my-auto">
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <h3 className="font-extrabold text-slate-900 text-base">
                 স্টক এডজাস্টমেন্ট (Stock Adjustment)
@@ -490,8 +490,8 @@ export const StockManagement: React.FC<StockManagementProps> = ({
 
       {/* Inter-Warehouse Transfer Modal */}
       {transferModalOpen && (
-        <div className="fixed inset-0 z-50 bg-[#1A1A17]/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl border border-slate-200">
+        <div className="fixed inset-0 z-50 bg-[#1A1A17]/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto my-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
@@ -619,8 +619,8 @@ export const StockManagement: React.FC<StockManagementProps> = ({
 
       {/* EDIT PRODUCT MODAL */}
       {editingProduct && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3">
-          <div className="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl animate-in zoom-in-95">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl animate-in zoom-in-95 max-h-[92vh] overflow-y-auto my-auto">
             <div className="flex items-center justify-between border-b pb-3 border-slate-100">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-emerald-100 text-emerald-800 rounded-xl">

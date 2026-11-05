@@ -71,7 +71,7 @@ export const HelpDrawer: React.FC<HelpDrawerProps> = ({ isOpen, onClose, lang })
         <div className="p-5 space-y-5 flex-1 overflow-y-auto">
           
           {/* Direct WhatsApp Callout Card */}
-          <div className="bg-linear-to-br from-[#E8F4EC] to-[#DCFCE7] border border-[#1F7A4D]/30 rounded-2xl p-4.5 text-[#1A1A17] space-y-3">
+          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-300 rounded-2xl p-4.5 text-[#1A1A17] space-y-3">
             <div className="flex items-center gap-2">
               <span className="p-1.5 bg-[#1F7A4D] text-white rounded-lg">
                 <MessageCircle className="w-4 h-4" />

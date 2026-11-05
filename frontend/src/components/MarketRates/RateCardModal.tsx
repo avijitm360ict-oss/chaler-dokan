@@ -107,7 +107,7 @@ export const RateCardModal: React.FC<RateCardModalProps> = ({
         <div className="flex-1 overflow-y-auto my-2 p-1">
           <div
             id="printable-area"
-            className="bg-linear-to-b from-amber-50/50 via-white to-emerald-50/40 rounded-2xl p-5 border-2 border-[#E0A526] shadow-sm space-y-4"
+            className="bg-gradient-to-b from-amber-50/50 via-white to-emerald-50/40 rounded-2xl p-5 border-2 border-amber-300 shadow-sm space-y-4"
           >
             {/* Card Header */}
             <div className="text-center pb-3 border-b-2 border-dashed border-[#DDD9CE]">
@@ -124,35 +124,37 @@ export const RateCardModal: React.FC<RateCardModalProps> = ({
             </div>
 
             {/* Price Table */}
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-[#1F7A4D] text-white font-bold">
-                  <th className="py-2 px-3 rounded-l-lg">চালের নাম ও ভ্যারাইটি</th>
-                  <th className="py-2 px-3 text-center">খুচরা (কেজি)</th>
-                  <th className="py-2 px-3 text-center">পাইকারি (কেজি)</th>
-                  <th className="py-2 px-3 text-right rounded-r-lg">৫০ কেজি বস্তা</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {selectedProducts.map((p) => (
-                  <tr key={p.id} className="hover:bg-amber-50/40 transition">
-                    <td className="py-2.5 px-3">
-                      <div className="font-bold text-[#1A1A17]">{p.nameBn}</div>
-                      <div className="text-[10px] text-slate-600 font-semibold">{p.grade} • {p.category}</div>
-                    </td>
-                    <td className="py-2.5 px-3 text-center font-bold text-[#1F7A4D] tabular-nums">
-                      {formatCurrency(p.retailPricePaisa, numFormat)}
-                    </td>
-                    <td className="py-2.5 px-3 text-center font-semibold text-[#8A5A00] tabular-nums">
-                      {formatCurrency(p.wholesalePricePaisa, numFormat)}
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-extrabold text-[#1A1A17] tabular-nums">
-                      {formatCurrency(p.sack50RetailPricePaisa, numFormat)}
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs min-w-[340px]">
+                <thead>
+                  <tr className="bg-[#1F7A4D] text-white font-bold">
+                    <th className="py-2 px-3 rounded-l-lg">চালের নাম ও ভ্যারাইটি</th>
+                    <th className="py-2 px-3 text-center">খুচরা (কেজি)</th>
+                    <th className="py-2 px-3 text-center">পাইকারি (কেজি)</th>
+                    <th className="py-2 px-3 text-right rounded-r-lg">৫০ কেজি বস্তা</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {selectedProducts.map((p) => (
+                    <tr key={p.id} className="hover:bg-amber-50/40 transition">
+                      <td className="py-2.5 px-3">
+                        <div className="font-bold text-[#1A1A17]">{p.nameBn}</div>
+                        <div className="text-[10px] text-slate-600 font-semibold">{p.grade} • {p.category}</div>
+                      </td>
+                      <td className="py-2.5 px-3 text-center font-bold text-[#1F7A4D] tabular-nums">
+                        {formatCurrency(p.retailPricePaisa, numFormat)}
+                      </td>
+                      <td className="py-2.5 px-3 text-center font-semibold text-[#8A5A00] tabular-nums">
+                        {formatCurrency(p.wholesalePricePaisa, numFormat)}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-extrabold text-[#1A1A17] tabular-nums">
+                        {formatCurrency(p.sack50RetailPricePaisa, numFormat)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             {/* Card Footer */}
             <div className="pt-2 border-t border-slate-200 text-center text-[10px] text-slate-600 font-medium flex items-center justify-between">

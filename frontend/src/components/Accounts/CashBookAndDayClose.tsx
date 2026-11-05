@@ -101,7 +101,7 @@ export const CashBookAndDayClose: React.FC<CashBookAndDayCloseProps> = ({
     <div className="space-y-4 pb-20 md:pb-6">
       
       {/* Top Banner: Day Close Status & Cash Register */}
-      <div className="bg-linear-to-r from-slate-900 via-slate-800 to-emerald-950 rounded-2xl p-4 sm:p-6 text-white shadow-md flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 rounded-2xl p-4 sm:p-6 text-white shadow-md flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <span className="p-2 bg-emerald-500/20 text-emerald-400 rounded-xl">
