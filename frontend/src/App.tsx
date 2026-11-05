@@ -1232,6 +1232,7 @@ export function App() {
           onSelectTab={handleSelectTab}
           lang={lang}
           userRole={userRole}
+          warehousesCount={warehouses.length}
         />
 
         {/* Main Content Area */}

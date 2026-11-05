@@ -362,7 +362,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden my-auto animate-in zoom-in-95">
         
         {/* Brand Banner */}
-        <div className="bg-linear-to-tr from-[#16603B] via-[#1F7A4D] to-[#E0A526] p-6 text-white text-center relative">
+        <div className="bg-gradient-to-tr from-emerald-800 via-emerald-600 to-amber-600 p-6 text-white text-center relative">
           {isDismissable && onClose && (
             <button
               onClick={onClose}

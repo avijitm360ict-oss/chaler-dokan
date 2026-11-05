@@ -1,6 +1,7 @@
 import React from 'react';
 import { Language, UserRole } from '../types';
 import { translations } from '../i18n/translations';
+import { toBengaliDigits } from '../utils/formatters';
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -26,6 +27,7 @@ interface SidebarProps {
   onSelectTab: (tab: string) => void;
   lang: Language;
   userRole?: UserRole;
+  warehousesCount?: number;
 }
 
 interface NavItem {
@@ -43,7 +45,7 @@ interface NavSection {
   items: NavItem[];
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, lang, userRole = 'owner' }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, lang, userRole = 'owner', warehousesCount = 1 }) => {
   const t = translations[lang];
 
   // Grouped Navigation Items matching Design Brief Section 4.1
@@ -171,7 +173,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, lang, 
             <span>{lang === 'bn' ? 'গোডাউন সংযোগ' : 'Godowns'}</span>
             <span className="text-[#1F7A4D] flex items-center gap-1 font-black">
               <span className="w-1.5 h-1.5 rounded-full bg-[#1F7A4D] animate-ping" />
-              ৩টি সক্রিয়
+              {warehousesCount ? `${toBengaliDigits(warehousesCount)}টি সক্রিয়` : '১টি সক্রিয়'}
             </span>
           </div>
           <div className="text-[10px] text-slate-600 font-semibold">
