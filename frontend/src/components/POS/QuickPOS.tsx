@@ -1032,14 +1032,14 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
             {/* Grand Total Highlight */}
             <div className="p-3 bg-[#1F7A4D] rounded-2xl text-white flex items-center justify-between shadow-xs">
               <div>
-                <span className="text-[10px] text-emerald-100 uppercase tracking-wider block font-bold">
+                <span className="text-[10px] text-emerald-50 uppercase tracking-wider block font-bold">
                   {t.grandTotal}
                 </span>
                 <span className="text-2xl font-black tabular-nums">
                   {formatCurrency(grandTotalPaisa, numFormat)}
                 </span>
               </div>
-              <div className="text-right text-[11px] text-emerald-100">
+              <div className="text-right text-[11px] text-emerald-50 font-semibold">
                 <span>{cart.length} টি চাল</span>
               </div>
             </div>
@@ -1083,7 +1083,7 @@ export const QuickPOS: React.FC<QuickPOSProps> = ({
             onClick={() => setIsMobileCartOpen(true)}
             className="cursor-pointer flex-1"
           >
-            <span className="text-xs text-emerald-100 block font-bold">
+            <span className="text-xs text-emerald-50 block font-bold">
               {cart.length} টি চাল • কার্ট ও কাস্টমার দেখুন ↑
             </span>
             <span className="text-lg font-black tabular-nums">

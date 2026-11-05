@@ -383,14 +383,14 @@ export const ReportsHub: React.FC<ReportsHubProps> = ({
 
             <div className="p-4 bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl text-white flex items-center justify-between shadow-md">
               <div>
-                <span className="text-xs uppercase tracking-wider font-bold text-emerald-100 block">
+                <span className="text-xs uppercase tracking-wider font-bold text-emerald-50 block">
                   প্রকৃত নিট মুনাফা (Net Profit)
                 </span>
                 <span className="text-2xl font-black">
                   {formatCurrency(netProfitPaisa, numFormat)}
                 </span>
               </div>
-              <div className="text-right text-xs text-emerald-100">
+              <div className="text-right text-xs text-emerald-50 font-bold">
                 <span>মার্জিন: {totalSalesRevenuePaisa > 0 ? ((netProfitPaisa / totalSalesRevenuePaisa) * 100).toFixed(1) : 0}%</span>
               </div>
             </div>

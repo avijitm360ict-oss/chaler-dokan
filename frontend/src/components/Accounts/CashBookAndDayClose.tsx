@@ -100,47 +100,47 @@ export const CashBookAndDayClose: React.FC<CashBookAndDayCloseProps> = ({
   return (
     <div className="space-y-4 pb-20 md:pb-6">
       
-      {/* Top Banner: Day Close Status & Cash Register */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 rounded-2xl p-4 sm:p-6 text-white shadow-md flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="p-2 bg-emerald-500/20 text-emerald-400 rounded-xl">
-              <Wallet className="w-5 h-5" />
-            </span>
-            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">
+      {/* Top Banner: Day Close Status & Cash Register - High Contrast White Card */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-4 sm:p-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="p-3 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-200/60 shadow-2xs shrink-0">
+            <Wallet className="w-6 h-6 text-emerald-700" />
+          </div>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               {lang === 'bn' ? 'দৈনিক ক্যাশ বুক ও ডে-ক্লোজ' : 'Daily Cash Book & Day Close'}
             </h2>
+            <p className="text-slate-700 text-xs sm:text-sm font-bold mt-1 max-w-xl leading-relaxed">
+              {lang === 'bn' 
+                ? 'দিনের সমস্ত নগদ টাকার আয়-ব্যয় মিলিয়ে দিনশেষে ড্রয়ারের ক্যাশের সাথে হিসাব ক্লোজ করুন।' 
+                : 'Reconcile daily cash register drawer against system sales, collections and expenses.'}
+            </p>
           </div>
-          <p className="text-slate-300 text-xs sm:text-sm mt-1 max-w-xl">
-            {lang === 'bn' 
-              ? 'দিনের সমস্ত নগদ টাকার আয়-ব্যয় মিলিয়ে দিনশেষে ড্রয়ারের ক্যাশের সাথে হিসাব ক্লোজ করুন।' 
-              : 'Reconcile daily cash register drawer against system sales, collections and expenses.'}
-          </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           {/* Transfer Button */}
           <button
             onClick={() => setTransferModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-800/90 hover:bg-slate-700 text-white rounded-xl text-xs font-bold border border-slate-700 transition cursor-pointer active:scale-98"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold border border-slate-300 transition cursor-pointer active:scale-98"
           >
-            <ArrowRightLeft className="w-4 h-4 text-emerald-400" />
+            <ArrowRightLeft className="w-4 h-4 text-emerald-700" />
             <span>{lang === 'bn' ? 'টাকা স্থানান্তর (Transfer)' : 'Account Transfer'}</span>
           </button>
 
           {/* Add Expense Button */}
           <button
             onClick={() => setExpenseModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-800/90 hover:bg-slate-700 text-white rounded-xl text-xs font-bold border border-slate-700 transition cursor-pointer active:scale-98"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-800 rounded-xl text-xs font-bold border border-rose-200 transition cursor-pointer active:scale-98"
           >
-            <Plus className="w-4 h-4 text-emerald-400" />
+            <Plus className="w-4 h-4 text-rose-700" />
             <span>{lang === 'bn' ? '+ খরচ এন্ট্রি' : '+ Record Expense'}</span>
           </button>
 
           {/* Perform Day Close Button */}
           <button
             onClick={() => setDayCloseModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 active:scale-98 text-slate-950 font-extrabold text-sm rounded-xl shadow-lg transition cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-black text-sm rounded-xl shadow-md transition cursor-pointer"
           >
             <Lock className="w-4 h-4" />
             <span>{lang === 'bn' ? 'আজকের ডে-ক্লোজ করুন' : 'Perform Day Close'}</span>

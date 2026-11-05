@@ -87,28 +87,28 @@ export const DailyRateBoard: React.FC<DailyRateBoardProps> = ({
   return (
     <div className="space-y-4 pb-20 md:pb-6">
       
-      {/* Top Banner */}
-      <div className="bg-gradient-to-r from-emerald-700 via-emerald-800 to-amber-700 rounded-2xl p-4 sm:p-6 text-white shadow-md flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="p-2 bg-white/20 rounded-xl backdrop-blur-xs">
-              <TrendingUp className="w-5 h-5 text-white" />
-            </span>
-            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">
+      {/* Top Banner - Clean, Crisp White Card with High Contrast */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-4 sm:p-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="p-3 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-200/60 shadow-2xs shrink-0">
+            <TrendingUp className="w-6 h-6 text-emerald-700" />
+          </div>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
               {lang === 'bn' ? 'আজকের বাজারদর আপডেট' : 'Daily Rice Market Price Board'}
             </h2>
+            <p className="text-slate-700 text-xs sm:text-sm font-bold mt-1 max-w-xl leading-relaxed">
+              {lang === 'bn' 
+                ? 'চালের দাম প্রতিদিন ওঠানামা করে। এখানে সব চালের পাইকারি ও খুচরা দর এক ক্লিকে পরিবর্তন করুন।' 
+                : 'Bulk update today’s retail and wholesale market prices in one quick screen.'}
+            </p>
           </div>
-          <p className="text-emerald-100 text-xs sm:text-sm mt-1 max-w-xl">
-            {lang === 'bn' 
-              ? 'চালের দাম প্রতিদিন ওঠানামা করে। এখানে সব চালের পাইকারি ও খুচরা দর এক ক্লিকে পরিবর্তন করুন।' 
-              : 'Bulk update today’s retail and wholesale market prices in one quick screen.'}
-          </p>
         </div>
 
         {/* Save Button */}
         <div className="flex items-center gap-3">
           {savedSuccess && (
-            <span className="flex items-center gap-1.5 text-xs font-bold bg-white text-emerald-800 px-3 py-1.5 rounded-xl shadow-xs">
+            <span className="flex items-center gap-1.5 text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 px-3.5 py-2 rounded-xl shadow-xs">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               {lang === 'bn' ? 'দর সফলভাবে আপডেট হয়েছে!' : 'Rates Saved!'}
             </span>
@@ -116,7 +116,7 @@ export const DailyRateBoard: React.FC<DailyRateBoardProps> = ({
 
           <button
             onClick={handleSaveAll}
-            className="flex items-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-300 active:scale-98 text-slate-950 font-extrabold text-sm rounded-xl shadow-lg transition"
+            className="flex items-center gap-2 px-5 py-2.5 bg-amber-400 hover:bg-amber-500 active:scale-98 text-slate-950 font-black text-sm rounded-xl shadow-md transition cursor-pointer"
           >
             <Save className="w-4 h-4" />
             <span>{lang === 'bn' ? 'সব দর সেভ করুন' : 'Save Today\'s Rates'}</span>

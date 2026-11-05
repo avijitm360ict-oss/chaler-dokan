@@ -57,7 +57,7 @@ export const RateCardModal: React.FC<RateCardModalProps> = ({
         {/* Modal Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-[#FFF4DC] text-[#8A5A00] rounded-xl">
+            <div className="p-2 bg-amber-100 text-amber-900 rounded-xl border border-amber-300">
               <Sparkles className="w-5 h-5 text-amber-700" />
             </div>
             <div>
@@ -118,7 +118,7 @@ export const RateCardModal: React.FC<RateCardModalProps> = ({
                 {lang === 'bn' ? tenant.shopNameBn : tenant.shopNameEn}
               </h2>
               <p className="text-xs text-slate-700 font-medium">{tenant.address} • ফোন: {tenant.phone}</p>
-              <div className="inline-block mt-1 px-2.5 py-0.5 bg-[#FFF4DC] border border-[#E0A526]/50 rounded-md text-[11px] font-bold text-[#8A5A00]">
+              <div className="inline-block mt-1 px-3 py-1 bg-amber-50 border border-amber-300 rounded-lg text-xs font-bold text-amber-950">
                 তারিখ: {formatDateBangla(new Date().toISOString())}
               </div>
             </div>
