@@ -277,8 +277,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
           <div className="text-xl sm:text-2xl font-black text-[#1A1A17] mt-2 tabular-nums">
             {userRole === 'cashier' ? (
-              <span className="text-sm text-slate-400 font-bold flex items-center gap-1">
-                <Lock className="w-3.5 h-3.5" /> শুধুমাত্র মালিকের জন্য
+              <span className="text-xs text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg font-bold inline-flex items-center gap-1.5 border border-slate-200">
+                <Lock className="w-3.5 h-3.5 text-slate-600" /> শুধুমাত্র মালিকের জন্য
               </span>
             ) : (
               formatCurrency(totalSalesTodayPaisa, numFormat)
@@ -299,8 +299,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
           <div className="text-xl sm:text-2xl font-black text-emerald-800 mt-2 tabular-nums">
             {userRole === 'cashier' ? (
-              <span className="text-sm text-slate-400 font-bold flex items-center gap-1">
-                <Lock className="w-3.5 h-3.5" /> শুধুমাত্র মালিকের জন্য
+              <span className="text-xs text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg font-bold inline-flex items-center gap-1.5 border border-slate-200">
+                <Lock className="w-3.5 h-3.5 text-slate-600" /> শুধুমাত্র মালিকের জন্য
               </span>
             ) : (
               formatCurrency(totalPaidTodayPaisa, numFormat)

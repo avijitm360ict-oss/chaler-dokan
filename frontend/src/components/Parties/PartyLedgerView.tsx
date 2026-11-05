@@ -189,7 +189,7 @@ export const PartyLedgerView: React.FC<PartyLedgerViewProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-400">
+              <span className="text-xs font-bold text-slate-600">
                 {filteredParties.length} জন
               </span>
               <button

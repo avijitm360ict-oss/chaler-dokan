@@ -438,7 +438,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
                   placeholder="-১৫ বা +৫০"
                   className="w-full p-2.5 rounded-xl border border-slate-300 font-extrabold text-lg text-slate-900 bg-white"
                 />
-                <span className="text-[10px] text-slate-400 mt-0.5 block">
+                <span className="text-xs text-slate-600 font-semibold mt-1 block">
                   ওজন কমে গেলে ঋণাত্মক সংখ্যা দিন (যেমন: -১৫), বাড়লে ধনাত্মক (+৫০)
                 </span>
               </div>
@@ -686,7 +686,7 @@ export const StockManagement: React.FC<StockManagementProps> = ({
                   onChange={(e) => setEditMinStockKg(Number(e.target.value))}
                   className="w-full p-2.5 rounded-xl border border-slate-300 font-bold bg-white"
                 />
-                <span className="text-[10px] text-slate-400 mt-0.5 block">
+                <span className="text-xs text-slate-600 font-semibold mt-1 block">
                   মজুদ এই পরিমাণের নিচে নামলে সিস্টেমে লো-স্টক সতর্কতা দেখাবে
                 </span>
               </div>
